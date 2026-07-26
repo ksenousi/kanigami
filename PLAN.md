@@ -96,6 +96,43 @@ fluid.
 
 ---
 
+## Safety — testing against a real account
+
+There is no staging WaniKani. Every phase is tested against somebody's real
+SRS progress, so the write path is gated deliberately.
+
+**API v2 has no destructive endpoints.** No deletes, no resets, no way to
+touch the account itself. The entire write surface is four calls:
+`POST /reviews`, `PUT /assignments/{id}/start`, and create/update on
+`/study_materials`. The worst an incorrect client can do is submit a wrong
+answer or start a lesson early — bad SRS data, not a wrecked account. There
+is no undo for either, which is why the rules below are not optional.
+
+1. **Phases 1–3 run on a read-only token.** WaniKani's token page has
+   per-permission checkboxes (start assignments, create reviews, create and
+   update study materials, update user preferences). Leave every one
+   unchecked. WaniKani then rejects writes with a 403 server-side, whatever
+   the client tries to do — a guarantee no amount of code review can match.
+2. **Do not wire `submitReview` or `startAssignment` before Phase 4.** They
+   exist in `src/lib/wanikani.js` and are deliberately imported by nothing.
+   `grep -rn 'submitReview\|startAssignment' src/` should list only their own
+   definitions until Phase 4 begins.
+3. **Phase 4 ships behind a dry-run switch, default on.** In dry-run,
+   grading and queueing run for real and the would-be request is logged
+   instead of sent — `dry run: POST /reviews {assignment_id, meaning: 0,
+   reading: 1}`. Run a full session in dry-run and read the log before any
+   real submission.
+4. **Take a baseline before the first live write.** `GET /assignments` is
+   read-only; dump it to a file and keep it. If a bug misgrades a batch, that
+   snapshot is the only record of what the stages were beforehand.
+5. **First live write is one item.** Submit a single review, then open
+   wanikani.com and confirm the stage and next-review time match what the
+   response said. Only then let a whole session through.
+6. **Rotate the token after Phase 4 testing.** Revoking on the settings page
+   is instant and costs nothing.
+
+---
+
 ## Phase 0 — scaffold ✅ done
 
 Vite + React 19, Pages workflow, token gate, API client, ink surface tokens.
@@ -193,6 +230,9 @@ is reachable in the browser.
 ## Phase 4 — submission
 
 **Files:** `src/lib/submit.js`, wired into `Review.jsx`
+
+Read **Safety** above before starting this phase — it is the one that can
+damage real progress, and it ships behind a default-on dry-run switch.
 
 - On item completion, `POST /reviews` with the accumulated counts.
 - Submit as items complete, not in one batch at the end — a closed tab must
