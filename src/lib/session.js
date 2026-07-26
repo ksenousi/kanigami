@@ -108,17 +108,31 @@ function record(item, questionType, verdict) {
     : { ...item, incorrectReading: item.incorrectReading + 1 }
 }
 
-// Answer the question `nextQuestion` just handed out. 'correct' retires the
+// Answer the question `nextQuestion` handed out. 'correct' retires the
 // question, 'incorrect' counts the miss and sends it back down the queue, and
 // 'retry' — the grader's nudge for a right answer to the wrong question —
 // leaves the session untouched, which is the whole point of it.
-export function answer(session, verdict) {
-  if (verdict !== 'correct' && verdict !== 'incorrect') return session
-
+//
+// The question has to be passed back in, and has to be the one the session is
+// actually asking. A component holding a stale question across a re-render
+// would otherwise grade the wrong item in silence; here it throws, because
+// that is a wiring mistake and not something a user can cause.
+export function answer(session, question, verdict) {
   const index = selectIndex(session)
-  if (index === -1) return session
+  if (index === -1) {
+    throw new Error('answer: the session is finished — nothing is being asked')
+  }
 
   const entry = session.queue[index]
+  if (question?.item?.subjectId !== entry.subjectId || question?.questionType !== entry.questionType) {
+    throw new Error(
+      `answer: the session is asking ${entry.subjectId}/${entry.questionType}, ` +
+      `but was handed ${question?.item?.subjectId ?? '?'}/${question?.questionType ?? '?'}`
+    )
+  }
+
+  if (verdict !== 'correct' && verdict !== 'incorrect') return session
+
   const items = session.items.map(item =>
     item.subjectId === entry.subjectId ? record(item, entry.questionType, verdict) : item
   )

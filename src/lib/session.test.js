@@ -45,13 +45,16 @@ function play(session, verdict = () => 'correct') {
   let current = nextQuestion(session)
   while (current && guard-- > 0) {
     asked.push(current)
-    session = answer(session, verdict(current, asked.length))
+    session = answer(session, current, verdict(current, asked.length))
     current = nextQuestion(session)
   }
   return { session, asked }
 }
 
 const label = question => `${question.item.subjectId}:${question.questionType}`
+
+// Most tests care about the verdict, not about which question carries it.
+const ask = (session, verdict) => answer(session, nextQuestion(session), verdict)
 
 describe('createSession', () => {
   it('pairs subjects with their assignments', () => {
@@ -132,12 +135,12 @@ describe('requeueing a miss', () => {
     const session = createSession(tenKanji())
     const missed = label(nextQuestion(session))
 
-    const after = answer(session, 'incorrect')
+    const after = ask(session, 'incorrect')
     const upcoming = []
     let walk = after
     for (let i = 0; i < 5; i++) {
       upcoming.push(label(nextQuestion(walk)))
-      walk = answer(walk, 'correct')
+      walk = ask(walk, 'correct')
     }
 
     expect(upcoming.slice(0, 3)).not.toContain(missed)
@@ -160,7 +163,7 @@ describe('requeueing a miss', () => {
 
   it('requeues at the end when the queue is nearly empty', () => {
     const session = createSession([kanji(1, '山')])
-    const after = answer(session, 'incorrect')
+    const after = ask(session, 'incorrect')
 
     expect(after.queue).toHaveLength(2)
     expect(nextQuestion(after).questionType).toBe('reading')
@@ -189,7 +192,7 @@ describe('wrong-answer counts', () => {
 
   it('counts a miss against the question that was asked, not the item', () => {
     const session = createSession([kanji(1, '山')])
-    const after = answer(session, 'incorrect')
+    const after = ask(session, 'incorrect')
     const item = after.items[0]
 
     expect(item.incorrectMeaning).toBe(1)
@@ -199,13 +202,31 @@ describe('wrong-answer counts', () => {
 
   it('leaves the session untouched on a retry verdict', () => {
     const session = createSession(tenKanji())
-    expect(answer(session, 'retry')).toBe(session)
+    expect(ask(session, 'retry')).toBe(session)
   })
 
-  it('ignores an answer when the queue is empty', () => {
+  it('refuses an answer when the queue is empty', () => {
     const { session } = play(createSession([radical(1, '亠')]))
     expect(nextQuestion(session)).toBe(null)
-    expect(answer(session, 'correct')).toBe(session)
+    expect(() => answer(session, null, 'correct')).toThrow(/finished/)
+  })
+
+  it('refuses a question the session has moved past', () => {
+    const session = createSession(tenKanji())
+    const stale = nextQuestion(session)
+    const moved = answer(session, stale, 'correct')
+
+    // The component still holds `stale`; the session is asking something else.
+    expect(() => answer(moved, stale, 'correct')).toThrow(/is asking/)
+    expect(() => answer(moved, stale, 'retry')).toThrow(/is asking/)
+  })
+
+  it('refuses the right subject asked for the wrong thing', () => {
+    const session = createSession([kanji(1, '山')])
+    const meaning = nextQuestion(session)
+    const reading = { ...meaning, questionType: 'reading' }
+
+    expect(() => answer(session, reading, 'correct')).toThrow(/1\/meaning/)
   })
 })
 
@@ -214,7 +235,7 @@ describe('completion', () => {
     const session = createSession([radical(1, '亠')])
     expect(nextQuestion(session).questionType).toBe('meaning')
 
-    const after = answer(session, 'correct')
+    const after = ask(session, 'correct')
     expect(isComplete(after.items[0])).toBe(true)
     expect(after.justCompleted?.subjectId).toBe(1)
     expect(nextQuestion(after)).toBe(null)
@@ -224,7 +245,7 @@ describe('completion', () => {
   it('holds a kanji incomplete until both questions are right', () => {
     const session = createSession([kanji(1, '山'), kanji(2, '川')])
 
-    const afterMeaning = answer(session, 'correct')
+    const afterMeaning = ask(session, 'correct')
     expect(isComplete(afterMeaning.items[0])).toBe(false)
     expect(afterMeaning.justCompleted).toBe(null)
 
@@ -240,7 +261,7 @@ describe('completion', () => {
 
   it('does not complete an item on a miss', () => {
     const session = createSession([radical(1, '亠')])
-    expect(answer(session, 'incorrect').justCompleted).toBe(null)
+    expect(ask(session, 'incorrect').justCompleted).toBe(null)
   })
 })
 
@@ -254,7 +275,7 @@ describe('sessionProgress', () => {
   })
 
   it('holds an item in remaining while it is half answered', () => {
-    const session = answer(createSession([kanji(1, '山'), kanji(2, '川')]), 'correct')
+    const session = ask(createSession([kanji(1, '山'), kanji(2, '川')]), 'correct')
     expect(sessionProgress(session)).toEqual({ remaining: 2, completed: 0, total: 2 })
   })
 
@@ -270,7 +291,7 @@ describe('immutability', () => {
     const session = createSession(tenKanji())
     const queueLength = session.queue.length
 
-    answer(session, 'incorrect')
+    ask(session, 'incorrect')
 
     expect(session.queue).toHaveLength(queueLength)
     expect(session.items[0].incorrectMeaning).toBe(0)
