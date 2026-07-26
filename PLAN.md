@@ -1,8 +1,8 @@
 # kanigami — build plan
 
-A handoff document. Phase 0 is done and on `main`; an agent picking this up
-should start at Phase 1 and work down. Each phase is independently shippable
-and independently reviewable — do not collapse them into one branch.
+A handoff document. Phases 0 to 2 are done and on `main`; an agent picking
+this up should start at Phase 3 and work down. Each phase is independently
+shippable and independently reviewable — do not collapse them into one branch.
 
 Read **Ground rules** and **The design** first. They are the parts that words
 alone make ambiguous, and getting them wrong means rebuilding the phase.
@@ -93,6 +93,46 @@ Lessons are reading material, so typeset them. Warm stock `#f3ede0`, ink
 
 Under 640px, both surfaces go single-column; the glyph sizes are already
 fluid.
+
+### 家 Home — the ink surface, standing led
+
+Decided from a prototype. `Connected.jsx` is a placeholder that says so in its
+own comment; this is what replaces it. Home is the only screen that answers
+*which of the two worlds am I entering, and is it worth entering now*, and
+since there is no router it is a state in `App.jsx`, not a route.
+
+It is the ink surface. Masthead, then the middle carries **position**:
+
+- Reviews due and lessons waiting as standing figures, reviews in vermilion
+  when there are any and `--ink-dim` when there are none. Beneath them, kanji
+  passed this level as a smaller figure.
+- The SRS spread as **one segmented hairline** 2px tall — apprentice
+  `#c8452c`, guru `#8a6f4a`, master `#4f6b78`, enlightened `#5a5f7a`, burned
+  `--ink-line` — with the counts as one line of letter-spaced mono beneath.
+  Never five cards with five numbers in them, which is the thing being
+  replaced.
+- Two ways in, as the house pattern: type over a hairline that lights
+  vermilion on hover and focus. `Review` and `Learn`, each with its keystroke
+  in mono underneath. Disabled is 35% opacity with the rule staying dim.
+
+**The footline track is the forecast.** Every screen already draws a 1px rule
+across the bottom; on home it carries the next 24 hours from `/summary`'s
+hourly buckets — 24 segments rising from the baseline, the current hour lit
+vermilion, the next few hours in `#6b3a2c`, empty hours staying 1px. `next at
+18:00` sits at the left of it and `+24h` at the right.
+
+Rejected: **time leading**, with the forecast as a full chart mid-screen and
+the SRS spread demoted to a rule — clearer at a glance, but it makes the
+screen mostly about a chart. **Peers**, one hairline row each — the safe
+compromise, and it reads like one. Also rejected earlier: the bare door with
+two counts, the paper table-of-contents, and cutting home entirely.
+
+**The risk to check first.** A sparkline drawn at hairline weight in a footer
+is either the most characteristic thing in the app or too quiet to read. Look
+at it at 1× on a laptop before building anything else on top of it. If it
+does not read, the fallback is to raise the track to 2px and keep everything
+else — not to promote the forecast back into the middle of the screen, which
+is the direction that was rejected.
 
 ### The mark — 落款 the seal
 
@@ -345,7 +385,33 @@ passes. Context sentences come from `context_sentences`; readings render as
 
 ---
 
-## Phase 6 — session wrap
+## Phase 6 — the home surface
+
+**Files:** `src/components/Home.jsx`, `src/components/Forecast.jsx`
+
+Replaces `Connected.jsx`, which was only ever proof the chain worked. Build
+it to the 家 Home spec above — standing in the middle, the forecast in the
+footline track.
+
+It lands here because it needs both destinations to exist, and because
+Phase 8's edge states are states *of this screen*. Everything it reads is already
+in `src/lib/wanikani.js`: `/summary` for the hourly buckets, the two
+assignment collections for the counts. The SRS spread needs all assignments
+rather than the immediately-available ones — that is a paginated read, so
+fetch it once on mount and never on a timer.
+
+Five states, all of them drawn in the prototype and all of them real:
+reviews due, nothing due, lessons only, loading, token revoked. The
+nothing-due state is the one that justifies the whole screen — with an empty
+queue the forecast is the only thing on it still answering a question.
+
+**Acceptance:** every state reachable in the browser; the footline forecast
+readable at 1× without leaning in; keyboard alone gets from home into a
+review session and back.
+
+---
+
+## Phase 7 — session wrap
 
 **Files:** `src/components/Wrap.jsx`
 
@@ -355,13 +421,14 @@ mechanics, no scores out of five.
 
 ---
 
-## Phase 7 — the edges
+## Phase 8 — the edges
 
 - Token revoked mid-session → return to the gate without losing pending
   submissions.
 - Network loss → pause the session and say so plainly; do not drop answers.
 - Free accounts past level 3 → explain rather than 401.
-- Empty queue → the calm state, with the next review time.
+- Empty queue → home's nothing-due state, built in Phase 6. This is the
+  calm state; do not build a second one.
 - Full keyboard navigation and visible focus on every control.
 - A wrap-up control that ends the session early and submits what is done.
 

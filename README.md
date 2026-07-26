@@ -15,9 +15,10 @@ and redistributes nothing.
 
 ## Status
 
-Phase 0 — scaffold. Token gate, API client, and live queue counts work.
-The review and lesson surfaces are not built yet. See [PLAN.md](PLAN.md) for
-the phased build; start at Phase 1.
+Phases 0 to 2. Token gate, API client and live queue counts work, and the
+session engine and grader are built and tested. The review and lesson
+surfaces are not built yet. See [PLAN.md](PLAN.md) for the phased build;
+start at Phase 3.
 
 ## Running it
 
