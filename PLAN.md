@@ -195,7 +195,7 @@ subjects, study materials, `POST /reviews`, and `PUT /assignments/{id}/start`.
 
 ---
 
-## Phase 1 — session engine
+## Phase 1 — session engine ✅ done
 
 **Files:** `src/lib/session.js`, `src/lib/session.test.js`
 
@@ -207,22 +207,34 @@ A pure state machine over the queue. No React, no fetching.
 - `nextQuestion(session)` picks the next unanswered question. Interleave
   meaning and reading rather than asking both for one subject back to back,
   and never ask the same subject twice in a row while other items remain.
-- `answer(session, verdict)` advances or requeues. A wrong answer puts the
-  item back with at least a few items in between.
+- `answer(session, question, verdict)` advances or requeues. A wrong answer
+  puts the item back with at least a few items in between. The question has
+  to be handed back in: it is checked against what the session is actually
+  asking and throws on a mismatch, so a component holding a stale question —
+  a double Enter, a timer, a stale dependency array — cannot silently grade
+  the wrong item.
 - An item is **complete** when both its questions are correct; only then does
-  it become eligible for submission.
-- `sessionProgress(session)` → `{ remaining, completed, total }`.
+  it become eligible for submission. `answer` reports the item a correct
+  answer just finished as `justCompleted`, which is the hook Phase 4 needs to
+  submit as items complete rather than in one batch.
+- `sessionProgress(session)` → `{ remaining, completed, total }`, counting
+  items rather than questions.
 
-**Acceptance:** vitest covers interleaving, requeue distance, wrong-answer
-accumulation across retries, and a radical (meaning-only) completing after
-one correct answer.
+**Shipped:** 26 vitest cases covering interleaving, requeue distance,
+wrong-answer accumulation across retries, a radical (meaning-only) completing
+after one correct answer, and the stale-question guard.
+
+The queue order is deterministic and follows the order subjects are passed
+in — which for `getSubjects` means ascending id, so radicals arrive before
+kanji before vocabulary. If a session should feel shuffled, shuffle at the
+caller; the engine deliberately has no randomness in it.
 
 ---
 
-## Phase 2 — the grader
+## Phase 2 — the grader ✅ done
 
 **Files:** `src/lib/grade.js`, `src/lib/grade.test.js`
-**Dependency:** add `wanakana` — do not hand-roll romaji→kana.
+**Dependency:** `wanakana` — do not hand-roll romaji→kana.
 
 This is the hard part of the whole app. A grader that is wrong by 5% feels
 broken immediately, and it is the reason people distrust third-party clients.
@@ -256,10 +268,27 @@ broken immediately, and it is the reason people distrust third-party clients.
   strip a leading `to ` on verbs and a leading article.
 - If the user typed kana into a meaning question, return `'retry'` with
   *"We want the meaning, not the reading"*.
+- Same nudge when nothing matches as a meaning but the input converts to one
+  of the subject's readings — `yama` for 山 is the same mistake as やま by
+  someone whose keyboard was in the wrong mode, and counting it as a miss
+  would send an undeserved wrong answer to WaniKani. Meanings are checked
+  first, so a romaji synonym the user added themselves is still accepted as
+  the meaning it is.
 
-**Acceptance:** a table-driven test file with at least 40 cases including
-`さん`/`やま` for 山, blacklist rejection, each typo-tolerance band, a user
-synonym, and kana-in-a-meaning-box.
+**Shipped:** 71 table-driven cases including `さん`/`やま` for 山, blacklist
+rejection, every typo-tolerance band at both edges, a user synonym,
+kana-in-a-meaning-box, and romaji-in-a-meaning-box.
+
+Two behaviours worth knowing before changing anything here:
+
+- Tolerance scales by the **accepted meaning's** length, not the input's, and
+  the most forgiving candidate wins. `fountain` therefore passes for 山. This
+  is WaniKani's own model; their `auxiliary_meanings` blacklist is the
+  intended fix for a specific near-miss, not a tighter distance function.
+- The reading nudge names the on'yomi or the kun'yomi only when every
+  accepted reading agrees on a type. Anything else — including vocabulary,
+  whose readings carry no type — falls through to *"WaniKani wants a
+  different reading"*.
 
 ---
 
