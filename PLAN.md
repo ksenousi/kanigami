@@ -48,13 +48,23 @@ feature that caches or ships WaniKani content to anyone else.
 
 ## The design
 
-Two surfaces, one token system. Both are already declared in
-`src/index.css`; extend that file rather than starting a new one.
+Two surfaces, one token system, already declared in `src/index.css`; extend
+that file rather than starting a new one.
+
+**The hex values below are the default theme, not the thing to type.**
+`src/index.css` is layered palette → roles → surfaces, and a component asks
+for a role — `--ground`, `--text`, `--text-strong`, `--text-soft`, `--dim`,
+`--rule`, `--accent` — never for `--vermilion` or a literal `#c8452c`. Each
+colour named here gives its role beside it for that reason. A rule that
+reaches past the role layer is a rule no theme can move.
 
 ### 墨 Ink — the review surface
 
-The character *is* the interface. Ground `#100e0c`, text `#e6dfd0`, one
-vermilion `#c8452c` hairline carrying every accent in the screen.
+The character *is* the interface. Ground `#100e0c` (`--ground`), text
+`#e6dfd0` (`--text`), one vermilion `#c8452c` (`--accent`) hairline carrying
+every accent in the screen. Display type — the glyph and the standing figures
+— sits slightly brighter at `#f2ece0` (`--text-strong`), and running prose
+slightly back at `#cfc6b4` (`--text-soft`).
 
 - The subject glyph is set in mincho at `clamp(96px, 20vw, 168px)`, weight
   300, centred, with nothing competing for attention.
@@ -75,8 +85,11 @@ vermilion `#c8452c` hairline carrying every accent in the screen.
 
 ### 紙 Paper — the lesson surface
 
-Lessons are reading material, so typeset them. Warm stock `#f3ede0`, ink
-`#221f1a`, rules `#d8cfba`, seal-red accent `#9e3b26`, mincho throughout.
+Lessons are reading material, so typeset them. Warm stock `#f3ede0`
+(`--ground`), ink `#221f1a` (`--text`), rules `#d8cfba` (`--rule`), seal-red
+accent `#9e3b26` (`--accent`), mincho throughout. `.surface-paper` binds these
+already; it still owes itself real `--text-strong` and `--text-soft` values,
+which is this phase's job to choose.
 
 - Two columns, a book spread: **verso** holds the character large with its
   reading as `<ruby>`, the subject-type line, and the stroke count; **recto**
@@ -103,23 +116,30 @@ since there is no router it is a state in `App.jsx`, not a route.
 
 It is the ink surface. Masthead, then the middle carries **position**:
 
-- Reviews due and lessons waiting as standing figures, reviews in vermilion
-  when there are any and `--ink-dim` when there are none. Beneath them, kanji
+- Reviews due and lessons waiting as standing figures, reviews in `--accent`
+  when there are any and `--dim` when there are none. Beneath them, kanji
   passed this level as a smaller figure.
-- The SRS spread as **one segmented hairline** 2px tall — apprentice
-  `#c8452c`, guru `#8a6f4a`, master `#4f6b78`, enlightened `#5a5f7a`, burned
-  `--ink-line` — with the counts as one line of letter-spaced mono beneath.
-  Never five cards with five numbers in them, which is the thing being
-  replaced.
+- The SRS spread as **one segmented hairline** 2px tall, with the counts as
+  one line of letter-spaced mono beneath. Never five cards with five numbers
+  in them, which is the thing being replaced. Apprentice takes `--accent` and
+  burned takes `--rule`; the three stages between them need colours the
+  palette does not have yet, so **this phase adds `--srs-guru`,
+  `--srs-master` and `--srs-enlightened` to the palette layer** — themeable,
+  unlike WaniKani's subject colours, because they are ours. The prototype
+  used `#8a6f4a`, `#4f6b78` and `#5a5f7a`: a warm-to-cool walk away from the
+  accent as items get further from needing attention.
 - Two ways in, as the house pattern: type over a hairline that lights
-  vermilion on hover and focus. `Review` and `Learn`, each with its keystroke
-  in mono underneath. Disabled is 35% opacity with the rule staying dim.
+  `--accent` on hover and focus. `Review` and `Learn`, each with its
+  keystroke in mono underneath. Disabled is 35% opacity with the rule staying
+  dim.
 
 **The footline track is the forecast.** Every screen already draws a 1px rule
 across the bottom; on home it carries the next 24 hours from `/summary`'s
 hourly buckets — 24 segments rising from the baseline, the current hour lit
-vermilion, the next few hours in `#6b3a2c`, empty hours staying 1px. `next at
-18:00` sits at the left of it and `+24h` at the right.
+`--accent`, the next few hours at
+`color-mix(in srgb, var(--accent) 55%, var(--ground))` so they stay on the
+theme's accent rather than a hardcoded brown, and empty hours staying 1px.
+`next at 18:00` sits at the left of it and `+24h` at the right.
 
 Rejected: **time leading**, with the forecast as a full chart mid-screen and
 the SRS spread demoted to a rule — clearer at a glance, but it makes the
@@ -208,7 +228,9 @@ touch the account itself. The entire write surface is four calls:
 answer or start a lesson early — bad SRS data, not a wrecked account. There
 is no undo for either, which is why the rules below are not optional.
 
-1. **Phases 1–3 run on a read-only token.** WaniKani's token page has
+1. **Every phase but 4 and 5 runs on a read-only token.** Those two are the
+   only ones that write — `POST /reviews` in 4, `PUT /assignments/{id}/start`
+   in 5. WaniKani's token page has
    per-permission checkboxes (start assignments, create reviews, create and
    update study materials, update user preferences). Leave every one
    unchecked. WaniKani then rejects writes with a 403 server-side, whatever
@@ -349,6 +371,12 @@ inverted for the dark ground.
 
 Keyboard-first: Enter submits, Enter again advances, and focus never leaves
 the field. Respect `prefers-reduced-motion` on the rule-lighting transition.
+
+Enter-to-submit then Enter-to-advance is exactly the double-fire that
+`answer(session, question, verdict)` guards against — pass back the question
+the screen is showing, and let it throw rather than working around it. The
+grader's third verdict is a UI state, not an error: `'retry'` lights nothing,
+counts nothing, and leaves the typed answer to be corrected.
 
 **Acceptance:** a full session of ten items can be completed with the
 keyboard alone, and every state — asking, correct, incorrect, retry-nudge —

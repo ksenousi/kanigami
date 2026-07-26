@@ -5,7 +5,7 @@ entirely in the browser on GitHub Pages.
 
 **Read [PLAN.md](PLAN.md) before doing anything.** It holds the phased build
 plan, the design spec for both surfaces, and the safety procedure for testing
-against a real WaniKani account. Phase 0 is done; start at the lowest
+against a real WaniKani account. Phases 0 to 2 are done; start at the lowest
 unfinished phase and ship one phase per branch.
 
 ## Architecture
