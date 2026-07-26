@@ -46,6 +46,19 @@ export default function TokenGate({ onConnected }) {
           .
         </p>
 
+        <div className="perms">
+          <p className="eyebrow">Permissions · leave every box unchecked</p>
+          <p className="scopes">
+            assignments:start · reviews:create · study_materials:create ·
+            study_materials:update · user:update
+          </p>
+          <p className="why">
+            Read access comes with every token, and reading is all kanigami does today. An
+            unchecked box means WaniKani itself refuses any write, which is a stronger promise
+            than anything this code can make.
+          </p>
+        </div>
+
         <form className="field" onSubmit={connect}>
           <input
             type="password"
