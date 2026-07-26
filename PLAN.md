@@ -121,18 +121,26 @@ Rejected, and why they are worth not re-proposing:
 - **Dog-eared paper stock** — the only light-ground mark, but it argues for
   the lesson surface in a client that is mostly reviews.
 
-Shipping it:
+Shipped, and why it is built the way it is:
 
-- **Trace 蟹 to paths.** An SVG that sets the glyph with a font stack renders
-  differently on every machine and falls back to a random serif on most. The
-  outline must come from an OFL-licensed mincho (Shippori Mincho, Noto Serif
-  JP) with attribution — not from Hiragino, which is licensed to the machine
-  and not redistributable in a public repo.
-- **Three files in `public/`**: `favicon.svg`, a 32px PNG for browsers that
-  ignore SVG, and a 180px `apple-touch-icon.png`. Vite copies `public/` to
-  the root of `dist`.
-- The link tags have to respect `base: '/kanigami/'` or they 404 on Pages
-  like any other asset.
+- **The glyph is traced to outlines, not set in a font.** An SVG that names a
+  font stack renders differently on every machine and falls back to a random
+  serif on most of them. `public/favicon.svg` carries the outline as one
+  path, taken from **Shippori Mincho SemiBold** (SIL Open Font License 1.1,
+  attributed in a comment inside the file). Not from Hiragino, which is
+  licensed to the machine and cannot be redistributed from a public repo.
+- **SemiBold, not Regular.** Reversed-out type reads lighter than positive
+  type at the same weight, and Regular's hairlines stop resolving around
+  32px. Bold was tried and rejected — its counters close up at 180.
+- The character's ink fills 40 of the 64-unit box, centred on its own bounding
+  box rather than its advance width, so it sits optically centred in the seal.
+- **Three files in `public/`**: `favicon.svg`, `favicon-32.png` for browsers
+  that ignore SVG, and a 180px `apple-touch-icon.png`. Vite copies `public/`
+  to the root of `dist` and rewrites the `href`s in `index.html` to
+  `/kanigami/…`, so `base` is already handled — verify it stays that way if
+  the link tags are ever edited.
+- To regenerate at another size or weight, re-trace from the OFL font. Do not
+  hand-edit the path data.
 
 ---
 
