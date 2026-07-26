@@ -99,12 +99,18 @@ fluid.
 Decided from a prototype of five directions. The app ships **no favicon at
 all** today, which is the gap this closes.
 
-The mark is a seal stamp: a full-bleed rounded square (6/64 radius, matching
-the app's 2px on a 40px control) filled seal red `#9e3b26`, with 蟹 reversed
-out in paper `#f3ede0` at roughly 43/64 of the box. Seal red is already in
-the system holding the left rule of every context sentence on the paper
-surface; this is the one other place a field of that colour is allowed. No
-vermilion — the ink surface's accent stays on the ink surface.
+The mark is a seal stamp: a full-bleed square filled seal red `#9e3b26`, with
+蟹 reversed out in paper `#f3ede0`. Seal red is already in the system holding
+the left rule of every context sentence on the paper surface; this is the one
+other place a field of that colour is allowed. No vermilion — the ink
+surface's accent stays on the ink surface.
+
+**Square corners, deliberately.** A rounded version shipped first and was
+replaced: the corner was the only place anything but seal red appeared, and a
+transparent corner picks up whatever tab sits behind it, which reads as a
+white border on a light tab. A 落款 has hard edges anyway, and iOS applies
+its own corner mask to `apple-touch-icon` — pre-rounding double-rounds it.
+Every pixel of all three files is now opaque.
 
 Why this one: legibility at 16px does not depend on strokes resolving. A
 solid field survives any size and the monochrome pinned-tab test, where a
