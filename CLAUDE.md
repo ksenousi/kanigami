@@ -48,6 +48,37 @@ unfinished phase and ship one phase per branch.
 - **Radicals may have no Unicode character.** Fall back to
   `character_images` (prefer SVG) and invert for the ink ground.
 
+## This repo is public
+
+Everything committed here is world-readable at
+`github.com/ksenousi/kanigami`, including anything a force-push later
+removes. Assume every commit is permanent and public.
+
+- **Never commit a real API token.** Not in a test, a fixture, a comment, a
+  commit message, or a screenshot. The placeholder in the token field is
+  all-zeros and the test UUIDs are obviously fake — keep it that way. A real
+  token in a public repo grants write access to somebody's SRS progress and
+  must be revoked on the WaniKani settings page immediately if one lands.
+- **Do not commit real API responses as fixtures.** Dumping a live
+  `/subjects` or `/assignments` payload into a test file is the easy mistake
+  here, and it commits two things at once: Tofugu's copyrighted mnemonics,
+  and the account's own progress data. Hand-author the smallest object each
+  test needs, with the fields the code actually reads.
+- **No account data anywhere.** Username, level, review history, and
+  timestamps stay out of tests, docs, and issue text.
+- **Never log a token.** Not to the console, not into an error message, not
+  as a URL or query parameter — request auth goes in the `Authorization`
+  header and nowhere else.
+- **The app holds the token in `localStorage` on a public origin**, so any
+  script running there can read it. That is why the dependency list is two
+  packages, and why the Phase 5 mnemonic parser must not use
+  `dangerouslySetInnerHTML` — WaniKani's mnemonics arrive as markup and that
+  parser is the one real XSS surface in the app.
+- **Commits use the GitHub noreply address**, already set in this repo's
+  local git config. Don't override it with a personal email.
+- `.claude/settings.local.json` and `.claude/worktrees` are gitignored;
+  leave them that way.
+
 ## Conventions
 
 - Plain JavaScript, no TypeScript. ES modules everywhere.
