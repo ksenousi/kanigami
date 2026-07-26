@@ -1,0 +1,264 @@
+/* ============================================================
+   kanigami — 墨 ink for reviews, 紙 paper for lessons.
+
+   Two grounds, one token system. The review surface is ink:
+   near-black, one vermilion hairline, the character carrying the
+   screen. The lesson surface is paper: warm stock, mincho prose,
+   generous measure. Components read tokens only; the surface
+   class re-declares them.
+
+   WaniKani's subject colours are information, not decoration —
+   radical blue, kanji pink, vocabulary purple. They survive in
+   both worlds as a line of type, never as a field of colour.
+   ============================================================ */
+
+:root {
+  --ink: #100e0c;
+  --ink-raised: #17140f;
+  --ink-line: #2a2620;
+  --ink-text: #e6dfd0;
+  --ink-dim: #6b6255;
+  --vermilion: #c8452c;
+
+  --paper: #f3ede0;
+  --paper-line: #d8cfba;
+  --paper-text: #221f1a;
+  --paper-dim: #7d7362;
+  --seal: #9e3b26;
+
+  --wk-radical: #00aaff;
+  --wk-kanji: #ff00aa;
+  --wk-vocab: #aa00ff;
+
+  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --jp-sans: 'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+  --jp-serif: 'Hiragino Mincho ProN', 'Yu Mincho', 'Shippori Mincho', serif;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--ink);
+  color: var(--ink-text);
+  font-family: var(--sans);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The ink surface. Reviews live here. */
+.surface-ink {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px clamp(20px, 5vw, 48px) 24px;
+  gap: 32px;
+}
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.masthead .wordmark {
+  font-family: var(--jp-serif);
+  font-size: 21px;
+  letter-spacing: 0.12em;
+  color: var(--ink-text);
+}
+
+.masthead .tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--vermilion);
+}
+
+.masthead .sp {
+  flex: 1;
+}
+
+.centred {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  text-align: center;
+}
+
+.glyph {
+  font-family: var(--jp-serif);
+  font-size: clamp(96px, 20vw, 168px);
+  line-height: 0.88;
+  font-weight: 300;
+  color: #f2ece0;
+  text-shadow: 0 0 60px rgba(200, 69, 44, 0.14);
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.eyebrow.hot {
+  color: var(--vermilion);
+}
+
+.lede {
+  max-width: 46ch;
+  color: #cfc6b4;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.lede a {
+  color: var(--vermilion);
+}
+
+/* A field, not a box. One hairline under the input, lit when it matters. */
+.field {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 6px 2px;
+  color: var(--ink-text);
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.field input::placeholder {
+  color: var(--ink-line);
+}
+
+.field input:focus {
+  outline: none;
+}
+
+.field .rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ink-line) 12%, var(--ink-line) 88%, transparent);
+}
+
+.field:focus-within .rule,
+.field .rule.lit {
+  background: linear-gradient(90deg, transparent, var(--vermilion) 12%, var(--vermilion) 88%, transparent);
+}
+
+button {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-text);
+  background: transparent;
+  border: 1px solid var(--ink-line);
+  border-radius: 2px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--vermilion);
+  color: var(--vermilion);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+button.quiet {
+  border-color: transparent;
+  color: var(--ink-dim);
+  padding: 10px 0;
+}
+
+button.quiet:hover:not(:disabled) {
+  color: var(--vermilion);
+}
+
+:focus-visible {
+  outline: 1px solid var(--vermilion);
+  outline-offset: 3px;
+}
+
+.error {
+  color: var(--vermilion);
+  font-size: 14px;
+  max-width: 42ch;
+}
+
+/* Standing figures — counts that read at a glance without a card around them. */
+.figures {
+  display: flex;
+  gap: clamp(28px, 6vw, 64px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.figure b {
+  font-family: var(--jp-serif);
+  font-size: 46px;
+  font-weight: 300;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #f2ece0;
+}
+
+.figure span {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.figure.due b {
+  color: var(--vermilion);
+}
+
+.footline {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.footline .track {
+  flex: 1;
+  height: 1px;
+  background: var(--ink-line);
+}
