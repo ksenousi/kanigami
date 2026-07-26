@@ -70,8 +70,8 @@ removes. Assume every commit is permanent and public.
   as a URL or query parameter — request auth goes in the `Authorization`
   header and nowhere else.
 - **The app holds the token in `localStorage` on a public origin**, so any
-  script running there can read it. That is why the dependency list is two
-  packages, and why the Phase 5 mnemonic parser must not use
+  script running there can read it. That is why every runtime dependency has
+  to earn its place, and why the Phase 5 mnemonic parser must not use
   `dangerouslySetInnerHTML` — WaniKani's mnemonics arrive as markup and that
   parser is the one real XSS surface in the app.
 - **Commits use the GitHub noreply address**, already set in this repo's
