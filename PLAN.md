@@ -145,12 +145,18 @@ the left rule of every context sentence on the paper surface; this is the one
 other place a field of that colour is allowed. No vermilion — the ink
 surface's accent stays on the ink surface.
 
-**Square corners, deliberately.** A rounded version shipped first and was
-replaced: the corner was the only place anything but seal red appeared, and a
-transparent corner picks up whatever tab sits behind it, which reads as a
-white border on a light tab. A 落款 has hard edges anyway, and iOS applies
-its own corner mask to `apple-touch-icon` — pre-rounding double-rounds it.
-Every pixel of all three files is now opaque.
+**The corner is soft in some files and square in others**, and the split is
+not cosmetic — copying one setting across all four brings a bug back.
+
+- `favicon.svg` and `favicon-32.png` are rounded, 6 of the 64-unit box. Their
+  transparent corners composite correctly against any tab.
+- `favicon.ico` is square and carries **no alpha channel at all**. Safari
+  flattens transparency onto white, so a rounded `.ico` draws a white halo
+  around the seal on a dark tab. That halo was reported and chased twice; the
+  corner radius was never the cause. The missing `.ico` was — Safari requests
+  one whatever the link tags say, and 404 sent it back to guessing.
+- `apple-touch-icon.png` is square because iOS applies its own corner mask.
+  Pre-rounding double-rounds it on the home screen.
 
 Why this one: legibility at 16px does not depend on strokes resolving. A
 solid field survives any size and the monochrome pinned-tab test, where a
