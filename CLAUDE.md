@@ -89,6 +89,12 @@ removes. Assume every commit is permanent and public.
 - Two surfaces, tokens in `src/index.css`: 墨 ink for reviews, 紙 paper for
   lessons. De-boxed — no borders or cards that only group things. A hairline
   that lights is the house pattern, not an outlined box.
+- **`src/index.css` is layered palette → roles → surfaces.** Components read
+  role tokens (`--ground`, `--text`, `--text-strong`, `--text-soft`, `--dim`,
+  `--rule`, `--accent`) and never the palette underneath. Reaching past the
+  role layer for `--vermilion` or `--ink-text` writes a rule that no theme
+  can move, and adding a theme selector further down the file is the symptom,
+  not the fix. A new theme is one `[data-theme]` block of palette values.
 - WaniKani's subject colours (radical `#00aaff`, kanji `#ff00aa`, vocabulary
   `#aa00ff`) are information. They belong on one line of type, never as a
   full-bleed background.

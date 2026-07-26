@@ -1,22 +1,37 @@
 /* ============================================================
    kanigami — 墨 ink for reviews, 紙 paper for lessons.
 
-   Two grounds, one token system. The review surface is ink:
-   near-black, one vermilion hairline, the character carrying the
-   screen. The lesson surface is paper: warm stock, mincho prose,
-   generous measure. Components read tokens only; the surface
-   class re-declares them.
+   Three layers, and they only work if the order is respected:
+
+   1. PALETTE — raw values. A theme is one block of these and
+      nothing else, which is the whole point of the split.
+   2. ROLES — what a component actually asks for: --ground,
+      --text, --dim, --rule, --accent. **Components read roles
+      and never the palette.** A rule that reaches past this
+      layer for --vermilion is a rule that a theme cannot move.
+   3. SURFACES — .surface-ink and .surface-paper bind palette to
+      roles for their subtree. :root binds ink, because ink is
+      what the app opens into.
+
+   The two surfaces are committed worlds, not a light/dark pair:
+   paper has a night stock, not a dark mode. Themes sit
+   underneath both — a theme restyles ink *and* paper.
 
    WaniKani's subject colours are information, not decoration —
    radical blue, kanji pink, vocabulary purple. They survive in
-   both worlds as a line of type, never as a field of colour.
+   both worlds as a line of type, never as a field of colour, and
+   they are deliberately outside the palette layer: they mean the
+   same thing whatever the theme is.
    ============================================================ */
 
+/* ---- 1. palette — 墨 sumi, the default ---- */
 :root {
   --ink: #100e0c;
   --ink-raised: #17140f;
   --ink-line: #2a2620;
   --ink-text: #e6dfd0;
+  --ink-strong: #f2ece0; /* display type — the glyph, the standing figures */
+  --ink-soft: #cfc6b4;   /* running prose, set back from the body text */
   --ink-dim: #6b6255;
   --vermilion: #c8452c;
 
@@ -26,6 +41,7 @@
   --paper-dim: #7d7362;
   --seal: #9e3b26;
 
+  /* Not themeable. These are WaniKani's, and they carry meaning. */
   --wk-radical: #00aaff;
   --wk-kanji: #ff00aa;
   --wk-vocab: #aa00ff;
@@ -38,6 +54,48 @@
   color-scheme: dark;
 }
 
+/* A second theme is this shape and no more than this shape:
+
+   [data-theme='<name>'] {
+     --ink: …; --ink-raised: …; --ink-line: …; --ink-text: …;
+     --ink-strong: …; --ink-soft: …; --ink-dim: …; --vermilion: …;
+     --paper: …; --paper-line: …; --paper-text: …; --paper-dim: …;
+     --seal: …;
+   }
+
+   Set it on <html> and every surface follows. If a theme needs a
+   rule changed rather than a colour, the rule is reaching past
+   the role layer — fix that instead of adding a theme selector
+   further down this file. */
+
+/* ---- 2 & 3. roles, bound per surface ---- */
+:root,
+.surface-ink {
+  --ground: var(--ink);
+  --raised: var(--ink-raised);
+  --rule: var(--ink-line);
+  --text: var(--ink-text);
+  --text-strong: var(--ink-strong);
+  --text-soft: var(--ink-soft);
+  --dim: var(--ink-dim);
+  --accent: var(--vermilion);
+}
+
+.surface-paper {
+  --ground: var(--paper);
+  --raised: var(--paper);
+  --rule: var(--paper-line);
+  --text: var(--paper-text);
+  /* Provisional: paper has no display or prose ink of its own yet, so both
+     fall back to values the spec does name. Phase 5 sets them properly. */
+  --text-strong: var(--paper-text);
+  --text-soft: var(--paper-dim);
+  --dim: var(--paper-dim);
+  --accent: var(--seal);
+
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -45,8 +103,8 @@
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--ink);
-  color: var(--ink-text);
+  background: var(--ground);
+  color: var(--text);
   font-family: var(--sans);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -71,7 +129,7 @@ body {
   font-family: var(--jp-serif);
   font-size: 21px;
   letter-spacing: 0.12em;
-  color: var(--ink-text);
+  color: var(--text);
 }
 
 .masthead .tag {
@@ -79,7 +137,7 @@ body {
   font-size: 10px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: var(--vermilion);
+  color: var(--accent);
 }
 
 .masthead .sp {
@@ -101,8 +159,8 @@ body {
   font-size: clamp(96px, 20vw, 168px);
   line-height: 0.88;
   font-weight: 300;
-  color: #f2ece0;
-  text-shadow: 0 0 60px rgba(200, 69, 44, 0.14);
+  color: var(--text-strong);
+  text-shadow: 0 0 60px rgb(from var(--accent) r g b / 0.14);
 }
 
 .eyebrow {
@@ -110,22 +168,22 @@ body {
   font-size: 10px;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--ink-dim);
+  color: var(--dim);
 }
 
 .eyebrow.hot {
-  color: var(--vermilion);
+  color: var(--accent);
 }
 
 .lede {
   max-width: 46ch;
-  color: #cfc6b4;
+  color: var(--text-soft);
   font-size: 16px;
   line-height: 1.8;
 }
 
 .lede a {
-  color: var(--vermilion);
+  color: var(--accent);
 }
 
 /* A field, not a box. One hairline under the input, lit when it matters. */
@@ -141,7 +199,7 @@ body {
   background: transparent;
   border: 0;
   padding: 6px 2px;
-  color: var(--ink-text);
+  color: var(--text);
   font-family: var(--mono);
   font-size: 15px;
   letter-spacing: 0.06em;
@@ -149,7 +207,7 @@ body {
 }
 
 .field input::placeholder {
-  color: var(--ink-line);
+  color: var(--rule);
 }
 
 .field input:focus {
@@ -158,12 +216,12 @@ body {
 
 .field .rule {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--ink-line) 12%, var(--ink-line) 88%, transparent);
+  background: linear-gradient(90deg, transparent, var(--rule) 12%, var(--rule) 88%, transparent);
 }
 
 .field:focus-within .rule,
 .field .rule.lit {
-  background: linear-gradient(90deg, transparent, var(--vermilion) 12%, var(--vermilion) 88%, transparent);
+  background: linear-gradient(90deg, transparent, var(--accent) 12%, var(--accent) 88%, transparent);
 }
 
 button {
@@ -171,9 +229,9 @@ button {
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ink-text);
+  color: var(--text);
   background: transparent;
-  border: 1px solid var(--ink-line);
+  border: 1px solid var(--rule);
   border-radius: 2px;
   padding: 10px 20px;
   cursor: pointer;
@@ -181,8 +239,8 @@ button {
 }
 
 button:hover:not(:disabled) {
-  border-color: var(--vermilion);
-  color: var(--vermilion);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 button:disabled {
@@ -192,21 +250,21 @@ button:disabled {
 
 button.quiet {
   border-color: transparent;
-  color: var(--ink-dim);
+  color: var(--dim);
   padding: 10px 0;
 }
 
 button.quiet:hover:not(:disabled) {
-  color: var(--vermilion);
+  color: var(--accent);
 }
 
 :focus-visible {
-  outline: 1px solid var(--vermilion);
+  outline: 1px solid var(--accent);
   outline-offset: 3px;
 }
 
 .error {
-  color: var(--vermilion);
+  color: var(--accent);
   font-size: 14px;
   max-width: 42ch;
 }
@@ -231,7 +289,7 @@ button.quiet:hover:not(:disabled) {
   font-weight: 300;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: #f2ece0;
+  color: var(--text-strong);
 }
 
 .figure span {
@@ -239,11 +297,11 @@ button.quiet:hover:not(:disabled) {
   font-size: 9.5px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ink-dim);
+  color: var(--dim);
 }
 
 .figure.due b {
-  color: var(--vermilion);
+  color: var(--accent);
 }
 
 .footline {
@@ -254,11 +312,11 @@ button.quiet:hover:not(:disabled) {
   font-size: 10px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ink-dim);
+  color: var(--dim);
 }
 
 .footline .track {
   flex: 1;
   height: 1px;
-  background: var(--ink-line);
+  background: var(--rule);
 }
