@@ -94,6 +94,46 @@ Lessons are reading material, so typeset them. Warm stock `#f3ede0`, ink
 Under 640px, both surfaces go single-column; the glyph sizes are already
 fluid.
 
+### The mark — 落款 the seal
+
+Decided from a prototype of five directions. The app ships **no favicon at
+all** today, which is the gap this closes.
+
+The mark is a seal stamp: a full-bleed rounded square (6/64 radius, matching
+the app's 2px on a 40px control) filled seal red `#9e3b26`, with 蟹 reversed
+out in paper `#f3ede0` at roughly 43/64 of the box. Seal red is already in
+the system holding the left rule of every context sentence on the paper
+surface; this is the one other place a field of that colour is allowed. No
+vermilion — the ink surface's accent stays on the ink surface.
+
+Why this one: legibility at 16px does not depend on strokes resolving. A
+solid field survives any size and the monochrome pinned-tab test, where a
+mark built from lines does not.
+
+Rejected, and why they are worth not re-proposing:
+
+- **蟹 in mincho on ink** — the most on-thesis answer, and the one that dies
+  at 16px. Nineteen strokes of hairline mincho is a smudge.
+- **The lit hairline, name removed** — cannot degrade, because there is
+  nothing to lose; also cannot be recognised as anything.
+- **The crab as a creature** — the strongest alternative, and the one to
+  revisit if findability in a crowded tab strip ever beats formality.
+- **Dog-eared paper stock** — the only light-ground mark, but it argues for
+  the lesson surface in a client that is mostly reviews.
+
+Shipping it:
+
+- **Trace 蟹 to paths.** An SVG that sets the glyph with a font stack renders
+  differently on every machine and falls back to a random serif on most. The
+  outline must come from an OFL-licensed mincho (Shippori Mincho, Noto Serif
+  JP) with attribution — not from Hiragino, which is licensed to the machine
+  and not redistributable in a public repo.
+- **Three files in `public/`**: `favicon.svg`, a 32px PNG for browsers that
+  ignore SVG, and a 180px `apple-touch-icon.png`. Vite copies `public/` to
+  the root of `dist`.
+- The link tags have to respect `base: '/kanigami/'` or they 404 on Pages
+  like any other asset.
+
 ---
 
 ## Safety — testing against a real account
