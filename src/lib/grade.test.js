@@ -70,6 +70,14 @@ const skill = {
   ]
 }
 
+// The same subject as the API would send it if vocabulary readings ever
+// carried a type. Anything outside on'yomi/kun'yomi/nanori has to fall
+// through to the generic nudge, whatever the field actually holds.
+const skillTyped = {
+  ...skill,
+  readings: skill.readings.map(r => ({ ...r, type: 'vocabulary' }))
+}
+
 const toEat = {
   characters: '食べる',
   meanings: [{ meaning: 'To Eat', primary: true, accepted_answer: true }],
@@ -127,7 +135,9 @@ describe('readings', () => {
       { name: '食べる wrong ending — no partial credit', subject: toEat, input: 'たべます', verdict: 'incorrect' },
       { name: '食べる one kana short', subject: toEat, input: 'たべ', verdict: 'incorrect' },
       { name: '上手 じょうず', subject: skill, input: 'じょうず', verdict: 'correct' },
-      { name: '上手 うわて — untyped vocabulary reading', subject: skill, input: 'うわて', verdict: 'retry', hint: OTHER_READING }
+      { name: '上手 うわて — untyped vocabulary reading', subject: skill, input: 'うわて', verdict: 'retry', hint: OTHER_READING },
+      { name: '上手 うわて — an unexpected reading type', subject: skillTyped, input: 'うわて', verdict: 'retry', hint: OTHER_READING },
+      { name: '上手 じょうず with an unexpected reading type', subject: skillTyped, input: 'じょうず', verdict: 'correct' }
     ])
   )('$name', check)
 })
@@ -166,6 +176,25 @@ describe('normalisation', () => {
       { name: 'a leading article', subject: sun, input: 'the sun', verdict: 'correct' },
       { name: 'a leading indefinite article', subject: friend, input: 'a friend', verdict: 'correct' },
       { name: 'to as a whole answer is not stripped away', subject: toEat, input: 'to', verdict: 'incorrect' }
+    ])
+  )('$name', check)
+})
+
+// Typing the reading when the meaning was asked is the same mistake whether
+// the keyboard was in kana mode or not.
+describe('the reading typed into a meaning box', () => {
+  it.each(
+    meanings([
+      { name: '山 as romaji kun\'yomi', subject: mountain, input: 'yama', verdict: 'retry', hint: NOT_THE_READING },
+      { name: '山 as romaji on\'yomi', subject: mountain, input: 'san', verdict: 'retry', hint: NOT_THE_READING },
+      { name: '食べる as romaji', subject: toEat, input: 'taberu', verdict: 'retry', hint: NOT_THE_READING },
+      { name: 'a reading that is not this subject\'s', subject: mountain, input: 'kawa', verdict: 'incorrect' },
+      { name: 'an ordinary wrong answer', subject: mountain, input: 'river', verdict: 'incorrect' },
+      // Meanings are checked first, so a user who adds a romaji synonym gets
+      // it accepted rather than nudged.
+      { name: 'a romaji synonym the user added', subject: mountain, input: 'yama', synonyms: ['yama'], verdict: 'correct' },
+      // A blacklisted answer is still rejected, whatever it converts to.
+      { name: 'a blacklisted answer that converts to kana', subject: woman, input: 'male', verdict: 'incorrect' }
     ])
   )('$name', check)
 })

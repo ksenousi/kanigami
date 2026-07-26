@@ -81,7 +81,19 @@ function gradeMeaning(subject, typed, synonyms) {
     .filter(Boolean)
 
   const close = accepted.some(candidate => distance(answer, candidate) <= tolerance(candidate))
-  return close ? { verdict: 'correct', hint: null } : { verdict: 'incorrect', hint: null }
+  if (close) return { verdict: 'correct', hint: null }
+
+  // Nothing lands as a meaning. Before counting it wrong, check whether it is
+  // the reading typed with the keyboard in the wrong mode — やま gets the
+  // nudge above, and 'yama' is the same mistake by someone who did not switch
+  // scripts. Meanings are tried first, so a synonym that happens to look like
+  // a reading is still accepted as the meaning it is.
+  const kana = toKana(typed.toLowerCase())
+  if ((subject.readings ?? []).some(r => r.reading === kana)) {
+    return { verdict: 'retry', hint: 'We want the meaning, not the reading' }
+  }
+
+  return { verdict: 'incorrect', hint: null }
 }
 
 // Both sides of the comparison go through this, so "To Eat" matches "eat"
