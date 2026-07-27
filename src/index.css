@@ -53,6 +53,16 @@
   --wk-kanji: #ff00aa;
   --wk-vocab: #aa00ff;
 
+  /* The middle of the SRS spread. Themeable, unlike WaniKani's colours,
+     because these are ours — a warm-to-cool walk away from the accent as
+     items get further from needing attention. They have no per-surface role
+     because they mean the same on both; a theme moves them here. Apprentice
+     and burned are not in this list: they take --accent and --rule, which
+     already say what they need to. */
+  --srs-guru: #8a6f4a;
+  --srs-master: #4f6b78;
+  --srs-enlightened: #5a5f7a;
+
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
   --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --jp-sans: 'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif;
@@ -69,6 +79,7 @@
      --ink-strokes: …;
      --paper: …; --paper-line: …; --paper-text: …; --paper-strong: …;
      --paper-soft: …; --paper-dim: …; --seal: …; --paper-strokes: …;
+     --srs-guru: …; --srs-master: …; --srs-enlightened: …;
    }
 
    Set it on <html> and every surface follows. If a theme needs a
@@ -238,6 +249,160 @@ body {
   gap: 14px;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+/* ---- 家 Home ---- */
+
+.passed {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* The SRS spread: one segmented hairline, and the counts beneath it as one
+   line of type. Never five cards with five numbers in them. */
+.spreadline {
+  width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.segments {
+  display: flex;
+  gap: 2px;
+  height: 2px;
+}
+
+.segment {
+  height: 100%;
+  border-radius: 1px;
+}
+
+.srs-apprentice {
+  background: var(--accent);
+}
+
+.srs-guru {
+  background: var(--srs-guru);
+}
+
+.srs-master {
+  background: var(--srs-master);
+}
+
+.srs-enlightened {
+  background: var(--srs-enlightened);
+}
+
+.srs-burned {
+  background: var(--rule);
+}
+
+.counts {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  text-align: center;
+}
+
+/* Two doors. Type over a hairline that lights — the house pattern, not a
+   button with a border round it. */
+.doors {
+  display: flex;
+  gap: clamp(28px, 6vw, 64px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.door {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 6px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.door .name {
+  font-family: var(--jp-serif);
+  font-size: 26px;
+  letter-spacing: 0.04em;
+  color: var(--text-strong);
+  transition: color 0.15s;
+}
+
+.door .rule {
+  width: 100%;
+  min-width: 92px;
+  height: 1px;
+  background: var(--rule);
+  transition: background 0.15s;
+}
+
+.door .key {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.door:hover:not(:disabled),
+.door:focus-visible {
+  border-color: transparent;
+}
+
+.door:hover:not(:disabled) .name,
+.door:focus-visible .name {
+  color: var(--accent);
+}
+
+.door:hover:not(:disabled) .rule,
+.door:focus-visible .rule {
+  background: var(--accent);
+}
+
+.door.off {
+  opacity: 0.35;
+}
+
+/* The footline track, carrying the next 24 hours. Empty hours are 1px — the
+   baseline itself, not a gap in it. */
+.forecast .when {
+  min-width: 12ch;
+}
+
+.forecast .hours {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 22px;
+  background: transparent;
+}
+
+.forecast .hour {
+  flex: 1;
+  min-width: 2px;
+  background: var(--rule);
+}
+
+.forecast .hour.soon {
+  background: color-mix(in srgb, var(--accent) 55%, var(--ground));
+}
+
+.forecast .hour.now {
+  background: var(--accent);
 }
 
 /* The write path's switch, on the way into a session. */
@@ -458,6 +623,10 @@ button.quiet:hover:not(:disabled) {
 
 .figure.due b {
   color: var(--accent);
+}
+
+.figure.none b {
+  color: var(--dim);
 }
 
 .footline {

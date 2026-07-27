@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import TokenGate from './components/TokenGate.jsx'
-import Connected from './components/Connected.jsx'
+import Home from './components/Home.jsx'
 import Review from './components/Review.jsx'
 import Lesson from './components/Lesson.jsx'
 import { getUser, startAssignment, submitReview } from './lib/wanikani.js'
@@ -163,14 +163,14 @@ export default function App() {
   }
 
   return (
-    <Connected
+    <Home
       token={token}
       user={user}
       onDisconnect={disconnect}
-      onStartReview={startReview}
-      onStartLessons={startLessons}
+      onReview={startReview}
+      onLearn={startLessons}
       starting={loading}
-      startError={loadError}
+      error={loadError}
       dryRun={dryRun}
       onDryRun={setDryRun}
     />

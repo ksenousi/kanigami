@@ -95,6 +95,20 @@ export function getAvailableLessons(token) {
   return collection(token, '/assignments?immediately_available_for_lessons')
 }
 
+// Every assignment that has a stage on it, for the SRS spread. This is the
+// one paginated read in the app that is not about a session, so fetch it once
+// on mount and never on a timer.
+export function getStartedAssignments(token) {
+  return collection(token, '/assignments?started=true')
+}
+
+// The kanji of one level. WaniKani levels you up at 90% of these passed, so
+// it is the figure that actually moves you — and `levels` is a server-side
+// filter, which is why this is cheap rather than a scan.
+export function getLevelKanji(token, level) {
+  return collection(token, `/assignments?levels=${level}&subject_types=kanji`)
+}
+
 // An id filter goes in the query string, and a full review queue is enough
 // ids to make that string unreasonable. Chunk it.
 function chunked(ids, size = 500) {

@@ -507,29 +507,32 @@ the log, then let one batch through.
 
 ---
 
-## Phase 6 — the home surface
+## Phase 6 — the home surface ✅ done
 
-**Files:** `src/components/Home.jsx`, `src/components/Forecast.jsx`
+**Files:** `src/components/Home.jsx`, `src/components/Forecast.jsx`,
+`src/lib/standing.js`
 
-Replaces `Connected.jsx`, which was only ever proof the chain worked. Build
-it to the 家 Home spec above — standing in the middle, the forecast in the
-footline track.
+Built to the 家 Home spec above. `Connected.jsx` is gone.
 
-It lands here because it needs both destinations to exist, and because
-Phase 8's edge states are states *of this screen*. Everything it reads is already
-in `src/lib/wanikani.js`: `/summary` for the hourly buckets, the two
-assignment collections for the counts. The SRS spread needs all assignments
-rather than the immediately-available ones — that is a paginated read, so
-fetch it once on mount and never on a timer.
+**Shipped:** 18 vitest cases on `standing.js`, and all five states driven in
+the browser — reviews due, nothing due, lessons only, loading, token revoked.
 
-Five states, all of them drawn in the prototype and all of them real:
-reviews due, nothing due, lessons only, loading, token revoked. The
-nothing-due state is the one that justifies the whole screen — with an empty
-queue the forecast is the only thing on it still answering a question.
+- **The risk the spec flagged is settled: the footline forecast reads at 1×.**
+  The current hour in `--accent` carries it, the next four sit at
+  `color-mix(… 55% …)`, and an empty hour is 1px — the baseline itself, not a
+  gap in it. The 2px fallback was not needed.
+- **Three reads, once, on mount and never on a timer.** `/summary` carries
+  both counts *and* the forecast, which is cheaper than the two
+  immediately-available collections it replaces. `/assignments?started=true`
+  is the paginated one, for the spread. `/assignments?levels=N&
+  subject_types=kanji` is a server-side filter, which is what makes the
+  passed-this-level figure cheap rather than a scan.
+- **A count of nothing is `--dim`.** Only reviews take `--accent`, and only
+  when there is something to act on.
+- `r` and `l` open the two doors, and only when a door is open.
 
-**Acceptance:** every state reachable in the browser; the footline forecast
-readable at 1× without leaning in; keyboard alone gets from home into a
-review session and back.
+`standing.js` reads stages, it never decides them — the same rule as `srs.js`,
+for the same reason.
 
 ---
 

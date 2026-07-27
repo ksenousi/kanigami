@@ -1,0 +1,72 @@
+// Where you stand, as plain numbers.
+//
+// Home's job is to answer *which of the two worlds am I entering, and is it
+// worth entering now*. Everything it needs to answer that is counted here,
+// out of what the API already returned — nothing in this file fetches, and
+// nothing decides an SRS stage. It reads the stage WaniKani recorded and
+// puts it in a band.
+
+// WaniKani's nine stages in the five bands people actually talk in. Burned
+// last, because it is the one you stop thinking about.
+export const BANDS = [
+  { key: 'apprentice', from: 1, to: 4 },
+  { key: 'guru', from: 5, to: 6 },
+  { key: 'master', from: 7, to: 7 },
+  { key: 'enlightened', from: 8, to: 8 },
+  { key: 'burned', from: 9, to: 9 }
+]
+
+// One segmented hairline's worth of data. Assignments are resources from
+// `/assignments?started=true`; anything not yet started has no stage and is
+// not part of the spread.
+export function spread(assignments = []) {
+  const bands = BANDS.map(band => ({ ...band, count: 0 }))
+
+  for (const assignment of assignments) {
+    const stage = assignment?.data?.srs_stage
+    if (typeof stage !== 'number') continue
+    const band = bands.find(b => stage >= b.from && stage <= b.to)
+    if (band) band.count += 1
+  }
+
+  return { bands, total: bands.reduce((sum, band) => sum + band.count, 0) }
+}
+
+// The next 24 hours, as WaniKani already buckets them. The first bucket is
+// the current hour and holds everything available right now.
+export function forecast(summary, hours = 24) {
+  return (summary?.reviews ?? []).slice(0, hours).map(bucket => ({
+    at: bucket.available_at,
+    count: bucket.subject_ids?.length ?? 0
+  }))
+}
+
+export function dueNow(summary) {
+  return summary?.reviews?.[0]?.subject_ids?.length ?? 0
+}
+
+export function lessonsWaiting(summary) {
+  return summary?.lessons?.[0]?.subject_ids?.length ?? 0
+}
+
+// When something is next due, or null if nothing is in the next 24 hours.
+// The first bucket with anything in it is the answer — including the current
+// one, which means now.
+export function nextDue(summary) {
+  const bucket = (summary?.reviews ?? []).find(entry => (entry.subject_ids?.length ?? 0) > 0)
+  return bucket?.available_at ?? null
+}
+
+// Progress toward the next level. WaniKani levels you up at 90% of the
+// level's kanji passed, so this is the figure that actually moves you.
+// `assignments` are from `/assignments?levels=N&subject_types=kanji`.
+export function kanjiPassed(assignments = []) {
+  const passed = assignments.filter(a => Boolean(a?.data?.passed_at)).length
+  return { passed, total: assignments.length }
+}
+
+// The tallest bucket sets the scale; an empty forecast has no scale at all
+// and every segment stays on the baseline.
+export function peak(hours) {
+  return hours.reduce((highest, hour) => Math.max(highest, hour.count), 0)
+}
