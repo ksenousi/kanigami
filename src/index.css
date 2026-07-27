@@ -117,12 +117,18 @@
        * **No font-smoothing override.** See `body` below.
 
      One place to change if it is still not comfortable. Raise the whole
-     scale rather than one rule, or the hierarchy quietly flattens. */
-  --label: 13px;   /* mono eyebrows, footline, counts, folios */
-  --control: 14px; /* buttons */
-  --small: 16px;   /* secondary prose — the dry-run note, an error */
-  --body: 18px;    /* prose meant to be read: mnemonics, the lede */
-  --input: 19px;   /* what you type, and the question's loud word */
+     scale rather than one rule, or the hierarchy quietly flattens.
+
+     Raised by about a third on the second pass: 13px labels beside a 168px
+     glyph still read as fine print, and the answer you are typing was
+     smaller than the question. Every step moved by the same factor, so the
+     hierarchy is the one that was already there, just further from the
+     floor. */
+  --label: 17px;   /* mono eyebrows, footline, counts, folios */
+  --control: 19px; /* buttons */
+  --small: 21px;   /* secondary prose — the dry-run note, an error */
+  --body: 24px;    /* prose meant to be read: mnemonics, the lede */
+  --input: 26px;   /* what you type, and the question's loud word */
 
   /* The display steps. These used to be eleven numbers written into eleven
      rules, which made the instruction above — raise the whole scale, never
@@ -130,15 +136,19 @@
      left every display size where it was, flattening the hierarchy in the
      exact way the note warns about. Two near-duplicates (24px beside 23px)
      collapsed into one step on the way in. */
-  --display: 23px;    /* the wordmark, an accepted answer, a missed glyph */
-  --display-lg: 29px; /* a door */
-  --figure: 50px;     /* the standing figures */
+  --display: 31px;    /* the wordmark, an accepted answer, a missed glyph */
+  --display-lg: 39px; /* a door */
+  --figure: 62px;     /* the standing figures */
 
   /* Fluid, so they are sizes rather than steps — they answer to the
-     viewport, and the character is the interface on both surfaces. */
+     viewport, and the character is the interface on both surfaces.
+     The two characters are the one part of the scale the raise above left
+     alone: they are already viewport-bound and were never the thing that
+     was too small. Widening the gap to the type below them was the point,
+     and pushing 20vw higher only crowds a narrow screen. */
   --glyph: clamp(96px, 20vw, 168px); /* the review glyph */
   --face: clamp(84px, 14vw, 150px);  /* the lesson character */
-  --gloss: clamp(28px, 4vw, 40px);   /* what it means, on paper */
+  --gloss: clamp(36px, 4.6vw, 50px); /* what it means, on paper */
 
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
   --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -363,9 +373,15 @@ body {
    reserving the *tallest* verdict, not the shortest. At 58px it reserved the
    bare eyebrow and the glyph still rose 19px on every correct answer, since
    a completed item adds the accepted answer and the movement line under it.
-   100px is the correct-with-movement case measured. */
+   100px was the correct-with-movement case measured.
+
+   It is a measurement, so it is a dependency of the type scale: raising the
+   scale by a third left it reserving 100px for a block that now wants 123,
+   and the jump came straight back. Re-measured at the current sizes —
+   eyebrow 28 + answer 51 + movement 28, two 8px gaps. Move it whenever the
+   scale moves. */
 .judgement {
-  min-height: 100px;
+  min-height: 124px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -928,9 +944,22 @@ body {
   color: var(--text-soft);
 }
 
-/* A field, not a box. One hairline under the input, lit when it matters. */
+/* A field, not a box. One hairline under the input, lit when it matters.
+   Sized by the token rather than by a number: a personal access token is a
+   36-character UUID and the whole of it should be readable at once. 420px
+   was that width at the old 19px mono and silently stopped being it when the
+   scale went up — the placeholder ran off the end of its own field. In `ch`
+   it follows the type instead. 41 and not 36 because `ch` measures the
+   font's advance and the 0.06em tracking below is not in it, the same
+   arithmetic the forecast's fixed label does. The form carries the mono and
+   the input's size because that is the font `ch` has to measure — the input
+   sets them again for itself, and the hairline has no text to be affected.
+   Sizing the input instead would make its own `100%` resolve against a
+   shrink-to-fit parent, which collapses the field to a third of the token. */
 .field {
-  width: min(420px, 100%);
+  width: min(41ch, 100%);
+  font-family: var(--mono);
+  font-size: var(--input);
   display: flex;
   flex-direction: column;
   gap: 10px;
