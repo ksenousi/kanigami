@@ -1012,6 +1012,58 @@ body {
   opacity: 1;
 }
 
+/* The answer field is as wide as the answer. Fixed at the token gate's 41ch
+   it was wrong in both directions: half a line of nothing behind 「みず」,
+   and for a real vocabulary meaning — `elementary school student` — the
+   beginning of what you had typed scrolled off its own left edge, so the
+   field showed `ntary school student` and the word you were being graded on
+   was the one you could not see. The floor keeps an empty field a target,
+   the ceiling hands overflow back to the input's own scrolling once the
+   answer is wider than the column.
+
+   The measuring is a hidden copy of the text in the same grid cell as the
+   input, not a character count: `ch` is one advance of the mono zero and
+   knows nothing about かな being twice that, and the 0.06em of tracking is
+   outside it either way. The copy carries the same font and the same
+   tracking, so it is right for both scripts by construction rather than by
+   arithmetic that has to be revisited every time the scale moves. */
+.field.review {
+  width: fit-content;
+  min-width: 12ch;
+  max-width: 100%;
+}
+
+/* `clip` and not `hidden`: once an answer is past the ceiling the hidden copy
+   is wider than the cell, and an unclipped overflow — invisible or not — is
+   still part of the page's scrollable area, which put a horizontal scrollbar
+   under a centred one-screen review. `clip` takes the overflow away without
+   making this a scroll container of its own; the input keeps its own
+   scrolling, which is what should carry a long answer. */
+.field.review .grow {
+  display: grid;
+  max-width: 100%;
+  overflow: clip;
+}
+
+/* Same cell, same metrics. Any change to one of these has to be a change to
+   both or the field stops fitting what it holds. */
+.field.review .grow input,
+.field.review .grow::after {
+  grid-area: 1 / 1;
+  min-width: 0;
+  padding: 6px 2px;
+  font-family: var(--mono);
+  font-size: var(--input);
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.field.review .grow::after {
+  content: attr(data-value);
+  white-space: pre;
+  visibility: hidden;
+}
+
 /* Reviews keep focus in the field from the first question to the last, so a
    rule that lit on focus would never once be dark. Here it answers the
    question instead — and it answers *which* question, because the two

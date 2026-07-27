@@ -17,6 +17,12 @@ import { toKana } from 'wanakana'
 //
 // `lit` carries the verdict rather than a boolean, because the rule reports
 // which verdict it is: celadon for right, vermilion for wrong.
+//
+// The field is as wide as what is in it. The width comes from `.grow`, which
+// holds a hidden copy of the same text in the same grid cell as the input —
+// see the stylesheet for why the copy and not a character count. All this
+// component owes it is the current text, or the placeholder while there is
+// none, since the resting width should fit the word standing there.
 export default function AnswerField({
   value,
   onChange,
@@ -49,21 +55,29 @@ export default function AnswerField({
     // stops taking keys, and that one has to show, or an offline session just
     // silently swallows typing.
     <div className={paused ? 'field review paused' : 'field review'}>
-      <input
-        ref={input}
-        type="text"
-        value={value}
-        onChange={event => onChange(kana ? toKana(event.target.value, { IMEMode: true }) : event.target.value)}
-        onKeyDown={keyDown}
-        lang={kana ? 'ja' : 'en'}
-        placeholder={placeholder}
-        aria-label={kana ? 'Reading' : 'Meaning'}
-        autoComplete="off"
-        autoCapitalize="off"
-        autoCorrect="off"
-        spellCheck="false"
-        readOnly={locked}
-      />
+      <div className="grow" data-value={value || placeholder}>
+        <input
+          ref={input}
+          type="text"
+          value={value}
+          onChange={event => onChange(kana ? toKana(event.target.value, { IMEMode: true }) : event.target.value)}
+          onKeyDown={keyDown}
+          lang={kana ? 'ja' : 'en'}
+          placeholder={placeholder}
+          aria-label={kana ? 'Reading' : 'Meaning'}
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck="false"
+          readOnly={locked}
+          // An input carries an intrinsic width of `size` characters, and a
+          // grid track is sized by what its items intrinsically want. Left at
+          // the default 20 the track never measures anything narrower, so the
+          // hidden copy would only ever widen the field past twenty
+          // characters and never set it. This makes the input want nothing.
+          size={1}
+        />
+      </div>
       <div className={ruleClass(lit)} />
     </div>
   )

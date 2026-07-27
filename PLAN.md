@@ -105,6 +105,15 @@ slightly back at `#cfc6b4` (`--text-soft`).
 - The answer field is a hairline, not a box: transparent input, 1px rule
   underneath that lights vermilion on focus. Never add a border, card, or
   filled background around it.
+  - **It is as wide as the answer**, floored at 12ch and capped at the
+    column, and the hairline grows with it. Fixed at the token gate's width
+    it was wrong both ways: half a line of nothing behind 「みず」, and
+    `elementary school student` scrolled its own beginning off the left edge,
+    so the field read `ntary school student` and hid the very word being
+    graded. The width comes from a hidden copy of the text sharing a grid
+    cell with the input — **never from counting characters**: `ch` is one
+    advance of the mono zero, かな is twice that, and the tracking is outside
+    it either way.
 - The question is a single line of letter-spaced uppercase mono above the
   glyph, in **three pieces set apart from each other** — `kanji` **READING**
   `on'yomi`. **This is where WaniKani's subject colours live**: radical
