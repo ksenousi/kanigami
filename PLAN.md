@@ -2,13 +2,13 @@
 
 A handoff document. **Every phase is built and on `main`.**
 
-One thing is outstanding, and it is not code: phases 4 and 5 write to a real
-account, and neither has yet done so. Both were verified against a stubbed
-transport, which proves the client sends what it means to and not that
-WaniKani does what we expect with it. Their acceptance — a stage change
-matching wanikani.com, a started lesson appearing in the queue — needs a real
-session in a real account. See the note at the end of each, and **Safety**
-below for the procedure.
+One acceptance is outstanding, and it is not code. Phase 5's write path has
+now been run live; **Phase 4's has not**, because it cannot be until
+something is actually due for review — a freshly started item is hours away
+from its first one. Everything else about Phase 4 is verified against a
+stubbed transport, which proves the client sends what it means to and not
+that WaniKani does what we expect with it. See the note at the end of it, and
+**Safety** below for the procedure.
 
 Read **Ground rules** and **The design** first. They are the parts that words
 alone make ambiguous, and getting them wrong means rebuilding the phase.
@@ -467,7 +467,7 @@ afterwards. Nothing in this repo has yet written to a real account.
 
 ---
 
-## Phase 5 — the paper lesson surface ✅ built, ⚠️ not yet proven against a real account
+## Phase 5 — the paper lesson surface ✅ done
 
 **Files:** `src/components/Lesson.jsx`, `src/components/Mnemonic.jsx`,
 `src/lib/mnemonic.js`
@@ -505,9 +505,11 @@ became instead — worth knowing before "fixing" them:
   under it. Ruby survives on the verso, where the reading belongs to the
   whole word and alignment is not in question.
 
-**Still to do, and it is the acceptance:** started lessons appearing in the
-review queue on wanikani.com. Same procedure as Phase 4 — dry run first, read
-the log, then let one batch through.
+**Acceptance met.** A batch was run live against a throwaway account: dry run
+first to read the log, then the writes. Every start returned the started
+stage and a scheduled review, and the home surface picked both up on the way
+back — the spread moved and the forecast grew a bar at the hour they come
+due.
 
 ---
 
