@@ -80,7 +80,10 @@ export default function Lesson({ items, onQuiz, onExit }) {
 // sits over the whole word — which is what it is a reading of.
 function Face({ subject }) {
   const { text, image } = glyphFor(subject)
-  const reading = primaryReading(subject)
+  const primary = primaryReading(subject)
+  // Kana-only vocabulary is its own reading. Ruby over it would set the same
+  // word twice, one of them smaller.
+  const reading = primary === text ? null : primary
 
   if (!text) {
     return (

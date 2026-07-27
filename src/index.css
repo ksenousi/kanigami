@@ -830,14 +830,23 @@ button.quiet:hover:not(:disabled) {
   filter: var(--strokes);
 }
 
+/* Ruby at display size, without moving it.
+   A transform was tried here and is the wrong tool: it shifts the ruby by a
+   fixed amount whatever the reading is, so a reading longer than the word it
+   sits over lands on top of the glyph. しつぼう over 失望 is that case.
+   Setting the base's line-height closes the gap for every ratio instead. */
+.face ruby {
+  line-height: 1;
+  ruby-position: over;
+  ruby-align: center;
+}
+
 .face rt {
-  font-size: 0.19em;
+  font-size: 0.2em;
   font-family: var(--jp-sans);
-  letter-spacing: 0.08em;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
   color: var(--accent);
-  /* Ruby drifts away from its base at display size — the gap scales with the
-     character and the reading does not. Pull it back down. */
-  transform: translateY(0.9em);
 }
 
 .verso .stat {
