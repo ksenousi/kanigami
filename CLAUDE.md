@@ -47,6 +47,13 @@ a real account and the Safety procedure to re-accept.
   submitter is in dry run unless its caller says otherwise. `startAssignment`
   is gated the same way and reaches the network only from `App.jsx`. See
   Safety in PLAN.md; there is no undo for either.
+- **Dry run is development-only and does not ship.** `App.jsx` seeds it from
+  `import.meta.env.DEV`, and the switch in `Home.jsx` is gated on the same
+  literal so the block folds away at build time. A built app opens writing —
+  which is the point, since a deployed client that discards your answers is
+  broken, not careful. `createSubmitter`'s own default stays dry run: that is
+  the safety, and `App.jsx` is the single caller allowed to override it.
+  **Running `npm run dev` is what protects a real account, not the UI.**
 - **`base` and the repo name are coupled.** Renaming the repo without
   changing `vite.config.js` 404s every asset on Pages.
 - **Radicals may have no Unicode character.** Fall back to
