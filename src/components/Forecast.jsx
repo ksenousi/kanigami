@@ -22,7 +22,7 @@ export default function Forecast({ summary }) {
         {hours.map((hour, index) => (
           <span
             key={hour.at}
-            className={`hour${index === 0 ? ' now' : index <= WARM ? ' soon' : ''}`}
+            className={`hour${warmth(hour, index)}`}
             style={{ height: `${height(hour.count, tallest)}px` }}
           />
         ))}
@@ -38,6 +38,14 @@ export default function Forecast({ summary }) {
 function height(count, tallest) {
   if (count === 0 || tallest === 0) return 1
   return Math.max(2, Math.round((count / tallest) * TALLEST))
+}
+
+// Only an hour with something in it gets any warmth. Lighting an empty
+// current hour makes an empty queue look like a full one.
+function warmth(hour, index) {
+  if (hour.count === 0) return ''
+  if (index === 0) return ' now'
+  return index <= WARM ? ' soon' : ''
 }
 
 function nextLabel(summary) {

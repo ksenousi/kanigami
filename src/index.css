@@ -751,7 +751,11 @@ button.quiet:hover:not(:disabled) {
   border-right: 1px solid var(--rule);
   padding-right: clamp(20px, 4vw, 56px);
   min-height: 100%;
-  justify-content: center;
+  /* Both pages start at the top, the way a spread does. Centring the verso
+     floats the character halfway down whenever the recto is short — which a
+     radical with one mnemonic and no sentences always is. */
+  justify-content: flex-start;
+  padding-top: 6px;
 }
 
 .face {
