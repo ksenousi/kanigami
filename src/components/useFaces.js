@@ -1,23 +1,13 @@
 import { useEffect, useState } from 'react'
-import { FACES, available } from '../lib/faces.js'
+import { FACES, arrivedFaces } from '../lib/faces.js'
 
-// Which of the four faces this browser actually has.
+// Which of the four faces this browser actually has, and when to stop asking.
 //
-// The webfonts come from Google, split by unicode-range, so nothing is
-// downloaded until something needs a glyph from it — hence the explicit
-// `load`, with a kanji rather than the default Latin probe, because the
-// Latin subset of a Japanese font is a separate file that can arrive while
-// the kanji does not.
-//
-// **Not `document.fonts.check`.** That was the obvious call and it is the
-// wrong one: it answers "could this text be rendered with this font list",
-// and the list ends in a fallback, so it returns true for a font that does
-// not exist. Measured in a browser — `check("16px 'No Such Face 999'", '山')`
-// is `true`. It would have reported all four faces present while the app
-// drew one, which is precisely the silent failure this guard is for.
-//
-// A FontFace's own `status` is the honest signal: 'loaded' once the bytes
-// are in, 'error' when they are not coming.
+// How a face is judged present lives in `faces.js` — `arrivedFaces` — where
+// it can be tested without a DOM. Both traps it avoids are written up there:
+// `document.fonts.check` lies, and `FontFace.family` does not compare equal
+// in Safari. This file owns only the timing, which is the other half of
+// getting it right.
 //
 // **Asking once is not enough, and that shipped broken.** The stylesheet is
 // an external `<link>`; a screen can mount before the browser has parsed it,
@@ -28,21 +18,20 @@ import { FACES, available } from '../lib/faces.js'
 // banner on a machine whose fonts were entirely fine.
 //
 // So it keeps asking: on every `loadingdone`, and on a backoff, until all
-// four are in or the deadline passes.
+// four are in or the deadline passes. Measured against a stylesheet that
+// lands after the probe starts, the first attempt finds nothing and the
+// retry has all four — Safari 26 at 158ms, Chromium at 405ms. The retry is
+// load-bearing in both.
 //
 // **And it stays quiet until it is sure.** `settled` is false while there is
 // still reason to hope, because "the fonts are blocked" is an alarming thing
 // to say to somebody whose fonts are merely slow. Reported missing only once
 // asking again has stopped being worth it.
-const PROBE = '山'
 
 // Long enough for a slow network, short enough that somebody whose fonts
 // really are blocked is told rather than left wondering.
 const GIVE_UP_AFTER = 8000
 const RETRY = [150, 400, 900, 1800, 3000]
-
-const arrived = name =>
-  [...document.fonts].some(face => face.family === name && face.status === 'loaded')
 
 export default function useFaces() {
   // Optimistic until proven otherwise: all four, so a session starting
@@ -59,16 +48,9 @@ export default function useFaces() {
     const startedAt = Date.now()
 
     function probe() {
-      return Promise.all(
-        FACES.map(face =>
-          // A rejection is a font that will not be arriving, which is a fact
-          // about this browser rather than an error to report.
-          document.fonts.load(`16px '${face.webfont}'`, PROBE).catch(() => null)
-        )
-      ).then(() => {
+      return arrivedFaces(document.fonts).then(here => {
         if (!live) return
 
-        const here = available(arrived)
         if (here.length === FACES.length) {
           setState({ faces: here, settled: true })
           return

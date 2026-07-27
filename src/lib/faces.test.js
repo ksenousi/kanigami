@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FACES, available, faceFor } from './faces.js'
+import { FACES, PROBE, arrivedFaces, available, faceFor } from './faces.js'
 
 const named = list => list.map(face => face.key)
 
@@ -79,5 +79,76 @@ describe('available', () => {
     const local = [{ key: 'system', label: 'system', stack: 'serif' }]
     expect(available(name => (asked.push(name), false), local)).toEqual(local)
     expect(asked).toEqual([])
+  })
+})
+
+describe('arrivedFaces', () => {
+  // A stand-in for the browser's FontFaceSet. `serialize` is how this engine
+  // spells a family name back at you — the whole point of the Safari case
+  // below — and it is deliberately never consulted by the code under test.
+  function fontSet({ has = () => true, rejects = [], serialize = name => name }) {
+    const set = {
+      loaded: [],
+      load(font, text) {
+        const name = font.match(/'(.+)'/)[1]
+        set.loaded.push({ name, text })
+        if (rejects.includes(name)) return Promise.reject(new Error('blocked'))
+        // The real thing resolves with the faces it matched, and with an
+        // empty array when it matched none.
+        return Promise.resolve(has(name) ? [{ family: serialize(name), status: 'loaded' }] : [])
+      },
+      // Iterable like the real set, so a rewrite that reaches for `.family`
+      // finds something to reach for rather than crashing.
+      *[Symbol.iterator]() {
+        for (const face of FACES) yield { family: serialize(face.webfont), status: 'loaded' }
+      }
+    }
+    return set
+  }
+
+  it('keeps the faces whose webfont resolved', async () => {
+    const only = ['Noto Sans JP', 'Klee One']
+    const here = await arrivedFaces(fontSet({ has: name => only.includes(name) }))
+    expect(named(here)).toEqual(['gothic', 'kyokasho'])
+  })
+
+  it('keeps all four when they all resolve', async () => {
+    expect(await arrivedFaces(fontSet({}))).toHaveLength(FACES.length)
+  })
+
+  // Safari serializes a family name, so `FontFace.family` reads
+  // `"Noto Sans JP"` — quote characters and all — where Chrome gives a bare
+  // `Noto Sans JP`. The previous fix compared those strings and so found
+  // nothing in Safari, collapsing four working fonts to the one-face floor
+  // and announcing "1 of 4 typefaces" to somebody whose fonts were fine.
+  // Reading what `load` resolves with never asks how the name is spelled.
+  it('finds all four even when the engine quotes every family name', async () => {
+    const safari = fontSet({ serialize: name => `"${name}"` })
+    expect(named(await arrivedFaces(safari))).toEqual(named(FACES))
+  })
+
+  // The stylesheet is an external link and may not be parsed yet. `load`
+  // matches nothing and resolves *successfully* — which is not proof the
+  // fonts are missing, only that it is too early to say. The caller retries.
+  it('reports none when the stylesheet has not been parsed yet', async () => {
+    const here = await arrivedFaces(fontSet({ has: () => false }))
+    expect(named(here)).toEqual(['gothic'])
+  })
+
+  // A rejection is this browser saying the bytes are not coming.
+  it('treats a rejected load as a font that will not arrive', async () => {
+    const here = await arrivedFaces(fontSet({ rejects: ['Noto Serif JP', 'Klee One'] }))
+    expect(named(here)).toEqual(['gothic', 'maru'])
+  })
+
+  // The Latin subset of a Japanese webfont is a separate file that can land
+  // while the kanji does not, so the default Latin probe would say yes too
+  // early. Every family is asked about a kanji.
+  it('probes with a kanji rather than the default Latin text', async () => {
+    const set = fontSet({})
+    await arrivedFaces(set)
+    expect(set.loaded.map(call => call.name)).toEqual(FACES.map(face => face.webfont))
+    expect(new Set(set.loaded.map(call => call.text))).toEqual(new Set([PROBE]))
+    expect(PROBE).toMatch(/\p{Script=Han}/u)
   })
 })

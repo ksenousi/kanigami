@@ -77,3 +77,43 @@ export function available(check, faces = FACES) {
   const arrived = faces.filter(face => !face.webfont || check(face.webfont))
   return arrived.length > 0 ? arrived : faces.slice(0, 1)
 }
+
+// A kanji rather than the default Latin probe: these fonts are served split
+// by unicode-range, and a family's Latin subset is a separate file that can
+// arrive while the kanji does not.
+export const PROBE = '山'
+
+// Ask a FontFaceSet which of the four it actually has, and return them.
+//
+// The set is a parameter for the same reason `available` takes a `check`:
+// this file stays free of the DOM and the browser's real `document.fonts` is
+// passed in by the hook. What comes back is a promise of the faces present,
+// never empty, ready to hand to the screen.
+//
+// **Read the faces `load()` resolves with — never `FontFace.family`.** The
+// resolved array is the whole answer: non-empty means the family is in the
+// set and its bytes are in, empty means nothing matched (the stylesheet may
+// simply not be parsed yet — that is the caller's cue to ask again), and a
+// rejection means the bytes are not coming.
+//
+// Matching on `family` is the trap, and it shipped: Safari serializes the
+// name, so `family` reads `"Noto Sans JP"` with the quote characters in the
+// string, while Chrome gives a bare `Noto Sans JP`. Nothing compared equal
+// in Safari, so every face looked missing and the collapse-to-one floor
+// below took over — the app told people with four working fonts that one had
+// arrived. The resolved faces never raise the question.
+export function arrivedFaces(fontSet, faces = FACES) {
+  return Promise.all(
+    faces.map(face =>
+      face.webfont
+        ? fontSet
+            .load(`16px '${face.webfont}'`, PROBE)
+            .then(matched => matched.length > 0)
+            .catch(() => false)
+        : Promise.resolve(true)
+    )
+  ).then(landed => {
+    const here = new Set(faces.filter((_, i) => landed[i]).map(face => face.webfont))
+    return available(name => here.has(name), faces)
+  })
+}

@@ -64,9 +64,17 @@ a real account and the Safety procedure to re-accept.
   character. **Never test whether a webfont arrived with
   `document.fonts.check`** — it answers "could this text be rendered with
   this list", the list ends in a fallback, and it returns `true` for a font
-  that does not exist. Use `FontFace.status === 'loaded'`, which is what
-  `useFaces.js` does; getting this wrong reports four faces while drawing
-  one. **And probe more than once** — a screen can mount before the font
+  that does not exist. Getting this wrong reports four faces while drawing
+  one. Use what `document.fonts.load()` *resolves to* — a non-empty array of
+  matched faces — which is what `useFaces.js` does. **Do not go back to
+  matching `FontFace.family` against the family name.** That was the previous
+  fix and it never worked in Safari: WebKit returns `family` CSS-serialized,
+  so it is `"Noto Sans JP"` with the quotes in the string where Chrome
+  returns a bare `Noto Sans JP`. Measured in Safari 26 — 494 faces in
+  `document.fonts`, none equal to any name in `FACES`, so `available()` fell
+  to its one-face floor and told a user with four working fonts that one had
+  arrived. Anything comparing family names has to survive both spellings;
+  the resolved faces sidestep it. **And probe more than once** — a screen can mount before the font
   stylesheet is parsed, and until then `document.fonts` holds none of these
   families, so `load()` matches nothing and resolves *successfully*. A single
   probe reads that as four missing fonts, for good. It has to keep asking,
