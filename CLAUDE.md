@@ -81,6 +81,13 @@ a real account and the Safety procedure to re-accept.
   and stay quiet until it gives up: saying "blocked" at somebody whose fonts
   are merely slow is the false alarm that teaches them to ignore the real
   one.
+- **A review face belongs to its question — pick it once and hold it.**
+  `Review.jsx` keeps the rotation count and the chosen face in one piece of
+  state and turns both over when a new question goes up, never at render and
+  never on answering. Incrementing the count in `submit` restyled the
+  character still on screen under its verdict, and recomputing `faceFor` each
+  render let the list from `useFaces` re-index the rotation mid-question when
+  a webfont turned out to be blocked. Both read to the user as flickering.
 
 ## This repo is public
 
