@@ -80,6 +80,17 @@ Raising `--label` from 9.5px to 13px was a real fix for the mono labels and
 it left every one of them at the same 3.21:1 it had before. When something
 reads badly, check both.
 
+**The scale has since gone up again**, by about a third across every step —
+`--label` is 17px and `--input` 26px, the two characters unchanged because
+they are viewport-bound and were never the small thing. Pixel figures written
+elsewhere in this document are the sizes at the time that passage was written;
+`src/index.css` is the only place that says how big the app is now. Raising it
+also broke two rules that had a measurement of the old scale baked into them —
+the height `.judgement` reserves so the glyph does not jump, and the width of
+the token field, which was 36 characters of the old mono and stopped being 36
+characters of the new. **A measurement in CSS is a dependency of the scale.**
+Grep for one before moving the scale again.
+
 
 ### 墨 Ink — the review surface
 
@@ -99,8 +110,8 @@ slightly back at `#cfc6b4` (`--text-soft`).
   `on'yomi`. **This is where WaniKani's subject colours live**: radical
   `#00aaff`, kanji `#ff00aa`, vocabulary `#aa00ff`, on the quiet pieces only.
   Never as a full-bleed background, which is precisely what we are replacing.
-  - **What is being asked is the loud piece** — 19px against `--label` for
-    the rest, and it carries a hue of its own: **芥子 karashi `#c9bb62`
+  - **What is being asked is the loud piece** — `--input` against `--label`
+    for the rest, and it carries a hue of its own: **芥子 karashi `#c9bb62`
     (`--karashi`) for a meaning, 縹 hanada `#6f9fc4` (`--hanada`) for a
     reading.** Warm and cool, because the two questions are otherwise the
     same screen. It shipped as one uniform line where they differed by a
@@ -884,10 +895,22 @@ this text be rendered with this font list", the list ends in a fallback, and
 it therefore returns `true` for a font that does not exist — measured in a
 browser: `check("16px 'No Such Face 999'", '山')` is `true`. The guard nearly
 shipped that way and would have reported four faces while drawing one.
-`FontFace.status === 'loaded'` is the honest signal, and it needs an explicit
-`document.fonts.load` first because unicode-range subsets are not fetched
-until something asks for a glyph — with a kanji as the probe, since a
-Japanese font's Latin subset is a separate file that can arrive alone.
+
+The honest signal is the array `document.fonts.load` resolves with — the
+faces it matched. `load` is needed anyway, because unicode-range subsets are
+not fetched until something asks for a glyph, and the probe is a kanji since
+a Japanese font's Latin subset is a separate file that can arrive alone.
+
+**Do not identify a face by comparing `FontFace.family`.** That was the
+second attempt and it never once worked in Safari, which serializes the name:
+`family` reads `"Noto Sans JP"`, quote characters inside the string, where
+Chrome gives a bare `Noto Sans JP`. Measured in Safari 26 — 494 faces in
+`document.fonts`, none equal to any name in `FACES`, so `available()` fell to
+its collapse-to-one floor and the banner announced "1 of 4 typefaces" at
+somebody whose four fonts had all arrived and were on screen. The same false
+alarm this section is about, reached by a third door. The resolved faces
+never raise the question of how a name is spelled; `arrivedFaces` in
+`faces.js` is that, and it is tested against a Safari-shaped font set.
 
 **And one probe is not enough**, which is the second way this shipped broken.
 The stylesheet is an external `<link>`; a screen can mount before it is
