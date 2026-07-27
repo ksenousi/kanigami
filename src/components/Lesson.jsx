@@ -51,8 +51,11 @@ export default function Lesson({ items, onQuiz, onExit }) {
 
           <Readings subject={item.subject} />
 
-          <Mnemonic source={item.subject.meaning_mnemonic} />
-          <Mnemonic source={item.subject.reading_mnemonic} />
+          {/* Labelled, because a real subject carries two of these and they
+              are otherwise two untitled paragraphs of similar length. On a
+              long one you cannot tell where the meaning ends. */}
+          <Mnemonic source={item.subject.meaning_mnemonic} label="meaning" />
+          <Mnemonic source={item.subject.reading_mnemonic} label="reading" />
 
           <Sentences sentences={item.subject.context_sentences} />
         </div>
