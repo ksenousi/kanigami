@@ -15,10 +15,11 @@ and redistributes nothing.
 
 ## Status
 
-Phases 0 to 2. Token gate, API client and live queue counts work, and the
-session engine and grader are built and tested. The review and lesson
-surfaces are not built yet. See [PLAN.md](PLAN.md) for the phased build;
-start at Phase 3.
+Phases 0 to 3. Reviews can be worked through end to end on the ink surface —
+token gate, queue counts, session engine, grader and review screen. Nothing
+is submitted to WaniKani yet: the write path opens in Phase 4, and until then
+a read-only token is all this needs. The lesson surface is not built. See
+[PLAN.md](PLAN.md) for the phased build; start at Phase 4.
 
 ## Running it
 

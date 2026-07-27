@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { getAvailableLessons, getAvailableReviews, getSummary } from '../lib/wanikani.js'
 
 // Proof the whole chain works end to end: token → API → real counts for this
-// account. The review and lesson surfaces replace this screen; until they
-// exist it is the app.
-export default function Connected({ token, user, onDisconnect }) {
+// account, and a way into a review session. Phase 6 replaces this screen with
+// the home surface; until then it is the door.
+export default function Connected({ token, user, onDisconnect, onStartReview, starting, startError }) {
   const [counts, setCounts] = useState(null)
   const [error, setError] = useState('')
 
@@ -57,11 +57,17 @@ export default function Connected({ token, user, onDisconnect }) {
                 <span>lessons waiting</span>
               </div>
             </div>
-            <p className="lede">
-              {counts.reviews > 0
-                ? 'The review surface is not built yet — that is the next piece of work.'
-                : `Nothing due. ${counts.nextAt ? `Next review ${counts.nextAt}.` : ''}`}
-            </p>
+            {counts.reviews > 0 ? (
+              <button type="button" onClick={onStartReview} disabled={starting}>
+                {starting ? 'Loading' : 'Review'}
+              </button>
+            ) : (
+              <p className="lede">
+                Nothing due. {counts.nextAt ? `Next review ${counts.nextAt}.` : ''}
+              </p>
+            )}
+
+            {startError ? <p className="error">{startError}</p> : null}
           </>
         ) : (
           !error && <div className="eyebrow hot">reading your queue</div>

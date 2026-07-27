@@ -95,21 +95,31 @@ export function getAvailableLessons(token) {
   return collection(token, '/assignments?immediately_available_for_lessons')
 }
 
-// Fetch only the subjects we are about to show. ids= is capped in practice,
-// so chunk it rather than building one enormous query string.
-export async function getSubjects(token, ids) {
+// An id filter goes in the query string, and a full review queue is enough
+// ids to make that string unreasonable. Chunk it.
+function chunked(ids, size = 500) {
   const chunks = []
-  for (let i = 0; i < ids.length; i += 500) chunks.push(ids.slice(i, i + 500))
+  for (let i = 0; i < ids.length; i += size) chunks.push(ids.slice(i, i + size))
+  return chunks
+}
+
+// Fetch only the subjects we are about to show.
+export async function getSubjects(token, ids) {
   const pages = await Promise.all(
-    chunks.map(chunk => collection(token, `/subjects?ids=${chunk.join(',')}`))
+    chunked(ids).map(chunk => collection(token, `/subjects?ids=${chunk.join(',')}`))
   )
   return pages.flat()
 }
 
 // User synonyms and notes. The grader has to accept these as correct
 // meanings, so they are fetched alongside the subjects, never after.
-export function getStudyMaterials(token, subjectIds) {
-  return collection(token, `/study_materials?subject_ids=${subjectIds.join(',')}`)
+export async function getStudyMaterials(token, subjectIds) {
+  const pages = await Promise.all(
+    chunked(subjectIds).map(chunk =>
+      collection(token, `/study_materials?subject_ids=${chunk.join(',')}`)
+    )
+  )
+  return pages.flat()
 }
 
 export function submitReview(token, { assignmentId, incorrectMeaning, incorrectReading }) {

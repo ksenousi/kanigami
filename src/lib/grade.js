@@ -14,12 +14,7 @@
 // engine hands out as `item.subject`.
 
 import { isKana, toKana } from 'wanakana'
-
-const READING_LABELS = {
-  onyomi: "on'yomi",
-  kunyomi: "kun'yomi",
-  nanori: 'nanori'
-}
+import { readingTypeLabel } from './subject.js'
 
 export function grade({ subject, questionType, input, synonyms = [] }) {
   const typed = (input ?? '').trim()
@@ -51,8 +46,7 @@ function gradeReading(subject, typed) {
 }
 
 function wantedReading(accepted) {
-  const types = new Set(accepted.map(r => r.type))
-  const label = types.size === 1 ? READING_LABELS[[...types][0]] : null
+  const label = readingTypeLabel(accepted)
   return label ? `WaniKani wants the ${label}` : 'WaniKani wants a different reading'
 }
 

@@ -34,12 +34,17 @@
   --ink-soft: #cfc6b4;   /* running prose, set back from the body text */
   --ink-dim: #6b6255;
   --vermilion: #c8452c;
+  /* WaniKani's radical stroke images are black on transparent, so they need
+     turning inside out to sit on a dark ground. It belongs with the palette
+     because a light theme would set it to none. */
+  --ink-strokes: invert(1);
 
   --paper: #f3ede0;
   --paper-line: #d8cfba;
   --paper-text: #221f1a;
   --paper-dim: #7d7362;
   --seal: #9e3b26;
+  --paper-strokes: none;
 
   /* Not themeable. These are WaniKani's, and they carry meaning. */
   --wk-radical: #00aaff;
@@ -59,8 +64,9 @@
    [data-theme='<name>'] {
      --ink: …; --ink-raised: …; --ink-line: …; --ink-text: …;
      --ink-strong: …; --ink-soft: …; --ink-dim: …; --vermilion: …;
+     --ink-strokes: …;
      --paper: …; --paper-line: …; --paper-text: …; --paper-dim: …;
-     --seal: …;
+     --seal: …; --paper-strokes: …;
    }
 
    Set it on <html> and every surface follows. If a theme needs a
@@ -79,6 +85,7 @@
   --text-soft: var(--ink-soft);
   --dim: var(--ink-dim);
   --accent: var(--vermilion);
+  --strokes: var(--ink-strokes);
 }
 
 .surface-paper {
@@ -92,6 +99,7 @@
   --text-soft: var(--paper-dim);
   --dim: var(--paper-dim);
   --accent: var(--seal);
+  --strokes: var(--paper-strokes);
 
   color-scheme: light;
 }
@@ -163,7 +171,60 @@ body {
   text-shadow: 0 0 60px rgb(from var(--accent) r g b / 0.14);
 }
 
+/* Radicals with no codepoint. WaniKani's stroke images are black on
+   transparent; --strokes turns them inside out for whichever ground they
+   have landed on. */
+.glyph img {
+  display: block;
+  height: 0.78em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+/* What is being asked, and of what. This one line is where WaniKani's
+   subject colours live — never as a field of colour behind anything. */
+.question {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.question.wk-radical {
+  color: var(--wk-radical);
+}
+
+.question.wk-kanji {
+  color: var(--wk-kanji);
+}
+
+.question.wk-vocabulary {
+  color: var(--wk-vocab);
+}
+
+/* Held open so the glyph does not jump when a verdict arrives. */
+.judgement {
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.judgement p {
+  margin: 0;
+}
+
+.answers {
+  font-family: var(--jp-serif);
+  font-size: 20px;
+  color: var(--accent);
+}
+
 .eyebrow {
+  margin: 0;
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.3em;
@@ -244,13 +305,36 @@ body {
 }
 
 .field .rule {
+  position: relative;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--rule) 12%, var(--rule) 88%, transparent);
 }
 
-.field:focus-within .rule,
-.field .rule.lit {
+/* The lit state is a second gradient fading in over the first. Gradients do
+   not interpolate, so lighting the rule by swapping backgrounds would snap. */
+.field .rule::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background: linear-gradient(90deg, transparent, var(--accent) 12%, var(--accent) 88%, transparent);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.field:focus-within .rule::after,
+.field .rule.lit::after {
+  opacity: 1;
+}
+
+/* Reviews keep focus in the field from the first question to the last, so a
+   rule that lit on focus would never once be dark. Here it answers the
+   question instead: lit means judged. */
+.field.review:focus-within .rule::after {
+  opacity: 0;
+}
+
+.field.review .rule.lit::after {
+  opacity: 1;
 }
 
 button {
@@ -348,4 +432,13 @@ button.quiet:hover:not(:disabled) {
   flex: 1;
   height: 1px;
   background: var(--rule);
+}
+
+/* The rule lighting is the only motion in the app, and it is the one thing
+   carrying a verdict — so it stays visible here and simply stops moving. */
+@media (prefers-reduced-motion: reduce) {
+  .field .rule::after,
+  button {
+    transition: none;
+  }
 }

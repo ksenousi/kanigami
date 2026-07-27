@@ -1,7 +1,7 @@
 # kanigami — build plan
 
-A handoff document. Phases 0 to 2 are done and on `main`; an agent picking
-this up should start at Phase 3 and work down. Each phase is independently
+A handoff document. Phases 0 to 3 are done and on `main`; an agent picking
+this up should start at Phase 4 and work down. Each phase is independently
 shippable and independently reviewable — do not collapse them into one branch.
 
 Read **Ground rules** and **The design** first. They are the parts that words
@@ -360,27 +360,53 @@ Two behaviours worth knowing before changing anything here:
 
 ---
 
-## Phase 3 — the ink review screen
+## Phase 3 — the ink review screen ✅ done
 
 **Files:** `src/components/Review.jsx`, `src/components/Glyph.jsx`,
-`src/components/AnswerField.jsx`
+`src/components/AnswerField.jsx`, `src/lib/subject.js`, `src/lib/queue.js`
 
-Wire Phases 1 and 2 to the ink surface described above. Radical subjects
-without a Unicode codepoint must render `character_images` (prefer the SVG),
-inverted for the dark ground.
+Phases 1 and 2 wired to the ink surface. Radical subjects without a Unicode
+codepoint render `character_images` (the SVG where there is one), inverted for
+the dark ground.
 
 Keyboard-first: Enter submits, Enter again advances, and focus never leaves
-the field. Respect `prefers-reduced-motion` on the rule-lighting transition.
+the field. The grader's third verdict is a UI state and not an error —
+`'retry'` lights nothing, counts nothing, and leaves the typed answer to be
+corrected.
 
-Enter-to-submit then Enter-to-advance is exactly the double-fire that
-`answer(session, question, verdict)` guards against — pass back the question
-the screen is showing, and let it throw rather than working around it. The
-grader's third verdict is a UI state, not an error: `'retry'` lights nothing,
-counts nothing, and leaves the typed answer to be corrected.
+**Shipped:** 19 further vitest cases on `subject.js`, and a full ten-item
+session driven end to end in the browser: asking, correct, incorrect, both
+retry nudges, and the finished state.
 
-**Acceptance:** a full session of ten items can be completed with the
-keyboard alone, and every state — asking, correct, incorrect, retry-nudge —
-is reachable in the browser.
+Four things here were decided against the obvious alternative, and the
+alternative is worth not re-proposing:
+
+- **Enter is handled on `keydown`, not by the form's implicit submission.**
+  Implicit submission depends on conditions this field cannot promise, and it
+  was observed not firing. The `keydown` handler cancels the default, so the
+  two paths cannot both fire — remove that `preventDefault` and every answer
+  submits twice.
+- **The rule does not light on focus here**, which is what `.field.review` in
+  the stylesheet arranges. Focus is in the field from the first question to
+  the last, so a rule that lit on focus would never once be dark and would
+  carry no information at all. Lit means judged. Correct and incorrect light
+  the same rule; the line of type beneath is what differs.
+- **The verdict is derived from the question the screen is showing**, held in
+  state, because by then `session` is already the next generation.
+  `answer()` is called once, on the first Enter, with that same question
+  handed back to it; the second Enter never reaches the grader.
+- **`src/lib/subject.js` holds the awkward cases** — a radical with no
+  codepoint, readings that disagree about their type — because they are
+  data-shaped, and a component cannot be tested as cheaply as a function.
+  `src/lib/queue.js` is the one impure piece: three reads and a
+  `createSession` over them.
+
+`--strokes` joined the palette layer for the radical images: WaniKani ships
+them black on transparent, so the ink surface inverts them and paper does not.
+A theme sets `--ink-strokes` / `--paper-strokes` like any other palette value.
+
+The session's finished screen is deliberately the honest minimum — it says the
+session is over and that nothing was submitted. Phase 7 replaces it.
 
 ---
 
@@ -391,7 +417,9 @@ is reachable in the browser.
 Read **Safety** above before starting this phase — it is the one that can
 damage real progress, and it ships behind a default-on dry-run switch.
 
-- On item completion, `POST /reviews` with the accumulated counts.
+- On item completion, `POST /reviews` with the accumulated counts. Phase 1's
+  `answer()` already reports that moment as `justCompleted`; `Review.jsx` is
+  where it surfaces.
 - Submit as items complete, not in one batch at the end — a closed tab must
   not lose finished work.
 - Show the returned SRS movement from the response payload.
