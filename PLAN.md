@@ -818,6 +818,79 @@ would not — that is the version to build if this ever matters.
 
 ---
 
+## The Japanese faces — why four, and why two mechanisms
+
+kanigami set every glyph in one face until this. The problem with that is not
+aesthetic: a character met in a single typeface is learned as that picture,
+and the WaniKani forums are full of people who know a kanji and cannot read
+it on a station sign. Third-party font randomisers exist for this and nothing
+else.
+
+**The evidence.** High-variability orthographic training, *Psychonomic
+Bulletin & Review*, 2025: 190 participants with no Chinese, 24 characters,
+one typeface versus three. On typefaces never seen before, the
+single-typeface group was 576ms slower (1813 vs 1237) and 18.3% less accurate;
+the variable group 254ms (1621 vs 1367) and 8.3%. Their three training faces
+were 楷体, 宋体 and 黑体 — the Chinese counterparts of kyokasho, mincho and
+gothic.
+
+**The cost is real and is the point.** The variable group was *slower on the
+face it had trained on* — 1367 vs 1237ms. Variability buys generalisation and
+charges for it in familiarity. If a future change makes the app feel snappier
+by dropping back to one face, that is the trade being reversed, not a win.
+
+**Two mechanisms, because the surfaces do different jobs.**
+
+- **Reviews rotate**, one face per question, `faceFor(n)` in `faces.js`.
+  Rotation rather than a random draw: every face comes up equally often,
+  which a draw only manages on average and a ten-item session never sees.
+  Being predictable costs nothing — knowing the next card is a mincho tells
+  you nothing about which character is on it.
+- **Lessons show all four at once**, `Collection` in `Lesson.jsx`. Comparison
+  is what separates the skeleton from the styling, and it is precisely what
+  the review must not offer: side by side, the character is given away.
+
+**The four, and the one that lost.** Noto Sans JP (gothic — what WaniKani
+itself uses, and what is on every sign and screen), Noto Serif JP (mincho —
+books and newspapers), Klee One (the forms a hand makes), Zen Maru Gothic
+(rounded — packaging, kids' material). BIZ UDGothic was a fifth candidate:
+rendering 令糸道 in each pair and counting differing pixels, gothic-vs-UD was
+the closest pair of every pair measured, because it is a gothic. It bought a
+slot and almost no variety.
+
+**Print and handwriting are a different problem from font variation**, and
+exposure alone does not fix it. 令, 糸, 心, 直, 八, 下 and the しんにょう in 道
+differ systematically between printed and written forms. Japan's Agency for
+Cultural Affairs settled the status of this in 2016 (常用漢字表の字体・字形に
+関する指針): as long as a character's skeleton is legible, both forms are
+correct. That is a thing the lesson can say *because* it shows the collection,
+and could not say with one face.
+
+**Hosting.** Google Fonts by `<link>`, split by `unicode-range`. Self-hosting
+was the first plan and was dropped: 36MB of source fonts, a Python
+subsetting toolchain, and a guess about which kanji to include that would
+have silently broken any character guessed wrong. Since the shuffle means a
+session needs every glyph in *every* family, on-demand chunking saves less
+than usual — but it still beats shipping four full faces. Self-hosting
+remains available later; it is a build step, not a redesign.
+
+**A blocked font says so.** `FaceWarning` on home, a count in the review
+footline. Without it the app reverts to its old behaviour and looks entirely
+normal doing it — the exact failure this feature exists to prevent, arriving
+by another door.
+
+**Do not test for a webfont with `document.fonts.check`.** It answers "could
+this text be rendered with this font list", the list ends in a fallback, and
+it therefore returns `true` for a font that does not exist — measured in a
+browser: `check("16px 'No Such Face 999'", '山')` is `true`. The guard nearly
+shipped that way and would have reported four faces while drawing one.
+`FontFace.status === 'loaded'` is the honest signal, and it needs an explicit
+`document.fonts.load` first because unicode-range subsets are not fetched
+until something asks for a glyph — with a kanji as the probe, since a
+Japanese font's Latin subset is a separate file that can arrive alone.
+
+---
+
 ## Reference
 
 - API docs: <https://docs.api.wanikani.com/>
