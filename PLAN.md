@@ -1,7 +1,8 @@
 # kanigami — build plan
 
-A handoff document. Phases 0 to 3 are done and on `main`; an agent picking
-this up should start at Phase 4 and work down. Each phase is independently
+A handoff document. Phases 0 to 4 are on `main`; an agent picking this up
+should start at Phase 5 and work down. Phase 4 is built but its acceptance is
+outstanding — see the note at the end of it. Each phase is independently
 shippable and independently reviewable — do not collapse them into one branch.
 
 Read **Ground rules** and **The design** first. They are the parts that words
@@ -235,10 +236,11 @@ is no undo for either, which is why the rules below are not optional.
    update study materials, update user preferences). Leave every one
    unchecked. WaniKani then rejects writes with a 403 server-side, whatever
    the client tries to do — a guarantee no amount of code review can match.
-2. **Do not wire `submitReview` or `startAssignment` before Phase 4.** They
-   exist in `src/lib/wanikani.js` and are deliberately imported by nothing.
-   `grep -rn 'submitReview\|startAssignment' src/` should list only their own
-   definitions until Phase 4 begins.
+2. **`startAssignment` is still imported by nothing** and stays that way
+   until Phase 5. `submitReview` is wired as of Phase 4, in exactly one place:
+   `App.jsx` passes it to `createSubmitter` as `send`. `grep -rn
+   'submitReview\|startAssignment' src/` should show their definitions, that
+   one import, and nothing else — no other module may reach the write path.
 3. **Phase 4 ships behind a dry-run switch, default on.** In dry-run,
    grading and queueing run for real and the would-be request is logged
    instead of sent — `dry run: POST /reviews {assignment_id, meaning: 0,
@@ -410,24 +412,49 @@ session is over and that nothing was submitted. Phase 7 replaces it.
 
 ---
 
-## Phase 4 — submission
+## Phase 4 — submission ✅ built, ⚠️ not yet proven against a real account
 
-**Files:** `src/lib/submit.js`, wired into `Review.jsx`
+**Files:** `src/lib/submit.js`, `src/lib/srs.js`, wired through `App.jsx` and
+`Review.jsx`
 
-Read **Safety** above before starting this phase — it is the one that can
-damage real progress, and it ships behind a default-on dry-run switch.
+Read **Safety** above before touching this phase — it is the one that can
+damage real progress.
 
-- On item completion, `POST /reviews` with the accumulated counts. Phase 1's
-  `answer()` already reports that moment as `justCompleted`; `Review.jsx` is
-  where it surfaces.
-- Submit as items complete, not in one batch at the end — a closed tab must
-  not lose finished work.
-- Show the returned SRS movement from the response payload.
-- On failure, retry with backoff and keep the item in a pending list; surface
-  *"3 answers still syncing"* rather than failing silently.
+`createSubmitter({ send, dryRun })` takes completed items and settles them one
+at a time. `Review.jsx` hands it `justCompleted` and subscribes with `watch`;
+it never sees the token or the API. `srs.js` names the stage numbers the
+response comes back with, and names nothing it was not given.
 
-**Acceptance:** a completed item's stage change matches what wanikani.com
-shows for the same item.
+**Shipped:** 23 further vitest cases, and all three paths driven end to end in
+the browser against a stubbed transport — dry run, a successful submission,
+and a refusal.
+
+- **Dry run is the default in the constructor**, not in the caller. A
+  submitter built by code that forgot to think about this writes nothing, and
+  the switch is off again after every reload: turning it off is a decision to
+  write to a real account, and that decision should not survive a refresh.
+  The log line is the one the plan specified —
+  `dry run: POST /reviews {assignment_id: 1001, meaning: 0, reading: 0}`.
+- **The screen says which mode it is in for the whole session.** The footline
+  reads `dry run` in `--dim`, or `submitting` in `--accent` — the live-write
+  session is the one that gets the accent, because it is the one worth
+  noticing.
+- **Items go one at a time, in the order they finished.** It stays well clear
+  of the rate limit, and a queue that fans out has no order left to report.
+- **Retries are for failures that retrying can fix.** 400, 401, 403, 404 and
+  422 give up at once — a rejected token is still rejected in a minute, and
+  waiting is a way of not saying so. Everything else backs off 1s, 4s, 15s,
+  60s and then lands in `failed`, where the footline counts it as syncing and
+  the finished screen names it.
+- **The movement line arrives a beat after the answer**, because the request
+  does. It reads `submitting` until the response lands and only ever shows
+  what came back.
+
+**Still to do, and it is the acceptance:** run a real session against a real
+account. Safety steps 4 to 6 are the procedure — take the `GET /assignments`
+baseline first, let exactly one item through, check the stage and next-review
+time on wanikani.com against what the response said, and rotate the token
+afterwards. Nothing in this repo has yet written to a real account.
 
 ---
 

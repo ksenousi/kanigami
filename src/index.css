@@ -223,6 +223,41 @@ body {
   color: var(--accent);
 }
 
+/* What WaniKani said the item did. One dim line, never a badge. */
+.movement {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* The write path's switch, on the way into a session. */
+.dryrun {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 48ch;
+}
+
+.dryrun .why {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.dryrun .why.hot {
+  color: var(--accent);
+}
+
+/* A session that is really writing says so for its whole length. */
+.footline .live {
+  color: var(--accent);
+}
+
 .eyebrow {
   margin: 0;
   font-family: var(--mono);

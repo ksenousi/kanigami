@@ -4,7 +4,16 @@ import { getAvailableLessons, getAvailableReviews, getSummary } from '../lib/wan
 // Proof the whole chain works end to end: token → API → real counts for this
 // account, and a way into a review session. Phase 6 replaces this screen with
 // the home surface; until then it is the door.
-export default function Connected({ token, user, onDisconnect, onStartReview, starting, startError }) {
+export default function Connected({
+  token,
+  user,
+  onDisconnect,
+  onStartReview,
+  starting,
+  startError,
+  dryRun,
+  onDryRun
+}) {
   const [counts, setCounts] = useState(null)
   const [error, setError] = useState('')
 
@@ -58,9 +67,25 @@ export default function Connected({ token, user, onDisconnect, onStartReview, st
               </div>
             </div>
             {counts.reviews > 0 ? (
-              <button type="button" onClick={onStartReview} disabled={starting}>
-                {starting ? 'Loading' : 'Review'}
-              </button>
+              <>
+                <button type="button" onClick={onStartReview} disabled={starting}>
+                  {starting ? 'Loading' : 'Review'}
+                </button>
+
+                {/* The gate on the write path. It reads as a statement of
+                    what will happen, because that is the only thing about it
+                    worth reading. */}
+                <div className="dryrun">
+                  <button className="quiet" type="button" onClick={() => onDryRun(!dryRun)}>
+                    {dryRun ? 'dry run · on' : 'dry run · off'}
+                  </button>
+                  <p className={dryRun ? 'why' : 'why hot'}>
+                    {dryRun
+                      ? 'Answers are graded and queued for real; the request to WaniKani is logged instead of sent.'
+                      : 'Answers will be submitted to WaniKani as items finish. There is no undo for a submitted review.'}
+                  </p>
+                </div>
+              </>
             ) : (
               <p className="lede">
                 Nothing due. {counts.nextAt ? `Next review ${counts.nextAt}.` : ''}

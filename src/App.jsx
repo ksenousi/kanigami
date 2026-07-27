@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import TokenGate from './components/TokenGate.jsx'
 import Connected from './components/Connected.jsx'
 import Review from './components/Review.jsx'
-import { getUser } from './lib/wanikani.js'
+import { getUser, submitReview } from './lib/wanikani.js'
 import { loadReviewSession } from './lib/queue.js'
+import { createSubmitter } from './lib/submit.js'
 import { clearToken, readToken } from './lib/token.js'
 
 export default function App() {
@@ -15,6 +16,10 @@ export default function App() {
   const [review, setReview] = useState(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
+  // On, and it starts on again after every reload. Turning it off is a
+  // decision to write to a real account, and that decision does not survive
+  // a refresh by accident.
+  const [dryRun, setDryRun] = useState(true)
 
   // A token from a previous visit still has to be proven against the API —
   // it may have been revoked since.
@@ -53,7 +58,16 @@ export default function App() {
       if (loaded.session.items.length === 0) {
         setLoadError('Nothing is due right now.')
       } else {
-        setReview(loaded)
+        // The submitter is built here, once per session, because this is the
+        // only place that holds both the token and the dry-run decision. The
+        // review screen never sees either.
+        setReview({
+          ...loaded,
+          submitter: createSubmitter({
+            send: review => submitReview(token, review),
+            dryRun
+          })
+        })
       }
     } catch (problem) {
       setLoadError(problem.message)
@@ -87,6 +101,7 @@ export default function App() {
       <Review
         session={review.session}
         synonyms={review.synonyms}
+        submitter={review.submitter}
         onExit={() => setReview(null)}
       />
     )
@@ -100,6 +115,8 @@ export default function App() {
       onStartReview={startReview}
       starting={loading}
       startError={loadError}
+      dryRun={dryRun}
+      onDryRun={setDryRun}
     />
   )
 }

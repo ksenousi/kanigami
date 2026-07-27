@@ -15,11 +15,18 @@ and redistributes nothing.
 
 ## Status
 
-Phases 0 to 3. Reviews can be worked through end to end on the ink surface —
-token gate, queue counts, session engine, grader and review screen. Nothing
-is submitted to WaniKani yet: the write path opens in Phase 4, and until then
-a read-only token is all this needs. The lesson surface is not built. See
-[PLAN.md](PLAN.md) for the phased build; start at Phase 4.
+Phases 0 to 4. Reviews can be worked through end to end on the ink surface —
+token gate, queue counts, session engine, grader, review screen and
+submission.
+
+**Submission is behind a dry run that is on by default**, and turns itself
+back on after every reload. In dry run every answer is graded and queued for
+real and the request to WaniKani is logged to the console instead of sent, so
+a read-only token is enough to use the whole app. Turning it off writes to
+your real SRS progress, and there is no undo for a submitted review.
+
+The lesson surface is not built. See [PLAN.md](PLAN.md) for the phased build;
+start at Phase 5.
 
 ## Running it
 

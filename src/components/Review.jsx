@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { answer, nextQuestion, sessionProgress } from '../lib/session.js'
 import { grade } from '../lib/grade.js'
+import { movement } from '../lib/srs.js'
 import { acceptedAnswers, questionLine, subjectTypeName } from '../lib/subject.js'
 import AnswerField from './AnswerField.jsx'
 import Glyph from './Glyph.jsx'
@@ -15,11 +16,18 @@ import Glyph from './Glyph.jsx'
 //
 // The grader's third verdict is a UI state and not an error. 'retry' lights
 // nothing, counts nothing, and leaves what was typed alone to be corrected.
-export default function Review({ session: opening, synonyms = {}, onExit }) {
+//
+// The screen never talks to the API. It hands completed items to `submitter`,
+// which decides whether anything is actually sent — so a session can be run
+// with a submitter that only logs, which is the default and the point.
+export default function Review({ session: opening, synonyms = {}, submitter, onExit }) {
   const [session, setSession] = useState(opening)
   const [typed, setTyped] = useState('')
   const [judged, setJudged] = useState(null)
   const [nudge, setNudge] = useState(null)
+  const [sync, setSync] = useState(() => submitter.state())
+
+  useEffect(() => submitter.watch(setSync), [submitter])
 
   // While a verdict is showing, `session` is already the next generation —
   // the question on screen is the one held in `judged`.
@@ -47,11 +55,18 @@ export default function Review({ session: opening, synonyms = {}, onExit }) {
       return
     }
 
-    setSession(answer(session, asking, verdict))
+    const next = answer(session, asking, verdict)
+    setSession(next)
+
+    // Both questions right. Submit now rather than at the end of the session:
+    // a tab closed halfway through should lose the queue and nothing else.
+    if (next.justCompleted) submitter.push(next.justCompleted)
+
     setJudged({
       question: asking,
       verdict,
-      answers: acceptedAnswers(asking.subject, asking.questionType)
+      answers: acceptedAnswers(asking.subject, asking.questionType),
+      completed: Boolean(next.justCompleted)
     })
     setNudge(null)
   }
@@ -91,26 +106,37 @@ export default function Review({ session: opening, synonyms = {}, onExit }) {
             </form>
 
             <div className="judgement" aria-live="polite">
-              {judged ? <Verdict judged={judged} /> : nudge ? <p className="eyebrow hot">{nudge}</p> : null}
+              {judged ? (
+                <Verdict judged={judged} outcome={sync.results[showing.item.subjectId]} />
+              ) : nudge ? (
+                <p className="eyebrow hot">{nudge}</p>
+              ) : null}
             </div>
           </>
         ) : (
           // Phase 7 replaces this with the session wrap. Until then, the
-          // honest minimum: it is over, and nothing was sent anywhere.
+          // honest minimum: it is over, and this is what became of it.
           <>
             <div className="glyph">終</div>
             <p className="eyebrow">{progress.total} items · session finished</p>
             <p className="lede">
-              Nothing has been submitted to WaniKani — the write path opens in a later phase.
+              {sync.dryRun
+                ? 'Dry run — every submission was logged to the console instead of sent.'
+                : sync.failed.length > 0
+                  ? `${sync.failed.length} ${sync.failed.length === 1 ? 'answer' : 'answers'} could not be submitted: ${sync.failed[0].message}`
+                  : 'Everything was submitted to WaniKani.'}
             </p>
           </>
         )}
       </div>
 
       <div className="footline">
-        <span>復習</span>
+        <span className={sync.dryRun ? '' : 'live'}>{sync.dryRun ? 'dry run' : 'submitting'}</span>
         <span className="track" />
-        <span>{progress.remaining} left</span>
+        <span>
+          {sync.syncing > 0 ? `${sync.syncing} syncing · ` : ''}
+          {progress.remaining} left
+        </span>
       </div>
     </div>
   )
@@ -120,7 +146,7 @@ export default function Review({ session: opening, synonyms = {}, onExit }) {
 // this surface and no red flood. The line of type is what differs, and the
 // accepted answer appears either way: getting it wrong is when you most need
 // to see it.
-function Verdict({ judged }) {
+function Verdict({ judged, outcome }) {
   const separator = judged.question.questionType === 'reading' ? '、' : ', '
 
   return (
@@ -129,6 +155,18 @@ function Verdict({ judged }) {
         {judged.verdict === 'correct' ? 'correct' : 'incorrect · it comes back'}
       </p>
       <p className="answers">{judged.answers.join(separator)}</p>
+      {judged.completed ? <p className="movement">{movementLine(outcome)}</p> : null}
     </>
   )
+}
+
+// One dim line under a finished item, and only ever what came back — the
+// stages are read out of WaniKani's response and never worked out here. It
+// arrives a beat after the answer, so there is a word for the wait.
+function movementLine(outcome) {
+  if (!outcome) return 'submitting'
+  if (outcome.status === 'dry-run') return 'dry run · nothing sent'
+  if (outcome.status === 'skipped') return outcome.message
+  if (outcome.status === 'failed') return 'not submitted · still to sync'
+  return movement(outcome.review) ?? 'submitted'
 }
