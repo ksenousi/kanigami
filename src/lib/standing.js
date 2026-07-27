@@ -6,6 +6,8 @@
 // nothing decides an SRS stage. It reads the stage WaniKani recorded and
 // puts it in a band.
 
+import { subjectTypeName } from './subject.js'
+
 // WaniKani's nine stages in the five bands people actually talk in. Burned
 // last, because it is the one you stop thinking about.
 export const BANDS = [
@@ -55,6 +57,22 @@ export function lessonsWaiting(summary) {
 export function nextDue(summary) {
   const bucket = (summary?.reviews ?? []).find(entry => (entry.subject_ids?.length ?? 0) > 0)
   return bucket?.available_at ?? null
+}
+
+// How much has been taught, by kind. Every assignment from
+// `/assignments?started=true` has been through a lesson, so the collection
+// already fetched for the spread answers this too — no second read.
+//
+// `kana_vocabulary` counts as vocabulary, the same as it does everywhere else.
+export function learned(assignments = []) {
+  const counts = { radical: 0, kanji: 0, vocabulary: 0 }
+
+  for (const assignment of assignments) {
+    const type = subjectTypeName(assignment?.data?.subject_type)
+    if (type in counts) counts[type] += 1
+  }
+
+  return { ...counts, total: counts.radical + counts.kanji + counts.vocabulary }
 }
 
 // Progress toward the next level. WaniKani levels you up at 90% of the

@@ -64,15 +64,20 @@
   --wk-kanji: #ff00aa;
   --wk-vocab: #aa00ff;
 
-  /* The middle of the SRS spread. Themeable, unlike WaniKani's colours,
-     because these are ours — a warm-to-cool walk away from the accent as
-     items get further from needing attention. They have no per-surface role
-     because they mean the same on both; a theme moves them here. Apprentice
-     and burned are not in this list: they take --accent and --rule, which
-     already say what they need to. */
+  /* The SRS spread. Themeable, unlike WaniKani's colours, because these are
+     ours — a walk away from the accent as items get further from needing
+     attention: hot, warm, cool, cooler, and finally the colour draining out.
+     They have no per-surface role because they mean the same on both; a
+     theme moves them here. Apprentice is not in this list — it takes
+     --accent, which already says what it needs to.
+
+     These label the counts as well as drawing the bar, so each one has to be
+     readable as 9.5px type on the ground. 灰 ash is what burned is for:
+     --rule measured 1.28:1 and simply could not be read. */
   --srs-guru: #8a6f4a;
   --srs-master: #4f6b78;
   --srs-enlightened: #5a5f7a;
+  --srs-burned: #8b8275;
 
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
   --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -90,7 +95,7 @@
      --celadon: …; --ink-strokes: …;
      --paper: …; --paper-line: …; --paper-text: …; --paper-strong: …;
      --paper-soft: …; --paper-dim: …; --seal: …; --paper-strokes: …;
-     --srs-guru: …; --srs-master: …; --srs-enlightened: …;
+     --srs-guru: …; --srs-master: …; --srs-enlightened: …; --srs-burned: …;
    }
 
    Both surfaces are dark now — ink is a warm brown-black and paper a blue-
@@ -346,6 +351,29 @@ body {
   color: var(--dim);
 }
 
+/* Everything taught so far. The subject colours label it, which is the one
+   job they have — never a field of colour, only a line of type. */
+.learned {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.learned .wk-radical {
+  color: var(--wk-radical);
+}
+
+.learned .wk-kanji {
+  color: var(--wk-kanji);
+}
+
+.learned .wk-vocabulary {
+  color: var(--wk-vocab);
+}
+
 /* The SRS spread: one segmented hairline, and the counts beneath it as one
    line of type. Never five cards with five numbers in them. */
 .spreadline {
@@ -366,24 +394,27 @@ body {
   border-radius: 1px;
 }
 
-.srs-apprentice {
+/* One colour per band, drawing the segment and colouring its own count. The
+   colour is what ties the two together — without it the words are evenly
+   spaced over proportional segments and you cannot tell which is which. */
+.segment.srs-apprentice {
   background: var(--accent);
 }
 
-.srs-guru {
+.segment.srs-guru {
   background: var(--srs-guru);
 }
 
-.srs-master {
+.segment.srs-master {
   background: var(--srs-master);
 }
 
-.srs-enlightened {
+.segment.srs-enlightened {
   background: var(--srs-enlightened);
 }
 
-.srs-burned {
-  background: var(--rule);
+.segment.srs-burned {
+  background: var(--srs-burned);
 }
 
 .counts {
@@ -394,6 +425,26 @@ body {
   text-transform: uppercase;
   color: var(--dim);
   text-align: center;
+}
+
+.counts .srs-apprentice {
+  color: var(--accent);
+}
+
+.counts .srs-guru {
+  color: var(--srs-guru);
+}
+
+.counts .srs-master {
+  color: var(--srs-master);
+}
+
+.counts .srs-enlightened {
+  color: var(--srs-enlightened);
+}
+
+.counts .srs-burned {
+  color: var(--srs-burned);
 }
 
 /* Two doors. Type over a hairline that lights — the house pattern, not a
@@ -467,17 +518,18 @@ body {
   min-width: 12ch;
 }
 
+/* No gaps between the hours: an empty hour is 1px of the baseline, and a
+   gutter between them turns the rule this is supposed to be into a row of
+   ticks. */
 .forecast .hours {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
-  height: 22px;
+  height: 24px;
   background: transparent;
 }
 
 .forecast .hour {
   flex: 1;
-  min-width: 2px;
   background: var(--rule);
 }
 
@@ -485,7 +537,12 @@ body {
   background: color-mix(in srgb, var(--accent) 55%, var(--ground));
 }
 
+/* The backlog is a marker, not an hour. Full height so it cannot be missed,
+   three pixels wide so it cannot be mistaken for a quantity — it is already
+   the largest figure on the screen above. */
 .forecast .hour.now {
+  flex: 0 0 3px;
+  margin-right: 4px;
   background: var(--accent);
 }
 
@@ -945,10 +1002,15 @@ button.quiet:hover:not(:disabled) {
   font-weight: 600;
 }
 
+/* On the verso, under the character. Left-aligned against the column's
+   centred glyph, because prose that is centred stops being prose. */
 .sentences {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
+  text-align: left;
+  margin-top: 6px;
 }
 
 .sentences blockquote {

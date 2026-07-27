@@ -133,10 +133,19 @@ Radical stroke images invert on this surface now (`--paper-strokes:
 invert(1)`), the same as on ink, because the ground is no longer light.
 
 - Two columns, a book spread: **verso** holds the character large with its
-  reading as `<ruby>`; **recto** holds the meaning as a display-size heading,
-  the readings labelled on'yomi / kun'yomi, the mnemonic as real prose at
-  ~42ch, and a context sentence set against a seal-red left rule. The
-  subject-type line and level sit in the running head.
+  reading as `<ruby>`, and beneath it the context sentences against a
+  seal-red left rule; **recto** holds the meaning as a display-size heading,
+  the readings labelled on'yomi / kun'yomi, and the two mnemonics as real
+  prose at ~42ch, each under a mono label. The subject-type line and level
+  sit in the running head.
+- **The sentences are on the verso deliberately.** They started on the recto,
+  which then ran past the fold on any subject with two long mnemonics while
+  the verso stopped a third of the way down — one page overflowing beside an
+  empty one. Moving them balances the spread and removes the scroll without
+  hiding or cutting anything. Rejected: splitting the reading mnemonic onto
+  its own page (doubles the Nexts in a batch), and letting the recto scroll
+  inside a viewport-capped spread — worth revisiting only if a mnemonic ever
+  overflows even a balanced spread.
 - This originally asked for a stroke count on the verso and furigana on the
   context sentences. The API carries neither; see Phase 5 for what they
   became.
@@ -165,13 +174,34 @@ It is the ink surface. Masthead, then the middle carries **position**:
   passed this level as a smaller figure.
 - The SRS spread as **one segmented hairline** 2px tall, with the counts as
   one line of letter-spaced mono beneath. Never five cards with five numbers
-  in them, which is the thing being replaced. Apprentice takes `--accent` and
-  burned takes `--rule`; the three stages between them need colours the
-  palette does not have yet, so **this phase adds `--srs-guru`,
-  `--srs-master` and `--srs-enlightened` to the palette layer** — themeable,
-  unlike WaniKani's subject colours, because they are ours. The prototype
-  used `#8a6f4a`, `#4f6b78` and `#5a5f7a`: a warm-to-cool walk away from the
-  accent as items get further from needing attention.
+  in them, which is the thing being replaced. Apprentice takes `--accent`;
+  the other four are palette entries of their own — `--srs-guru #8a6f4a`,
+  `--srs-master #4f6b78`, `--srs-enlightened #5a5f7a`, `--srs-burned
+  #8b8275` — themeable, unlike WaniKani's subject colours, because they are
+  ours. A walk away from the accent as items get further from needing
+  attention: hot, warm, cool, cooler, and finally the colour draining out.
+- **Each count is set in its own band's colour.** Decided from a prototype
+  after the first build left them all `--dim`: the segments are proportional
+  and the words evenly spaced, so nothing tied a number to a colour and you
+  had to count along the bar. Colour does the tying and the line stays
+  centred.
+  - This is why burned has a colour of its own. It was `--rule`, which
+    measures **1.28:1** against the ink ground — unreadable as 9.5px type,
+    and it made 45% of the bar look like empty track. 灰 ash `#8b8275` is
+    5.09:1, warm enough to separate by hue from enlightened next to it, and
+    still the quietest of the five.
+  - The other four measure 3.0–4.1:1, which is marginal at this size. So is
+    `--dim`, which is what they replaced, so nothing got worse — but a theme
+    picking new SRS colours should check them as **text**, not just as bars.
+  - Rejected: aligning each count under its own segment (works, but colour
+    is simpler and keeps the line centred), a swatch dot per word, and
+    dropping burned from the bar entirely.
+- **Everything learned so far, by kind**, as one line above the spread —
+  `224 radicals · 525 kanji · 1646 vocabulary`, each in WaniKani's subject
+  colour. It needs no extra request: the started-assignments collection the
+  spread already fetches carries `subject_type`. Vocabulary's `#aa00ff` is
+  3.81:1 and stays as it is; those three colours are WaniKani's and mean the
+  same thing whatever the theme.
 - Two ways in, as the house pattern: type over a hairline that lights
   `--accent` on hover and focus. `Review` and `Learn`, each with its
   keystroke in mono underneath. Disabled is 35% opacity with the rule staying
@@ -179,11 +209,21 @@ It is the ink surface. Masthead, then the middle carries **position**:
 
 **The footline track is the forecast.** Every screen already draws a 1px rule
 across the bottom; on home it carries the next 24 hours from `/summary`'s
-hourly buckets — 24 segments rising from the baseline, the current hour lit
-`--accent`, the next few hours at
+hourly buckets — segments rising from the baseline, the next few hours at
 `color-mix(in srgb, var(--accent) 55%, var(--ground))` so they stay on the
 theme's accent rather than a hardcoded brown, and empty hours staying 1px.
-`next at 18:00` sits at the left of it and `+24h` at the right.
+There are **no gaps between the hours**: a gutter turns the rule this is
+supposed to be into a row of ticks.
+
+**The backlog is not part of the forecast.** Decided from a prototype.
+WaniKani's first bucket holds everything already due, which on a neglected
+account is larger than the rest of the day put together — 364 against a
+next-tallest of 31 — so letting it set the scale flattened the twenty-three
+hours the rule exists to show, and spent the whole width repeating the number
+already standing above it. It is drawn as a **3px full-height tick in
+`--accent`** at the left, a marker rather than a quantity, and the hours after
+it are scaled among themselves. `364 due` sits at the left and `+24h` at the
+right; with nothing due the left reads `next at 18:00`, or `nothing in 24h`.
 
 Rejected: **time leading**, with the forecast as a full chart mid-screen and
 the SRS spread demoted to a rule — clearer at a glance, but it makes the

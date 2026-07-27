@@ -4,6 +4,7 @@ import {
   dueNow,
   forecast,
   kanjiPassed,
+  learned,
   lessonsWaiting,
   nextDue,
   peak,
@@ -134,5 +135,40 @@ describe('peak', () => {
   it('is zero when there is nothing to scale against', () => {
     expect(peak([])).toBe(0)
     expect(peak([{ count: 0 }, { count: 0 }])).toBe(0)
+  })
+})
+
+describe('learned', () => {
+  const of = type => ({ data: { subject_type: type } })
+
+  it('counts what has been taught, by kind', () => {
+    expect(learned([of('radical'), of('kanji'), of('kanji'), of('vocabulary')])).toEqual({
+      radical: 1,
+      kanji: 2,
+      vocabulary: 1,
+      total: 4
+    })
+  })
+
+  // The same rule the glyph and the question line already follow.
+  it('counts kana vocabulary as vocabulary', () => {
+    expect(learned([of('vocabulary'), of('kana_vocabulary')])).toMatchObject({
+      vocabulary: 2,
+      total: 2
+    })
+  })
+
+  it('ignores anything it does not recognise rather than inventing a bucket', () => {
+    expect(learned([of('radical'), of('something_new'), {}, { data: {} }])).toEqual({
+      radical: 1,
+      kanji: 0,
+      vocabulary: 0,
+      total: 1
+    })
+  })
+
+  it('is all zeros at the very beginning', () => {
+    expect(learned([])).toEqual({ radical: 0, kanji: 0, vocabulary: 0, total: 0 })
+    expect(learned()).toEqual({ radical: 0, kanji: 0, vocabulary: 0, total: 0 })
   })
 })

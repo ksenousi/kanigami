@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getLevelKanji, getStartedAssignments, getSummary } from '../lib/wanikani.js'
-import { dueNow, kanjiPassed, lessonsWaiting, spread } from '../lib/standing.js'
+import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
 import Forecast from './Forecast.jsx'
 import useOnline from './useOnline.js'
 
@@ -33,7 +33,13 @@ export default function Home({
     Promise.all([getSummary(token), getStartedAssignments(token), getLevelKanji(token, user.level)])
       .then(([summary, started, kanji]) => {
         if (!live) return
-        setStanding({ summary, spread: spread(started), kanji: kanjiPassed(kanji) })
+        setStanding({
+          summary,
+          spread: spread(started),
+          kanji: kanjiPassed(kanji),
+          // The same collection, counted by kind rather than by stage.
+          learned: learned(started)
+        })
       })
       .catch(problem => {
         if (live) setFailure(problem.message)
@@ -112,6 +118,8 @@ export default function Home({
                 : 'no kanji at this level yet'}
             </p>
 
+            <Learned learned={standing.learned} />
+
             <Spread spread={standing.spread} />
 
             <div className="doors">
@@ -162,6 +170,23 @@ export default function Home({
   )
 }
 
+// Everything taught so far, by kind. WaniKani's subject colours do the
+// labelling — this is what they are for, and a line of type is the only place
+// the design lets them appear.
+function Learned({ learned: counts }) {
+  if (counts.total === 0) return null
+
+  return (
+    <p className="learned">
+      <span className="wk-radical">{counts.radical} radicals</span>
+      {' · '}
+      <span className="wk-kanji">{counts.kanji} kanji</span>
+      {' · '}
+      <span className="wk-vocabulary">{counts.vocabulary} vocabulary</span>
+    </p>
+  )
+}
+
 // One segmented hairline, and the counts as one line of type beneath it.
 // Never five cards with five numbers in them — that is the thing this
 // replaces.
@@ -181,8 +206,18 @@ function Spread({ spread: bands }) {
             />
           ))}
       </div>
+      {/* Each count wears its band's colour, which is what ties it to the
+          segment above — the words are evenly spaced and the segments are
+          proportional, so position cannot do that job. */}
       <p className="counts">
-        {bands.bands.map(band => `${band.key} ${band.count}`).join(' · ')}
+        {bands.bands.map((band, index) => (
+          <span key={band.key}>
+            {index > 0 ? ' · ' : ''}
+            <span className={`srs-${band.key}`}>
+              {band.key} {band.count}
+            </span>
+          </span>
+        ))}
       </p>
     </div>
   )

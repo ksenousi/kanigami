@@ -41,9 +41,14 @@ export default function Lesson({ items, onQuiz, onExit }) {
       </header>
 
       <div className="spread">
+        {/* The context sentences sit under the character rather than at the
+            bottom of the recto. The recto was running past the fold on any
+            subject with two long mnemonics while this column stopped a third
+            of the way down — one page overflowing beside an empty one. */}
         <div className="verso">
           <Face subject={item.subject} />
           <p className="stat">{glyphCount(item.subject)}</p>
+          <Sentences sentences={item.subject.context_sentences} />
         </div>
 
         <div className="recto">
@@ -56,8 +61,6 @@ export default function Lesson({ items, onQuiz, onExit }) {
               long one you cannot tell where the meaning ends. */}
           <Mnemonic source={item.subject.meaning_mnemonic} label="meaning" />
           <Mnemonic source={item.subject.reading_mnemonic} label="reading" />
-
-          <Sentences sentences={item.subject.context_sentences} />
         </div>
       </div>
 
