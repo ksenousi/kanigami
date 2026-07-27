@@ -47,7 +47,7 @@ export default function Wrap({ token, session, submitter, onDone, onDisconnect }
         <div className="glyph">終</div>
 
         <p className="eyebrow">
-          {report.completed} of {report.total} finished
+          {report.completed} of {report.total} items finished
         </p>
 
         {/* The session's own spread, in the same grammar as home's: one
@@ -66,7 +66,10 @@ export default function Wrap({ token, session, submitter, onDone, onDisconnect }
             <p className="counts">
               <span className="right">{report.correct} right</span>
               {report.wrong > 0 ? <span className="wrong">{report.wrong} wrong</span> : null}
-              <span>{Math.round(report.accuracy * 100)}% of {report.asked}</span>
+              {/* Items above, questions here, and nothing on screen said the
+                  units differed — `82% of 17` read as 82% of 17 things. Each
+                  figure on this screen now names what it counts. */}
+              <span>{Math.round(report.accuracy * 100)}% of {report.asked} questions</span>
             </p>
           </div>
         ) : null}
@@ -122,7 +125,10 @@ export default function Wrap({ token, session, submitter, onDone, onDisconnect }
 function whatBecameOfIt(sync, report) {
   if (sync.failed.length > 0) {
     const n = sync.failed.length
-    return `${n} ${n === 1 ? 'answer' : 'answers'} could not be sent: ${sync.failed[0].message}`
+    // There is no retry to offer — the submitter has already spent its
+    // backoff. What there is, is that an unsent answer costs nothing
+    // permanent, and that is worth saying rather than leaving to be inferred.
+    return `${n} ${n === 1 ? 'answer' : 'answers'} could not be sent, so ${n === 1 ? 'that item stays' : 'those items stay'} due and will come round again: ${sync.failed[0].message}`
   }
   if (sync.syncing > 0) {
     return `${sync.syncing} still syncing.`

@@ -46,6 +46,39 @@ export default function TokenGate({ onConnected }) {
           .
         </p>
 
+        {/* The field comes before the permissions block, which is the
+            opposite of how this screen used to read. Three paragraphs of
+            prose above the only control put the field below the fold on a
+            1280×720 laptop — the screen that exists to accept a token showed
+            neither the field nor the button, on a dark ground with no
+            scrollbar to suggest there was more. The scopes matter while you
+            are on WaniKani's settings page choosing them; by the time you
+            have a token in the clipboard, the field is what you want. */}
+        <form className="field" onSubmit={connect}>
+          <input
+            type="password"
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            placeholder="00000000-0000-0000-0000-000000000000"
+            aria-label="WaniKani personal access token"
+            aria-describedby={error ? 'token-error' : undefined}
+            autoComplete="off"
+            spellCheck="false"
+            disabled={checking}
+          />
+          <div className="rule" />
+        </form>
+
+        {error ? (
+          <p className="error" id="token-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        <button type="button" onClick={connect} disabled={checking || !value.trim()}>
+          {checking ? 'Checking' : 'Connect'}
+        </button>
+
         <div className="perms">
           <p className="eyebrow">Permissions · two, and only to write</p>
           <ul className="scopes">
@@ -66,26 +99,6 @@ export default function TokenGate({ onConnected }) {
             anything this code can make.
           </p>
         </div>
-
-        <form className="field" onSubmit={connect}>
-          <input
-            type="password"
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            placeholder="00000000-0000-0000-0000-000000000000"
-            aria-label="WaniKani personal access token"
-            autoComplete="off"
-            spellCheck="false"
-            disabled={checking}
-          />
-          <div className="rule" />
-        </form>
-
-        {error ? <p className="error">{error}</p> : null}
-
-        <button type="button" onClick={connect} disabled={checking || !value.trim()}>
-          {checking ? 'Checking' : 'Connect'}
-        </button>
       </div>
 
       <div className="footline">

@@ -20,6 +20,12 @@ export default function Lesson({ items, onQuiz, onExit }) {
   // quiz. The keyboard gets through a batch without reaching for the mouse.
   useEffect(() => {
     function key(event) {
+      // Enter on a focused button already fires that button's onClick, and
+      // Next and Quiz are bound to the same actions this handler runs — so
+      // without the guard, tabbing to Next and pressing Enter advanced twice
+      // and skipped a subject silently, and Enter on Back at the last card
+      // went back *and* entered the quiz.
+      if (event.target !== document.body) return
       if (event.key === 'ArrowLeft') setAt(n => Math.max(0, n - 1))
       if (event.key === 'ArrowRight' || event.key === 'Enter') {
         if (last && event.key === 'Enter') onQuiz()
@@ -66,6 +72,9 @@ export default function Lesson({ items, onQuiz, onExit }) {
 
       <div className="folio">
         <span>{at + 1} / {items.length}</span>
+        {/* Home names the key under each door; the lesson had the same
+            keyboard path and named none of it. */}
+        <span className="keys">← →</span>
         <span className="sp" />
         <button className="quiet" type="button" onClick={() => setAt(n => Math.max(0, n - 1))} disabled={at === 0}>
           Back

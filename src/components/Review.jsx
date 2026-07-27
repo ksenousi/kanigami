@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { answer, nextQuestion, sessionProgress } from '../lib/session.js'
 import { grade } from '../lib/grade.js'
 import { movement } from '../lib/srs.js'
-import { acceptedAnswers, questionParts, subjectTypeName } from '../lib/subject.js'
+import { acceptedAnswers, echoesAnswer, questionParts, subjectTypeName } from '../lib/subject.js'
 import AnswerField from './AnswerField.jsx'
 import Glyph from './Glyph.jsx'
 import useOnline from './useOnline.js'
@@ -80,6 +80,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
       question: asking,
       verdict,
       answers: acceptedAnswers(asking.subject, asking.questionType),
+      typed,
       completed: Boolean(next.justCompleted)
     })
     setNudge(null)
@@ -118,16 +119,13 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
                 placeholder={showing.questionType === 'reading' ? 'かな' : 'meaning'}
                 lit={judged?.verdict ?? null}
                 locked={Boolean(judged) || !online}
+                paused={!online}
                 focusKey={judged ? 'judged' : `${asking.item.subjectId}:${asking.questionType}`}
               />
             </form>
 
             <div className="judgement" aria-live="polite">
-              {!online ? (
-                <p className="eyebrow hot">
-                  offline · paused, and nothing you have answered is lost
-                </p>
-              ) : judged ? (
+              {judged ? (
                 <Verdict judged={judged} outcome={sync.results[showing.item.subjectId]} />
               ) : nudge ? (
                 <p className="eyebrow hot">{nudge}</p>
@@ -137,15 +135,24 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
         ) : null}
       </div>
 
-      <div className="footline">
-        <span className={sync.dryRun ? '' : 'live'}>{sync.dryRun ? 'dry run' : 'submitting'}</span>
+      {/* The pause belongs here and not in the judgement slot. It used to
+          render as `.eyebrow.hot` where a verdict goes — same position, same
+          size, same vermilion as `incorrect · it comes back` — so typing an
+          answer while offline produced something that read as a miss. The
+          footline already reports what the session is doing. */}
+      <div className="footline" role="status">
+        {online ? (
+          <span className={sync.dryRun ? '' : 'live'}>{sync.dryRun ? 'dry run' : 'submitting'}</span>
+        ) : (
+          <span>offline · paused, nothing answered is lost</span>
+        )}
         <span className="track" />
         <span>
           {sync.failed.length > 0 ? (
             <span className="live">{sync.failed.length} unsent · </span>
           ) : null}
           {sync.syncing > 0 ? `${sync.syncing} syncing · ` : ''}
-          {progress.remaining} left
+          {progress.remaining} {progress.remaining === 1 ? 'item' : 'items'} left
         </span>
       </div>
     </div>
@@ -167,7 +174,7 @@ function Question({ item, questionType }) {
     <p className={`question wk-${subjectTypeName(item.type)}`}>
       <span className="kind">{kind}</span>
       <span className={`asked ${asked}`}>{asked}</span>
-      {hint ? <span className="kind">{hint}</span> : null}
+      {hint ? <span className="hint">{hint}</span> : null}
     </p>
   )
 }
@@ -180,13 +187,24 @@ function Question({ item, questionType }) {
 function Verdict({ judged, outcome }) {
   const separator = judged.question.questionType === 'reading' ? '、' : ', '
   const right = judged.verdict === 'correct'
+  // A right answer with one accepted form printed that form again, 30px under
+  // a field already showing it. Suppressed only in that exact case: a second
+  // accepted meaning, or a synonym that was taken, is still worth seeing.
+  const echo = right && echoesAnswer(judged.typed, judged.answers)
+  // Latin meanings used to arrive in mincho — the app's only Latin serif, in
+  // the state that most wants plain reading. The Japanese keeps the serif.
+  const latin = judged.question.questionType === 'meaning'
 
   return (
     <>
       <p className={right ? 'eyebrow ok' : 'eyebrow hot'}>
         {right ? 'correct' : 'incorrect · it comes back'}
       </p>
-      <p className={right ? 'answers ok' : 'answers'}>{judged.answers.join(separator)}</p>
+      {echo ? null : (
+        <p className={['answers', latin ? 'latin' : '', right ? 'ok' : ''].filter(Boolean).join(' ')}>
+          {judged.answers.join(separator)}
+        </p>
+      )}
       {judged.completed ? <p className="movement">{movementLine(outcome)}</p> : null}
     </>
   )

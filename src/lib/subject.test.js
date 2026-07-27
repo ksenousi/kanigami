@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   acceptedAnswers,
+  echoesAnswer,
   glyphFor,
   questionLine,
   questionParts,
@@ -192,5 +193,29 @@ describe('questionParts — which reading, which meaning', () => {
   it('keeps the subject kind separate from what is being asked', () => {
     const { kind, asked } = questionParts(item('radical', drawnRadical), 'meaning')
     expect([kind, asked]).toEqual(['radical', 'meaning'])
+  })
+})
+
+describe('echoesAnswer', () => {
+  it('is an echo when the one accepted answer is what was typed', () => {
+    expect(echoesAnswer('さん', ['さん'])).toBe(true)
+  })
+
+  it('ignores case and stray whitespace', () => {
+    expect(echoesAnswer('  mountain ', ['Mountain'])).toBe(true)
+  })
+
+  // Four accepted meanings and you gave one: the other three are the point.
+  it('is not an echo when more than one answer would have done', () => {
+    expect(echoesAnswer('valuable', ['With Trouble', 'Valuable', 'Precious'])).toBe(false)
+  })
+
+  // A synonym was taken, so the canonical answer is news.
+  it('is not an echo when what was typed is not the accepted form', () => {
+    expect(echoesAnswer('grown-up', ['Adult'])).toBe(false)
+  })
+
+  it('is not an echo when there is nothing to show', () => {
+    expect(echoesAnswer('さん', [])).toBe(false)
   })
 })

@@ -116,7 +116,7 @@ export default function App() {
     return (
       <div className="surface-ink">
         <div className="centred">
-          <div className="eyebrow hot">connecting</div>
+          <div className="eyebrow hot" role="status">connecting</div>
         </div>
       </div>
     )

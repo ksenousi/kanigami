@@ -37,8 +37,20 @@
   --ink-text: #e6dfd0;
   --ink-strong: #f2ece0; /* display type — the glyph, the standing figures */
   --ink-soft: #cfc6b4;   /* running prose, set back from the body text */
-  --ink-dim: #6b6255;
-  --vermilion: #c8452c;
+  /* The quiet register, and the most-used colour in the app — every mono
+     eyebrow, the footline, the counts, the folios. It was #6b6255, which is
+     3.21:1 on the ink and fails AA at the label size. Raising --label from
+     9.5px to 13px fixed how big these were and never touched how bright.
+     4.63:1 clears AA, stays a long way under --ink-soft's 11.37:1, and keeps
+     the brown bias that separates ink from paper. */
+  --ink-dim: #857b6b;
+  /* 朱 vermilion. Lifted from #c8452c, which was 3.98:1 — fine on the 50px
+     figures and the wrong-answer rule, under AA everywhere it carries 13–16px
+     type, and that includes the retry nudge and the warning that the next
+     answer writes for real. Same hue to a tenth of a degree, so the 42° of
+     separation from --karashi that the meaning/reading split rests on is
+     untouched; only the lightness moved. 4.68:1. */
+  --vermilion: #d4533a;
   /* 青磁 celadon — what a right answer lights. The traditional foil to
      vermilion, and desaturated enough never to read as a success badge. The
      two verdicts sharing one accent is what made a miss easy to miss. */
@@ -55,7 +67,7 @@
   --paper-text: #dfe3ec;
   --paper-strong: #f0f3fa; /* display type — the character, the gloss */
   --paper-soft: #aeb5c4;   /* running prose, set back from the body text */
-  --paper-dim: #6f7788;
+  --paper-dim: #767f90;  /* 4.57:1, to agree with ink's dim rather than sit a step brighter */
   --seal: #d4593c;         /* lifted from #9e3b26 to carry on a dark ground */
   --paper-strokes: invert(1);
 
@@ -107,10 +119,26 @@
      One place to change if it is still not comfortable. Raise the whole
      scale rather than one rule, or the hierarchy quietly flattens. */
   --label: 13px;   /* mono eyebrows, footline, counts, folios */
+  --control: 14px; /* buttons */
   --small: 16px;   /* secondary prose — the dry-run note, an error */
   --body: 18px;    /* prose meant to be read: mnemonics, the lede */
-  --input: 19px;   /* what you type */
-  --control: 14px; /* buttons */
+  --input: 19px;   /* what you type, and the question's loud word */
+
+  /* The display steps. These used to be eleven numbers written into eleven
+     rules, which made the instruction above — raise the whole scale, never
+     one rule — impossible to follow: raising --label moved the labels and
+     left every display size where it was, flattening the hierarchy in the
+     exact way the note warns about. Two near-duplicates (24px beside 23px)
+     collapsed into one step on the way in. */
+  --display: 23px;    /* the wordmark, an accepted answer, a missed glyph */
+  --display-lg: 29px; /* a door */
+  --figure: 50px;     /* the standing figures */
+
+  /* Fluid, so they are sizes rather than steps — they answer to the
+     viewport, and the character is the interface on both surfaces. */
+  --glyph: clamp(96px, 20vw, 168px); /* the review glyph */
+  --face: clamp(84px, 14vw, 150px);  /* the lesson character */
+  --gloss: clamp(28px, 4vw, 40px);   /* what it means, on paper */
 
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
   --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -159,6 +187,20 @@
   --accent: var(--vermilion);
   --ok: var(--celadon);
   --strokes: var(--ink-strokes);
+
+  /* WaniKani's colours, carried the same distance toward the surface's own
+     text on both surfaces. Bare on the ink, kanji #ff00aa out-read the word
+     it was labelling — a saturated magenta beats a desaturated blue at any
+     size, so the 13px subject type was louder than the 19px question — while
+     vocabulary #aa00ff sat at 3.81:1 and was the least legible thing on the
+     line. Paper had been mixing them at 62% since it was built; ink was not,
+     which is the two surfaces disagreeing about the same information.
+     Mixing toward the text does both jobs at once: it drains the shout out
+     of the pink and lifts the purple to 5.30:1. Bound per surface rather
+     than at :root, because --text means different things here and there. */
+  --subject-radical: color-mix(in srgb, var(--wk-radical) 62%, var(--text));
+  --subject-kanji: color-mix(in srgb, var(--wk-kanji) 62%, var(--text));
+  --subject-vocabulary: color-mix(in srgb, var(--wk-vocab) 62%, var(--text));
 }
 
 .surface-paper {
@@ -172,6 +214,10 @@
   --accent: var(--seal);
   --ok: var(--celadon);
   --strokes: var(--paper-strokes);
+
+  --subject-radical: color-mix(in srgb, var(--wk-radical) 62%, var(--text));
+  --subject-kanji: color-mix(in srgb, var(--wk-kanji) 62%, var(--text));
+  --subject-vocabulary: color-mix(in srgb, var(--wk-vocab) 62%, var(--text));
 
   color-scheme: dark;
 }
@@ -212,7 +258,7 @@ body {
 
 .masthead .wordmark {
   font-family: var(--jp-serif);
-  font-size: 23px;
+  font-size: var(--display);
   letter-spacing: 0.12em;
   color: var(--text);
 }
@@ -241,7 +287,7 @@ body {
 
 .glyph {
   font-family: var(--jp-serif);
-  font-size: clamp(96px, 20vw, 168px);
+  font-size: var(--glyph);
   line-height: 0.88;
   font-weight: 300;
   color: var(--text-strong);
@@ -280,9 +326,17 @@ body {
 }
 
 .question .asked {
-  font-size: 19px;
+  font-size: var(--input);
   letter-spacing: 0.2em;
   color: var(--text-strong);
+}
+
+/* The subject colour paints the whole line, so `any of 4` was arriving in
+   kanji-pink — a colour that means "this is a kanji" attached to a phrase
+   that says nothing about the subject type. The hint answers *which*, and
+   belongs in the quiet register with the rest of the scaffolding. */
+.question .hint {
+  color: var(--dim);
 }
 
 .question .asked.meaning {
@@ -294,20 +348,24 @@ body {
 }
 
 .question.wk-radical {
-  color: var(--wk-radical);
+  color: var(--subject-radical);
 }
 
 .question.wk-kanji {
-  color: var(--wk-kanji);
+  color: var(--subject-kanji);
 }
 
 .question.wk-vocabulary {
-  color: var(--wk-vocab);
+  color: var(--subject-vocabulary);
 }
 
-/* Held open so the glyph does not jump when a verdict arrives. */
+/* Held open so the glyph does not jump when a verdict arrives — which means
+   reserving the *tallest* verdict, not the shortest. At 58px it reserved the
+   bare eyebrow and the glyph still rose 19px on every correct answer, since
+   a completed item adds the accepted answer and the movement line under it.
+   100px is the correct-with-movement case measured. */
 .judgement {
-  min-height: 58px;
+  min-height: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -318,10 +376,24 @@ body {
   margin: 0;
 }
 
+/* The accepted answer, and on a miss it used to wear the accent — which put
+   the answer at 3.98:1 next to what you wrongly typed at 14.52:1, making the
+   wrong word the brightest thing on screen and the right one the dimmest.
+   The accent already carries the rule and the verdict line in that state;
+   this was its third job and the wrong one. The hue split is untouched. */
 .answers {
   font-family: var(--jp-serif);
-  font-size: 23px;
-  color: var(--accent);
+  font-size: var(--display);
+  color: var(--text-strong);
+}
+
+/* The serif is for the Japanese. An English meaning set in mincho was the
+   only Latin serif anywhere in the app, and it appeared in the state that
+   most wants plain reading — paper's .gloss has always set the same words in
+   the sans, so the two surfaces were disagreeing about this too. */
+.answers.latin {
+  font-family: var(--sans);
+  letter-spacing: 0.01em;
 }
 
 .answers.ok {
@@ -384,21 +456,21 @@ body {
 
 .missed .ch {
   font-family: var(--jp-serif);
-  font-size: 24px;
+  font-size: var(--display);
   color: var(--text-strong);
   min-width: 2.2em;
 }
 
 .missed .ch.wk-radical {
-  color: var(--wk-radical);
+  color: var(--subject-radical);
 }
 
 .missed .ch.wk-kanji {
-  color: var(--wk-kanji);
+  color: var(--subject-kanji);
 }
 
 .missed .ch.wk-vocabulary {
-  color: var(--wk-vocab);
+  color: var(--subject-vocabulary);
 }
 
 /* The session's own tally, in the spread's grammar. Right and wrong keep the
@@ -445,9 +517,17 @@ body {
 }
 
 /* Everything taught so far. The subject colours label it, which is the one
-   job they have — never a field of colour, only a line of type. */
+   job they have — never a field of colour, only a line of type.
+
+   Laid out with gaps for the same reason .counts is, and it was written with
+   · separators anyway: three counts wrap on a narrow screen, and a wrapped
+   separator leaves a dot hanging at the end of a line. */
 .learned {
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
   font-family: var(--mono);
   font-size: var(--label);
   letter-spacing: 0.15em;
@@ -456,15 +536,15 @@ body {
 }
 
 .learned .wk-radical {
-  color: var(--wk-radical);
+  color: var(--subject-radical);
 }
 
 .learned .wk-kanji {
-  color: var(--wk-kanji);
+  color: var(--subject-kanji);
 }
 
 .learned .wk-vocabulary {
-  color: var(--wk-vocab);
+  color: var(--subject-vocabulary);
 }
 
 /* The SRS spread: one segmented hairline, and the counts beneath it as one
@@ -567,7 +647,7 @@ body {
 
 .door .name {
   font-family: var(--jp-serif);
-  font-size: 29px;
+  font-size: var(--display-lg);
   letter-spacing: 0.04em;
   color: var(--text-strong);
   transition: color 0.15s;
@@ -642,10 +722,14 @@ body {
   align-items: flex-end;
 }
 
+/* --rule here left the empty hours at 1.28:1, so a quiet stretch read as a
+   gap rather than as a baseline and the row came apart into ticks. The
+   no-gaps layout below only preserves the connective tissue if you can see
+   it. */
 .forecast .hour i {
   display: block;
   width: 100%;
-  background: var(--rule);
+  background: var(--dim);
 }
 
 .forecast .hour.soon i {
@@ -679,15 +763,35 @@ body {
   max-width: 48ch;
 }
 
+/* At --small in --text-soft this paragraph was the loudest text on the home
+   screen — 11.37:1 sans against the 4.63:1 mono everything else is set in —
+   so the eye landed on a note about a developer safety switch before it
+   landed on the review count or either door. It is scaffolding; the control
+   above it is the thing worth reading. */
 .dryrun .why {
   margin: 0;
-  font-size: var(--small);
+  font-size: var(--label);
   line-height: 1.7;
-  color: var(--text-soft);
+  color: var(--dim);
   text-align: center;
 }
 
+.dryrun button.quiet {
+  color: var(--text);
+}
+
+/* Demoting the note above does not demote this one. Dry run on is the safe,
+   boring state and its explanation is scaffolding; dry run off means the next
+   answer writes to somebody's real SRS history with no undo, and that stays
+   at reading size. It is set in --text-strong rather than the accent because
+   vermilion is 3.98:1 and this is the one warning that has to be read rather
+   than noticed; the accent is on the control that turned it on. */
 .dryrun .why.hot {
+  font-size: var(--small);
+  color: var(--text-strong);
+}
+
+.dryrun.live button.quiet {
   color: var(--accent);
 }
 
@@ -788,8 +892,13 @@ body {
   text-align: center;
 }
 
+/* --rule here was 1.28:1 — the same ratio this file calls unreadable where
+   the burned band gets its own colour. It made the placeholder invisible,
+   and the placeholder is doing two jobs: restating the question quietly
+   where the eye already is, and showing that the reading field converts
+   romaji before a key is pressed. Neither survived being invisible. */
 .field input::placeholder {
-  color: var(--rule);
+  color: var(--dim);
 }
 
 .field input:focus {
@@ -835,6 +944,20 @@ body {
   background: linear-gradient(90deg, transparent, var(--ok) 12%, var(--ok) 88%, transparent);
 }
 
+/* Offline. The field is read-only either way, but only this reason for it
+   needs saying — after a verdict the field is meant to sit there holding
+   what you typed, while offline it is quietly refusing keys. */
+.field.review.paused {
+  opacity: 0.45;
+}
+
+/* De-boxed, like everything else. Connect, Next and Quiz were rounded
+   rectangles with a border all the way round, sitting a few hundred pixels
+   from doors that are a word over a hairline — so the app was arguing both
+   sides of its own thesis, and the boxed version was winning on the screens a
+   first-time user sees first. The hairline is the affordance: it sits under
+   the word at rest and takes the accent on hover, which is the same sentence
+   the field and the doors already say. */
 button {
   font-family: var(--mono);
   font-size: var(--control);
@@ -842,15 +965,16 @@ button {
   text-transform: uppercase;
   color: var(--text);
   background: transparent;
-  border: 1px solid var(--rule);
-  border-radius: 2px;
-  padding: 10px 20px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 8px 6px 7px;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
 
 button:hover:not(:disabled) {
-  border-color: var(--accent);
+  border-bottom-color: var(--accent);
   color: var(--accent);
 }
 
@@ -860,9 +984,13 @@ button:disabled {
 }
 
 button.quiet {
-  border-color: transparent;
+  border-bottom-color: transparent;
   color: var(--dim);
-  padding: 10px 0;
+  padding: 8px 0 7px;
+}
+
+button.quiet:hover:not(:disabled) {
+  border-bottom-color: var(--accent);
 }
 
 button.quiet:hover:not(:disabled) {
@@ -896,7 +1024,7 @@ button.quiet:hover:not(:disabled) {
 
 .figure b {
   font-family: var(--jp-serif);
-  font-size: 50px;
+  font-size: var(--figure);
   font-weight: 300;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -997,7 +1125,7 @@ button.quiet:hover:not(:disabled) {
 }
 
 .face {
-  font-size: clamp(84px, 14vw, 150px);
+  font-size: var(--face);
   line-height: 1.1;
   font-weight: 400;
   color: var(--text-strong);
@@ -1048,7 +1176,7 @@ button.quiet:hover:not(:disabled) {
 
 .gloss {
   margin: 0;
-  font-size: clamp(28px, 4vw, 40px);
+  font-size: var(--gloss);
   font-weight: 400;
   line-height: 1.2;
   color: var(--text-strong);
@@ -1056,7 +1184,7 @@ button.quiet:hover:not(:disabled) {
 
 .readings {
   margin: 0;
-  font-size: 24px;
+  font-size: var(--display);
   color: var(--text);
 }
 
@@ -1105,15 +1233,15 @@ button.quiet:hover:not(:disabled) {
 }
 
 .m-radical {
-  color: color-mix(in srgb, var(--wk-radical) 62%, var(--text));
+  color: var(--subject-radical);
 }
 
 .m-kanji {
-  color: color-mix(in srgb, var(--wk-kanji) 62%, var(--text));
+  color: var(--subject-kanji);
 }
 
 .m-vocabulary {
-  color: color-mix(in srgb, var(--wk-vocab) 62%, var(--text));
+  color: var(--subject-vocabulary);
 }
 
 .m-reading,
@@ -1148,7 +1276,7 @@ button.quiet:hover:not(:disabled) {
 }
 
 .sentences .ja {
-  font-size: 19px;
+  font-size: var(--input);
   line-height: 1.9;
   color: var(--text);
 }
@@ -1181,6 +1309,8 @@ button.quiet:hover:not(:disabled) {
    carrying a verdict — so it stays visible here and simply stops moving. */
 @media (prefers-reduced-motion: reduce) {
   .field .rule::after,
+  .door .name,
+  .door .rule,
   button {
     transition: none;
   }

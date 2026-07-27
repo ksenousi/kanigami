@@ -25,11 +25,15 @@ export default function Home({
   onDryRun
 }) {
   const [standing, setStanding] = useState(null)
-  const [failure, setFailure] = useState('')
+  const [failure, setFailure] = useState(null)
+  // Bumped to re-run the three reads. A failed load used to offer only the
+  // door out, so a dropped connection cost you the token.
+  const [attempt, setAttempt] = useState(0)
   const online = useOnline()
 
   useEffect(() => {
     let live = true
+    setFailure(null)
     Promise.all([getSummary(token), getStartedAssignments(token), getLevelKanji(token, user.level)])
       .then(([summary, started, kanji]) => {
         if (!live) return
@@ -42,12 +46,12 @@ export default function Home({
         })
       })
       .catch(problem => {
-        if (live) setFailure(problem.message)
+        if (live) setFailure(problem)
       })
     return () => {
       live = false
     }
-  }, [token, user.level])
+  }, [token, user.level, attempt])
 
   const reviews = standing ? dueNow(standing.summary) : 0
   const lessons = standing ? lessonsWaiting(standing.summary) : 0
@@ -87,16 +91,24 @@ export default function Home({
         ) : null}
 
         {failure ? (
-          // Token revoked, or the network went. Either way the way out is the
-          // same door the app came in by.
+          // A revoked token and a dropped connection are not the same
+          // problem and were being offered the same answer — a button that
+          // deletes the token. Only 401 means the token is the thing at
+          // fault; everything else gets another go at the same three reads.
           <>
-            <p className="error">{failure}</p>
-            <button type="button" onClick={onDisconnect}>
-              Reconnect
-            </button>
+            <p className="error" role="alert">{failure.message}</p>
+            {failure.status === 401 ? (
+              <button type="button" onClick={onDisconnect}>
+                Disconnect
+              </button>
+            ) : (
+              <button type="button" onClick={() => setAttempt(n => n + 1)}>
+                Try again
+              </button>
+            )}
           </>
         ) : !standing ? (
-          <div className="eyebrow hot">reading your queue</div>
+          <div className="eyebrow hot" role="status">reading your queue</div>
         ) : (
           <>
             {/* A count of nothing is dim. Only a number worth acting on gets
@@ -137,15 +149,25 @@ export default function Home({
               />
             </div>
 
-            {starting ? <p className="eyebrow hot">loading</p> : null}
-            {error ? <p className="error">{error}</p> : null}
+            {starting ? <p className="eyebrow hot" role="status">loading</p> : null}
+            {error ? <p className="error" role="alert">{error}</p> : null}
 
             {/* The gate on the write path, covering both doors. It reads as a
                 statement of what will happen, because that is the only thing
                 about it worth reading. */}
-            <div className="dryrun">
-              <button className="quiet" type="button" onClick={() => onDryRun(!dryRun)}>
-                {dryRun ? 'dry run · on' : 'dry run · off'}
+            {/* `dry run · on` read as an instruction to turn it on as easily
+                as a statement that it is on, which is a bad ambiguity for the
+                one control deciding whether real SRS history gets written.
+                The label now names the state in words that cannot be read as
+                an imperative, and aria-pressed gives it to a screen reader. */}
+            <div className={dryRun ? 'dryrun' : 'dryrun live'}>
+              <button
+                className="quiet"
+                type="button"
+                aria-pressed={dryRun}
+                onClick={() => onDryRun(!dryRun)}
+              >
+                {dryRun ? 'dry run · nothing is sent' : 'live · writing to wanikani'}
               </button>
               <p className={dryRun ? 'why' : 'why hot'}>
                 {dryRun
@@ -177,11 +199,12 @@ function Learned({ learned: counts }) {
   if (counts.total === 0) return null
 
   return (
+    // Gaps rather than · separators, for the reason .counts already uses
+    // them: three counts wrap on a narrow screen and strand a dot at the end
+    // of the first line. The colours do the separating.
     <p className="learned">
       <span className="wk-radical">{counts.radical} radicals</span>
-      {' · '}
       <span className="wk-kanji">{counts.kanji} kanji</span>
-      {' · '}
       <span className="wk-vocabulary">{counts.vocabulary} vocabulary</span>
     </p>
   )

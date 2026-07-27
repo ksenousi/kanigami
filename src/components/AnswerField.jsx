@@ -24,6 +24,7 @@ export default function AnswerField({
   kana,
   lit,
   locked,
+  paused,
   placeholder,
   focusKey
 }) {
@@ -43,7 +44,11 @@ export default function AnswerField({
   }
 
   return (
-    <div className="field review">
+    // `locked` after a verdict looks no different, and should not — the
+    // answer stands there to be read. `paused` is the other reason the field
+    // stops taking keys, and that one has to show, or an offline session just
+    // silently swallows typing.
+    <div className={paused ? 'field review paused' : 'field review'}>
       <input
         ref={input}
         type="text"

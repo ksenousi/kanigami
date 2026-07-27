@@ -80,3 +80,17 @@ export function acceptedAnswers(subject, questionType) {
     ? (subject.readings ?? []).filter(r => r.accepted_answer).map(r => r.reading)
     : (subject.meanings ?? []).filter(m => m.accepted_answer).map(m => m.meaning)
 }
+
+// Whether showing the accepted answers would only repeat what was typed.
+//
+// The answer line exists for the miss — getting it wrong is when you need to
+// see it. On a hit it is usually right too: four accepted meanings, or a
+// synonym you happened to type, are all worth confirming. What it should not
+// do is print さん under a field already reading さん, which is the common
+// case and is pure echo the eye has to diff to be sure it learned nothing.
+export function echoesAnswer(typed, answers) {
+  if (answers.length !== 1) return false
+  return flatten(typed) === flatten(answers[0])
+}
+
+const flatten = value => value.toLowerCase().trim().replace(/\s+/g, ' ')
