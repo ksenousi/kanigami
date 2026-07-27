@@ -79,6 +79,18 @@
   --srs-enlightened: #5a5f7a;
   --srs-burned: #8b8275;
 
+  /* What is being asked. Warm for the meaning, cool for the reading — the two
+     questions are otherwise the same screen, and hue is the difference you
+     catch without reading. Used directly rather than through a role, like the
+     SRS colours, because they mean the same on both surfaces.
+
+     芥子 karashi is 42° of hue from the vermilion, which matters: a wrong
+     verdict puts the two on screen together, and the obvious gold was only
+     29° away. 縹 hanada is 164° from it and sits opposite. Both clear 4.5:1
+     on the ink ground with room to spare. */
+  --karashi: #c9bb62; /* meaning */
+  --hanada: #6f9fc4;  /* reading */
+
   /* ---- type scale ----
      Not part of the palette and not themeable: this is how big the app is,
      and every size in the file comes from here. The mono labels used to sit
@@ -117,6 +129,7 @@
      --paper: …; --paper-line: …; --paper-text: …; --paper-strong: …;
      --paper-soft: …; --paper-dim: …; --seal: …; --paper-strokes: …;
      --srs-guru: …; --srs-master: …; --srs-enlightened: …; --srs-burned: …;
+     --karashi: …; --hanada: …;
    }
 
    Both surfaces are dark now — ink is a warm brown-black and paper a blue-
@@ -270,6 +283,14 @@ body {
   font-size: 19px;
   letter-spacing: 0.2em;
   color: var(--text-strong);
+}
+
+.question .asked.meaning {
+  color: var(--karashi);
+}
+
+.question .asked.reading {
+  color: var(--hanada);
 }
 
 .question.wk-radical {

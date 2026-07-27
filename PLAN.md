@@ -82,12 +82,23 @@ slightly back at `#cfc6b4` (`--text-soft`).
   `on'yomi`. **This is where WaniKani's subject colours live**: radical
   `#00aaff`, kanji `#ff00aa`, vocabulary `#aa00ff`, on the quiet pieces only.
   Never as a full-bleed background, which is precisely what we are replacing.
-  - **What is being asked is the loud piece** — 19px in `--text-strong`
-    against `--label` for the rest. It shipped as one uniform line, where
-    `meaning` and `reading` differed by a single word set exactly like every
-    word beside it, so telling two otherwise identical screens apart meant
-    reading 13px mono. The asked word is the whole difference; it gets the
-    weight.
+  - **What is being asked is the loud piece** — 19px against `--label` for
+    the rest, and it carries a hue of its own: **芥子 karashi `#c9bb62`
+    (`--karashi`) for a meaning, 縹 hanada `#6f9fc4` (`--hanada`) for a
+    reading.** Warm and cool, because the two questions are otherwise the
+    same screen. It shipped as one uniform line where they differed by a
+    single word set exactly like every word beside it, so telling two
+    identical screens apart meant reading 13px mono.
+  - **Karashi was chosen by measurement, not by eye.** A wrong verdict puts
+    the asked word and the vermilion on screen together, and the obvious gold
+    sat only 29° of hue from it. Karashi is 42° away and 9.88:1 on the
+    ground; hanada is 164° away and 6.82:1. **A theme replacing these must
+    check the same thing** — the meaning colour shares a screen with
+    `--accent` every time somebody misses.
+  - Rejected: colouring only the reading and leaving meaning in plain ink
+    (one entry rather than two, and the asymmetry was the argument);
+    **あ / A** as marks, which cost no palette at all and state the input
+    mode rather than restating the question; and 読み / 意味 in mincho.
   - **The third piece answers *which*.** A reading names its type whenever
     every accepted reading agrees on one; when they disagree, and for any
     subject with more than one accepted answer, it reads `any of 3` instead.

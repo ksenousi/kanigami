@@ -166,7 +166,7 @@ function Question({ item, questionType }) {
   return (
     <p className={`question wk-${subjectTypeName(item.type)}`}>
       <span className="kind">{kind}</span>
-      <span className="asked">{asked}</span>
+      <span className={`asked ${asked}`}>{asked}</span>
       {hint ? <span className="kind">{hint}</span> : null}
     </p>
   )
