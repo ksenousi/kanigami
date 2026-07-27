@@ -5,8 +5,9 @@ entirely in the browser on GitHub Pages.
 
 **Read [PLAN.md](PLAN.md) before doing anything.** It holds the phased build
 plan, the design spec for both surfaces, and the safety procedure for testing
-against a real WaniKani account. Every phase is built; what is left is the
-live acceptance of phases 4 and 5, which needs a real account and the Safety
+against a real WaniKani account. Every phase is built. Phase 4 has been
+accepted live — reviews really submit — so the one path never run against a
+real account is `startAssignment`, which needs a real account and the Safety
 procedure.
 
 ## Architecture

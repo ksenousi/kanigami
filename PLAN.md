@@ -563,7 +563,7 @@ session is over and that nothing was submitted. Phase 7 replaces it.
 
 ---
 
-## Phase 4 — submission ✅ built, ⚠️ not yet proven against a real account
+## Phase 4 — submission ✅ done, proven against a real account
 
 **Files:** `src/lib/submit.js`, `src/lib/srs.js`, wired through `App.jsx` and
 `Review.jsx`
@@ -579,6 +579,23 @@ response comes back with, and names nothing it was not given.
 **Shipped:** 23 further vitest cases, and all three paths driven end to end in
 the browser against a stubbed transport — dry run, a successful submission,
 and a refusal.
+
+**Accepted live**, on a throwaway account at level 1, with dry run off — five
+radicals, one of them missed on purpose:
+
+- Four answered right went `apprentice I → apprentice II`. The fifth was
+  missed, came back later in the same session, was answered right, and
+  reported `apprentice I → apprentice I`. That non-promotion is the result
+  worth keeping: nothing in this app could have decided it, so it is proof
+  the stage is read out of the response rather than worked out here.
+- The wrap said everything finished had been sent, and a fresh read of the
+  summary afterwards showed 0 reviews due, down from 5.
+- The forecast then placed the missed item 2h out and the four promoted ones
+  4h out — WaniKani's halved intervals for levels 1–2, which again is a
+  number the app was told rather than one it derived.
+
+**Still unproven:** `startAssignment`. Reviews write; starting a lesson has
+never been run against a real account.
 
 - **Dry run is the default in the constructor**, not in the caller. A
   submitter built by code that forgot to think about this writes nothing, and
