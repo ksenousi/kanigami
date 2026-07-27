@@ -64,6 +64,23 @@ for a role — `--ground`, `--text`, `--text-strong`, `--text-soft`, `--dim`,
 colour named here gives its role beside it for that reason. A rule that
 reaches past the role layer is a rule no theme can move.
 
+**Contrast is measured, not judged.** Every colour that carries type has a
+ratio against its ground written beside it in `src/index.css`, and the floor
+is 4.5:1 for anything at `--label` or `--small`. This is not a preference: a
+design review of all five surfaces found three separate colours that had been
+chosen when they carried something larger and never rechecked once they were
+carrying 13px type. `--ink-dim` was 3.21:1 while labelling nearly every line
+in the app, `--vermilion` was 3.98:1 while carrying the retry nudge and the
+warning that the next answer writes for real, and the review field's
+placeholder was set to `--rule` at 1.28:1, which is invisible. Compute the
+ratio before adding a colour, and again after moving one.
+
+**Size and luminance are two fixes, and the first does not do the second.**
+Raising `--label` from 9.5px to 13px was a real fix for the mono labels and
+it left every one of them at the same 3.21:1 it had before. When something
+reads badly, check both.
+
+
 ### 墨 Ink — the review surface
 
 The character *is* the interface. Ground `#100e0c` (`--ground`), text
@@ -721,6 +738,66 @@ wrap handoff driven in the browser.
 The whole app was driven end to end against a stubbed API for this: gate →
 home → review → wrap, and home → lesson spread → quiz → wrap, keyboard only,
 in dry run and out of it.
+
+---
+
+## The design review — what changed and what was left alone
+
+A full UI/UX review of all five surfaces, run against this document rather
+than against general taste. Most findings were the same shape: a decision
+made once, correctly, and then not carried through when something near it
+moved. The fixes are in `9cb8017`. Recorded here because the reasoning is
+not visible in the diff.
+
+**Taken, and the reasoning worth keeping:**
+
+- **The accepted answer no longer wears the accent on a miss.** It measured
+  3.98:1 next to the wrong word you typed at 14.52:1, so the wrong answer was
+  the brightest text on screen and the right one the dimmest. The plan was
+  right to reject striking through or dimming what you typed; leaving the
+  accent on the *answer* was the same mistake pointing the other way. The hue
+  split survives on the rule and the verdict line, which is where it always
+  did the work.
+- **WaniKani's colours mix 62% toward each surface's text.** Paper had done
+  this since it was built and ink never had, which is the two surfaces
+  disagreeing about the same information. Bare on ink, `#ff00aa` out-read the
+  19px word it was labelling — saturated magenta beats a desaturated blue at
+  any size — and `#aa00ff` sat at 3.81:1. They are still WaniKani's colours
+  and still one line of type.
+- **Buttons are de-boxed.** Connect, Next and Quiz were rounded rectangles
+  a few hundred pixels from doors that are a word over a hairline, so the app
+  argued both sides of its own thesis and the boxed version won on the
+  screens a new user sees first.
+- **The forecast takes focus and the arrows walk it.** The claim in the Home
+  section that nothing here is hover-only was not true: the per-hour counts
+  exist nowhere else, and a pointer was the only way to reach them.
+- **A correct answer stops echoing itself.** Showing さん under a field
+  already reading さん is not the case the answer line was built for. It
+  still appears on every miss, and whenever a second accepted form or a taken
+  synonym makes it news — `echoesAnswer` in `subject.js` draws that line.
+- **Offline left the verdict slot.** It rendered in the same position, size
+  and vermilion as `incorrect · it comes back`, so answering while offline
+  produced something that read as a miss.
+
+**Left alone deliberately:**
+
+- **The two verdicts still differ by hue and nothing else.** No shake, no
+  flood, no sound, and the review found no reason to revisit it.
+- **The subject colours stay information and stay on one line of type.**
+  Mixing them toward the text changed their luminance, not their job.
+- **`--karashi` and `--hanada` were not touched.** Both already clear 4.5:1
+  and the 42°/164° separations hold; lifting the vermilion moved its
+  lightness only, so the measurement they rest on is still good.
+- **The mnemonic parser was checked and found structurally safe.** It can
+  emit no markup at all.
+
+**Open, and not a bug:** a submission that fails after the submitter has
+spent its backoff has no retry. The item is not lost — WaniKani never
+recorded the review, so the assignment stays due and comes round again, which
+the wrap now says. A retry that survived a reload would mean holding answers
+in `localStorage`, which is the offline feature this app deliberately does
+not have. An in-session retry, while the failed items are still in memory,
+would not — that is the version to build if this ever matters.
 
 ---
 
