@@ -13,7 +13,7 @@ import Forecast from './Forecast.jsx'
 //
 // The summary is fetched here rather than handed down, because a session just
 // changed it. Reading it at the end is the only time it is certainly fresh.
-export default function Wrap({ token, session, submitter, onDone }) {
+export default function Wrap({ token, session, submitter, onDone, onDisconnect }) {
   const report = sessionReport(session)
   const [summary, setSummary] = useState(null)
   const [sync, setSync] = useState(() => submitter.state())
@@ -52,6 +52,15 @@ export default function Wrap({ token, session, submitter, onDone }) {
         </p>
 
         <p className="lede">{whatBecameOfIt(sync, report)}</p>
+
+        {/* A token revoked mid-session. The way back is the gate, and it is
+            offered here rather than taken automatically — leaving this screen
+            would take the only record of what did not get sent with it. */}
+        {sync.failed.some(failure => failure.status === 401) ? (
+          <button type="button" onClick={onDisconnect}>
+            Reconnect
+          </button>
+        ) : null}
 
         {report.missed.length > 0 ? (
           <div className="missed">

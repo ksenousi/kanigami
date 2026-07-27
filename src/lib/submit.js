@@ -78,7 +78,11 @@ export function createSubmitter({
 
   function settle(subjectId, result) {
     results[subjectId] = result
-    if (result.status === 'failed') failed.push({ subjectId, message: result.message })
+    if (result.status === 'failed') {
+      // The status travels with the failure: a screen has to tell a rejected
+      // token, which needs the user, from a server error, which does not.
+      failed.push({ subjectId, message: result.message, status: result.httpStatus ?? null })
+    }
   }
 
   async function attempt(job) {
@@ -92,7 +96,16 @@ export function createSubmitter({
         return { status: 'sent', review: await send(job.review), message: null }
       } catch (problem) {
         const hopeless = FINAL.includes(problem.status) || attempts >= BACKOFF.length
-        if (hopeless) return { status: 'failed', review: null, message: problem.message }
+        if (hopeless) {
+          return {
+            status: 'failed',
+            review: null,
+            message: problem.message,
+            // A network failure has no status at all, which is itself the
+            // distinction worth keeping: nothing reached WaniKani.
+            httpStatus: problem.status ?? null
+          }
+        }
         await sleep(BACKOFF[attempts])
       }
     }

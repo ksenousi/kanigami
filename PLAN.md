@@ -1,10 +1,14 @@
 # kanigami — build plan
 
-A handoff document. Phases 0 to 5 are on `main`; an agent picking this up
-should start at Phase 6 and work down. Phases 4 and 5 are built, but their
-acceptance is outstanding — both write to a real account, and neither has yet
-done so. See the note at the end of each. Every phase is independently
-shippable and independently reviewable.
+A handoff document. **Every phase is built and on `main`.**
+
+One thing is outstanding, and it is not code: phases 4 and 5 write to a real
+account, and neither has yet done so. Both were verified against a stubbed
+transport, which proves the client sends what it means to and not that
+WaniKani does what we expect with it. Their acceptance — a stage change
+matching wanikani.com, a started lesson appearing in the queue — needs a real
+session in a real account. See the note at the end of each, and **Safety**
+below for the procedure.
 
 Read **Ground rules** and **The design** first. They are the parts that words
 alone make ambiguous, and getting them wrong means rebuilding the phase.
@@ -563,16 +567,33 @@ wrap handoff driven in the browser.
 
 ---
 
-## Phase 8 — the edges
+## Phase 8 — the edges ✅ done
 
-- Token revoked mid-session → return to the gate without losing pending
-  submissions.
-- Network loss → pause the session and say so plainly; do not drop answers.
-- Free accounts past level 3 → explain rather than 401.
-- Empty queue → home's nothing-due state, built in Phase 6. This is the
-  calm state; do not build a second one.
-- Full keyboard navigation and visible focus on every control.
-- A wrap-up control that ends the session early and submits what is done.
+**Files:** `src/components/useOnline.js`, and edits across the screens.
+
+- **Token revoked mid-session** → the submitter records the failure with its
+  HTTP status, and the wrap offers the gate. It is offered rather than taken:
+  leaving that screen automatically would carry off the only record of what
+  did not get sent.
+- **Network loss** → the session pauses and says so. The field goes
+  read-only, answers are refused rather than swallowed, and what was already
+  typed survives the pause. `navigator.onLine` is a coarse signal — it knows
+  there is an interface, not that WaniKani is reachable — so it is used only
+  to say so, never to decide that an answer failed. That stays with the
+  submitter, which retries.
+- **Free accounts past level 3** → 403 is translated in `wanikani.js`, where
+  every other status is, rather than at each call site.
+- **Empty queue** → home's nothing-due state from Phase 6. There is still
+  only one of them.
+- **Keyboard and focus** → `r` and `l` open the two doors, arrows walk a
+  lesson spread, Enter answers and advances, and `:focus-visible` rings every
+  control on both surfaces.
+- **Early exit** → the wrap-up control, built in Phase 7. Everything finished
+  is already submitted, so it loses nothing.
+
+The whole app was driven end to end against a stubbed API for this: gate →
+home → review → wrap, and home → lesson spread → quiz → wrap, keyboard only,
+in dry run and out of it.
 
 ---
 

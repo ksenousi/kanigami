@@ -55,6 +55,17 @@ async function request(token, path, options = {}) {
   if (response.status === 401) {
     throw new WaniKaniError('That token was rejected. Check it in your WaniKani settings.', 401)
   }
+  // A free account reaches level 3 and no further, and WaniKani refuses the
+  // content above it rather than pretending it is not there. Saying so beats
+  // showing somebody a bare 403.
+  if (response.status === 403) {
+    throw new WaniKaniError(
+      'WaniKani refused that. A free account reaches level 3; past it, content ' +
+        'needs a subscription. If you are subscribed, check the token has the ' +
+        'permission this needs.',
+      403
+    )
+  }
   if (response.status === 429) {
     // Somebody else on this device is using the same token. Wait it out once.
     await new Promise(resolve => setTimeout(resolve, 10_000))

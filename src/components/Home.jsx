@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getLevelKanji, getStartedAssignments, getSummary } from '../lib/wanikani.js'
 import { dueNow, kanjiPassed, lessonsWaiting, spread } from '../lib/standing.js'
 import Forecast from './Forecast.jsx'
+import useOnline from './useOnline.js'
 
 // 家 Home — the ink surface, standing led.
 //
@@ -25,6 +26,7 @@ export default function Home({
 }) {
   const [standing, setStanding] = useState(null)
   const [failure, setFailure] = useState('')
+  const online = useOnline()
 
   useEffect(() => {
     let live = true
@@ -49,6 +51,8 @@ export default function Home({
   useEffect(() => {
     function key(event) {
       if (event.metaKey || event.ctrlKey || event.altKey || starting) return
+      // Typing into something else should not open a door.
+      if (event.target instanceof HTMLInputElement) return
       if (event.key === 'r' && reviews > 0) onReview()
       if (event.key === 'l' && lessons > 0) onLearn()
     }
@@ -71,6 +75,10 @@ export default function Home({
         <div className="eyebrow">
           level {user.level} · {user.username}
         </div>
+
+        {!online ? (
+          <p className="eyebrow hot">offline · this app is online only</p>
+        ) : null}
 
         {failure ? (
           // Token revoked, or the network went. Either way the way out is the
@@ -107,8 +115,18 @@ export default function Home({
             <Spread spread={standing.spread} />
 
             <div className="doors">
-              <Door label="Review" keys="R" onClick={onReview} enabled={reviews > 0 && !starting} />
-              <Door label="Learn" keys="L" onClick={onLearn} enabled={lessons > 0 && !starting} />
+              <Door
+                label="Review"
+                keys="R"
+                onClick={onReview}
+                enabled={reviews > 0 && !starting && online}
+              />
+              <Door
+                label="Learn"
+                keys="L"
+                onClick={onLearn}
+                enabled={lessons > 0 && !starting && online}
+              />
             </div>
 
             {starting ? <p className="eyebrow hot">loading</p> : null}

@@ -195,7 +195,23 @@ describe('when WaniKani refuses', () => {
 
     expect(send).toHaveBeenCalledTimes(1)
     expect(slept).toEqual([])
-    expect(sub.state().failed).toEqual([{ subjectId: 440, message: 'That token was rejected.' }])
+    // The status travels with the failure: the wrap has to tell a revoked
+    // token, which needs the user, from a server error, which does not.
+    expect(sub.state().failed).toEqual([
+      { subjectId: 440, message: 'That token was rejected.', status: 401 }
+    ])
+  })
+
+  it('reports a network failure as having no status at all', async () => {
+    const send = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
+    const { it: sub } = submitter({ send, dryRun: false })
+
+    sub.push(completed())
+    await sub.idle()
+
+    expect(sub.state().failed).toEqual([
+      { subjectId: 440, message: 'Failed to fetch', status: null }
+    ])
   })
 
   it('gives up after the last delay rather than retrying forever', async () => {
@@ -210,7 +226,8 @@ describe('when WaniKani refuses', () => {
     expect(sub.state().results[440]).toEqual({
       status: 'failed',
       review: null,
-      message: 'WaniKani returned 503.'
+      message: 'WaniKani returned 503.',
+      httpStatus: 503
     })
   })
 

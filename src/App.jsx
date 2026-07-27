@@ -51,6 +51,8 @@ export default function App() {
     }
   }, [token, user])
 
+  // Back to the gate. The wrap is left standing until the user leaves it,
+  // so a revoked token does not also take the record of what went unsent.
   function disconnect() {
     clearToken()
     setToken('')
@@ -140,6 +142,7 @@ export default function App() {
         session={wrap.session}
         submitter={wrap.submitter}
         onDone={() => setWrap(null)}
+        onDisconnect={disconnect}
       />
     )
   }

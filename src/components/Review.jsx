@@ -5,6 +5,7 @@ import { movement } from '../lib/srs.js'
 import { acceptedAnswers, questionLine, subjectTypeName } from '../lib/subject.js'
 import AnswerField from './AnswerField.jsx'
 import Glyph from './Glyph.jsx'
+import useOnline from './useOnline.js'
 
 // The ink surface, wired to the session engine and the grader.
 //
@@ -26,6 +27,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
   const [judged, setJudged] = useState(null)
   const [nudge, setNudge] = useState(null)
   const [sync, setSync] = useState(() => submitter.state())
+  const online = useOnline()
 
   useEffect(() => submitter.watch(setSync), [submitter])
 
@@ -44,6 +46,10 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
   const progress = sessionProgress(session)
 
   function submit() {
+    // Paused. Answers already given are held by the submitter and will go
+    // when the network does; taking new ones would be answering into a void.
+    if (!online) return
+
     if (judged) {
       setJudged(null)
       setTyped('')
@@ -110,13 +116,17 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
                 onEnter={submit}
                 kana={showing.questionType === 'reading'}
                 lit={Boolean(judged)}
-                locked={Boolean(judged)}
+                locked={Boolean(judged) || !online}
                 focusKey={judged ? 'judged' : `${asking.item.subjectId}:${asking.questionType}`}
               />
             </form>
 
             <div className="judgement" aria-live="polite">
-              {judged ? (
+              {!online ? (
+                <p className="eyebrow hot">
+                  offline · paused, and nothing you have answered is lost
+                </p>
+              ) : judged ? (
                 <Verdict judged={judged} outcome={sync.results[showing.item.subjectId]} />
               ) : nudge ? (
                 <p className="eyebrow hot">{nudge}</p>
@@ -130,6 +140,9 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
         <span className={sync.dryRun ? '' : 'live'}>{sync.dryRun ? 'dry run' : 'submitting'}</span>
         <span className="track" />
         <span>
+          {sync.failed.length > 0 ? (
+            <span className="live">{sync.failed.length} unsent · </span>
+          ) : null}
           {sync.syncing > 0 ? `${sync.syncing} syncing · ` : ''}
           {progress.remaining} left
         </span>
