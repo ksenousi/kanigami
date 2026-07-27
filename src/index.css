@@ -553,11 +553,26 @@ body {
   margin: 0;
 }
 
+/* The two scopes that do something sit forward; the three that do not stay
+   back. A flat list of five read as "tick them all", which is the opposite
+   of what it should say. */
 .perms .scopes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   font-family: var(--mono);
   font-size: 10.5px;
   letter-spacing: 0.06em;
   line-height: 2;
+  color: var(--text-soft);
+}
+
+.perms .scopes b {
+  font-weight: 400;
+  color: var(--accent);
+}
+
+.perms .scopes.off {
   color: var(--dim);
 }
 

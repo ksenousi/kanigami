@@ -272,14 +272,19 @@ touch the account itself. The entire write surface is four calls:
 answer or start a lesson early — bad SRS data, not a wrecked account. There
 is no undo for either, which is why the rules below are not optional.
 
-1. **Every phase but 4 and 5 runs on a read-only token.** Those two are the
-   only ones that write — `POST /reviews` in 4, `PUT /assignments/{id}/start`
-   in 5 — and both are behind the same default-on dry run, so even they run
-   read-only until somebody turns it off. WaniKani's token page has
-   per-permission checkboxes (start assignments, create reviews, create and
-   update study materials, update user preferences). Leave every one
-   unchecked. WaniKani then rejects writes with a 403 server-side, whatever
-   the client tries to do — a guarantee no amount of code review can match.
+1. **Work on a read-only token unless the task is the write path itself.**
+   Only two calls write — `POST /reviews` and `PUT /assignments/{id}/start` —
+   and both sit behind the default-on dry run, so even they run read-only
+   until somebody turns it off. Reading needs no permission at all, so a
+   token with every box unchecked runs the whole app in dry run, and WaniKani
+   rejects any write with a 403 server-side whatever the client tries — a
+   guarantee no amount of code review can match.
+
+   Exactly two boxes matter when you do want to write: **`reviews:create`**
+   to submit reviews and **`assignments:start`** to start lessons.
+   `study_materials:create`, `study_materials:update` and `user:update` are
+   never used and should stay unchecked. The token gate says this on screen;
+   keep the two in step if either ever changes.
 2. **Both writes are wired, and both reach the network from `App.jsx` only.**
    It hands each to a `createSubmitter` as `send` — `submitReview` for a
    review session, `startAssignment` for a lesson batch. `grep -rn
