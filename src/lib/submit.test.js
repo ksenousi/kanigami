@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createSubmitter, dryRunLine, reviewFor } from './submit.js'
+import { createSubmitter, dryRunLine, reviewFor, startLine } from './submit.js'
 
 // A completed item as the session engine hands it over. Fake ids throughout.
 const completed = (over = {}) => ({
@@ -58,7 +58,19 @@ describe('dryRunLine', () => {
   })
 })
 
+describe('startLine', () => {
+  it('names the endpoint a lesson would have written to', () => {
+    expect(startLine(reviewFor(completed()))).toBe('dry run: PUT /assignments/8001/start')
+  })
+})
+
 describe('dry run', () => {
+  it('logs whatever the caller says it would have done', () => {
+    const { it: sub, logged } = submitter({ send: vi.fn(), describe: startLine })
+    sub.push(completed())
+    expect(logged).toEqual(['dry run: PUT /assignments/8001/start'])
+  })
+
   // The one that matters most: a submitter nobody configured must not write.
   it('is what you get when nobody says otherwise', () => {
     const send = vi.fn()

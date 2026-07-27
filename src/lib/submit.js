@@ -44,11 +44,19 @@ export function dryRunLine(review) {
   )
 }
 
+// Lessons write to a different endpoint with a different body, so they say a
+// different thing. The dry-run log is only worth reading if it names the
+// request that was not made.
+export function startLine(review) {
+  return `dry run: PUT /assignments/${review.assignmentId}/start`
+}
+
 const defaultSleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 export function createSubmitter({
   send,
   dryRun = true,
+  describe = dryRunLine,
   sleep = defaultSleep,
   log = line => console.info(line)
 } = {}) {
@@ -75,7 +83,7 @@ export function createSubmitter({
 
   async function attempt(job) {
     if (dryRun) {
-      log(dryRunLine(job.review))
+      log(describe(job.review))
       return { status: 'dry-run', review: null, message: null }
     }
 

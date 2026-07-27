@@ -1,9 +1,10 @@
 # kanigami — build plan
 
-A handoff document. Phases 0 to 4 are on `main`; an agent picking this up
-should start at Phase 5 and work down. Phase 4 is built but its acceptance is
-outstanding — see the note at the end of it. Each phase is independently
-shippable and independently reviewable — do not collapse them into one branch.
+A handoff document. Phases 0 to 5 are on `main`; an agent picking this up
+should start at Phase 6 and work down. Phases 4 and 5 are built, but their
+acceptance is outstanding — both write to a real account, and neither has yet
+done so. See the note at the end of each. Every phase is independently
+shippable and independently reviewable.
 
 Read **Ground rules** and **The design** first. They are the parts that words
 alone make ambiguous, and getting them wrong means rebuilding the phase.
@@ -88,15 +89,17 @@ slightly back at `#cfc6b4` (`--text-soft`).
 
 Lessons are reading material, so typeset them. Warm stock `#f3ede0`
 (`--ground`), ink `#221f1a` (`--text`), rules `#d8cfba` (`--rule`), seal-red
-accent `#9e3b26` (`--accent`), mincho throughout. `.surface-paper` binds these
-already; it still owes itself real `--text-strong` and `--text-soft` values,
-which is this phase's job to choose.
+accent `#9e3b26` (`--accent`), mincho throughout, display type at `#14110d`
+(`--text-strong`) and running prose set back at `#4a443a` (`--text-soft`).
 
 - Two columns, a book spread: **verso** holds the character large with its
-  reading as `<ruby>`, the subject-type line, and the stroke count; **recto**
-  holds the meaning as a display-size heading, the readings labelled
-  on'yomi / kun'yomi, the mnemonic as real prose at ~42ch, and a context
-  sentence with furigana set against a seal-red left rule.
+  reading as `<ruby>`; **recto** holds the meaning as a display-size heading,
+  the readings labelled on'yomi / kun'yomi, the mnemonic as real prose at
+  ~42ch, and a context sentence set against a seal-red left rule. The
+  subject-type line and level sit in the running head.
+- This originally asked for a stroke count on the verso and furigana on the
+  context sentences. The API carries neither; see Phase 5 for what they
+  became.
 - Mnemonics arrive from the API as `meaning_mnemonic` / `reading_mnemonic`
   containing tags like `<radical>`, `<kanji>`, `<vocabulary>`, `<reading>`,
   `<meaning>`, `<ja>`. Parse them into styled spans — do **not** dump them
@@ -231,16 +234,18 @@ is no undo for either, which is why the rules below are not optional.
 
 1. **Every phase but 4 and 5 runs on a read-only token.** Those two are the
    only ones that write — `POST /reviews` in 4, `PUT /assignments/{id}/start`
-   in 5. WaniKani's token page has
+   in 5 — and both are behind the same default-on dry run, so even they run
+   read-only until somebody turns it off. WaniKani's token page has
    per-permission checkboxes (start assignments, create reviews, create and
    update study materials, update user preferences). Leave every one
    unchecked. WaniKani then rejects writes with a 403 server-side, whatever
    the client tries to do — a guarantee no amount of code review can match.
-2. **`startAssignment` is still imported by nothing** and stays that way
-   until Phase 5. `submitReview` is wired as of Phase 4, in exactly one place:
-   `App.jsx` passes it to `createSubmitter` as `send`. `grep -rn
-   'submitReview\|startAssignment' src/` should show their definitions, that
-   one import, and nothing else — no other module may reach the write path.
+2. **Both writes are wired, and both reach the network from `App.jsx` only.**
+   It hands each to a `createSubmitter` as `send` — `submitReview` for a
+   review session, `startAssignment` for a lesson batch. `grep -rn
+   'submitReview\|startAssignment' src/` should show their definitions and
+   those two call sites, and nothing else. No screen imports either; if one
+   ever does, that is the regression to catch.
 3. **Phase 4 ships behind a dry-run switch, default on.** In dry-run,
    grading and queueing run for real and the would-be request is logged
    instead of sent — `dry run: POST /reviews {assignment_id, meaning: 0,
@@ -458,19 +463,47 @@ afterwards. Nothing in this repo has yet written to a real account.
 
 ---
 
-## Phase 5 — the paper lesson surface
+## Phase 5 — the paper lesson surface ✅ built, ⚠️ not yet proven against a real account
 
-**Files:** `src/components/Lesson.jsx`, `src/lib/mnemonic.js`
+**Files:** `src/components/Lesson.jsx`, `src/components/Mnemonic.jsx`,
+`src/lib/mnemonic.js`
 
-The book spread described above. `mnemonic.js` parses WaniKani's mnemonic
-tags into a safe span tree — that parser gets its own tests.
+The book spread described above. A batch of five is read, then quizzed, and
+each item that passes gets `PUT /assignments/{id}/start`.
 
-Flow: batch of five lessons → read each → a quiz over the batch that reuses
-the Phase 2 grader → `PUT /assignments/{id}/start` for each item that
-passes. Context sentences come from `context_sentences`; readings render as
-`<ruby>`.
+**Shipped:** 15 vitest cases on the parser, and the spread driven in the
+browser — kanji, a radical with no codepoint, and vocabulary, at both widths.
 
-**Acceptance:** started lessons appear in the review queue on wanikani.com.
+- **`mnemonic.js` parses to a flat list of `{ text, tag }`, and that is the
+  whole XSS defence.** Every piece leaves as a text node, so there is no code
+  path in `Mnemonic.jsx` that could emit HTML even if the input asked for it.
+  A tag WaniKani does not use — `<script>`, `<img onerror=…>` — is text, and
+  there is a test for each. Do not replace this with a sanitiser and
+  `dangerouslySetInnerHTML`: the point is not that the markup is cleaned, it
+  is that no markup is ever produced.
+- **The quiz runs on the ink surface**, reusing `Review.jsx` whole. Paper is
+  for reading material; a quiz is a quiz. The only difference is the
+  submitter it is handed, and the screen cannot tell.
+- **One submitter abstraction covers both writes.** `createSubmitter` takes a
+  `describe` for its dry-run line, so a lesson logs
+  `dry run: PUT /assignments/1001/start` rather than a review it is not
+  making. `movement()` gained the started-lesson case: an assignment carries
+  one stage and no movement, because there was nowhere for it to move from.
+
+Two things the design asked for that the API does not carry, and what they
+became instead — worth knowing before "fixing" them:
+
+- **Stroke count.** Not a field on any subject. The verso shows the character
+  count, which is the honest equivalent of what is actually there.
+- **Furigana on context sentences.** `context_sentences` are plain `ja` and
+  `en` strings with no per-kanji readings, so there is nothing to align ruby
+  to. The sentence is set against the seal-red rule with its translation
+  under it. Ruby survives on the verso, where the reading belongs to the
+  whole word and alignment is not in question.
+
+**Still to do, and it is the acceptance:** started lessons appearing in the
+review queue on wanikani.com. Same procedure as Phase 4 — dry run first, read
+the log, then let one batch through.
 
 ---
 

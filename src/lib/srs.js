@@ -23,11 +23,18 @@ export function stageName(stage) {
 }
 
 // The one dim line of type under a completed item. Null rather than a guess
-// when the response did not carry both stages — an empty line is honest and
-// an invented one is not.
-export function movement(review) {
-  const from = review?.starting_srs_stage
-  const to = review?.ending_srs_stage
-  if (typeof from !== 'number' || typeof to !== 'number') return null
-  return `${stageName(from)} → ${stageName(to)}`
+// when the response did not carry a stage — an empty line is honest and an
+// invented one is not.
+//
+// A review answers with where the item came from and where it went. A started
+// lesson answers with an assignment, which has only the one stage it is now
+// at; there is no movement to report because there was nowhere to move from.
+export function movement(resource) {
+  const from = resource?.starting_srs_stage
+  const to = resource?.ending_srs_stage
+  if (typeof from === 'number' && typeof to === 'number') {
+    return `${stageName(from)} → ${stageName(to)}`
+  }
+  if (typeof resource?.srs_stage === 'number') return stageName(resource.srs_stage)
+  return null
 }

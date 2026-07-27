@@ -42,6 +42,8 @@
   --paper: #f3ede0;
   --paper-line: #d8cfba;
   --paper-text: #221f1a;
+  --paper-strong: #14110d; /* display type — the character, the gloss */
+  --paper-soft: #4a443a;   /* running prose, set back from the body text */
   --paper-dim: #7d7362;
   --seal: #9e3b26;
   --paper-strokes: none;
@@ -65,8 +67,8 @@
      --ink: …; --ink-raised: …; --ink-line: …; --ink-text: …;
      --ink-strong: …; --ink-soft: …; --ink-dim: …; --vermilion: …;
      --ink-strokes: …;
-     --paper: …; --paper-line: …; --paper-text: …; --paper-dim: …;
-     --seal: …; --paper-strokes: …;
+     --paper: …; --paper-line: …; --paper-text: …; --paper-strong: …;
+     --paper-soft: …; --paper-dim: …; --seal: …; --paper-strokes: …;
    }
 
    Set it on <html> and every surface follows. If a theme needs a
@@ -93,10 +95,8 @@
   --raised: var(--paper);
   --rule: var(--paper-line);
   --text: var(--paper-text);
-  /* Provisional: paper has no display or prose ink of its own yet, so both
-     fall back to values the spec does name. Phase 5 sets them properly. */
-  --text-strong: var(--paper-text);
-  --text-soft: var(--paper-dim);
+  --text-strong: var(--paper-strong);
+  --text-soft: var(--paper-soft);
   --dim: var(--paper-dim);
   --accent: var(--seal);
   --strokes: var(--paper-strokes);
@@ -230,6 +230,14 @@ body {
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--dim);
+}
+
+/* Two ways in, side by side. */
+.ways {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* The write path's switch, on the way into a session. */
@@ -467,6 +475,212 @@ button.quiet:hover:not(:disabled) {
   flex: 1;
   height: 1px;
   background: var(--rule);
+}
+
+/* ============================================================
+   紙 Paper — the lesson surface.
+
+   Lessons are reading material, so this is typeset rather than
+   laid out: a book spread with a running head and a folio,
+   mincho throughout, seal red where ink uses vermilion.
+   ============================================================ */
+
+.surface-paper {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 26px clamp(20px, 5vw, 56px) 22px;
+  gap: clamp(20px, 4vh, 40px);
+  font-family: var(--jp-serif);
+  background: var(--ground);
+  color: var(--text);
+}
+
+.runninghead,
+.folio {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.runninghead .sp,
+.folio .sp {
+  flex: 1;
+}
+
+.spread {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: start;
+}
+
+.verso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  /* The gutter of the spread, and the only rule between the two pages. */
+  border-right: 1px solid var(--rule);
+  padding-right: clamp(20px, 4vw, 56px);
+  min-height: 100%;
+  justify-content: center;
+}
+
+.face {
+  font-size: clamp(84px, 14vw, 150px);
+  line-height: 1.1;
+  font-weight: 400;
+  color: var(--text-strong);
+  text-align: center;
+}
+
+.face img {
+  display: block;
+  height: 0.72em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+.face rt {
+  font-size: 0.19em;
+  font-family: var(--jp-sans);
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  /* Ruby drifts away from its base at display size — the gap scales with the
+     character and the reading does not. Pull it back down. */
+  transform: translateY(0.9em);
+}
+
+.verso .stat {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.recto {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 46ch;
+}
+
+.gloss {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text-strong);
+}
+
+.readings {
+  margin: 0;
+  font-size: 22px;
+  color: var(--text);
+}
+
+.readings .label {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.mnemonic {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 16px;
+  line-height: 1.85;
+  color: var(--text-soft);
+}
+
+/* WaniKani's subject colours inside running prose. They are information and
+   keep their hue, but mixed toward the surface's own ink so that a paragraph
+   of body text stays a paragraph rather than a set of highlights. */
+.m-radical,
+.m-kanji,
+.m-vocabulary {
+  font-weight: 600;
+}
+
+.m-radical {
+  color: color-mix(in srgb, var(--wk-radical) 62%, var(--text));
+}
+
+.m-kanji {
+  color: color-mix(in srgb, var(--wk-kanji) 62%, var(--text));
+}
+
+.m-vocabulary {
+  color: color-mix(in srgb, var(--wk-vocab) 62%, var(--text));
+}
+
+.m-reading,
+.m-ja {
+  color: var(--accent);
+}
+
+.m-meaning {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.sentences {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sentences blockquote {
+  margin: 0;
+  padding-left: 16px;
+  border-left: 2px solid var(--accent);
+}
+
+.sentences p {
+  margin: 0;
+}
+
+.sentences .ja {
+  font-size: 18px;
+  line-height: 1.9;
+  color: var(--text);
+}
+
+.sentences .en {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+
+/* The spread stacks rather than squeezing: verso above, recto below, and the
+   gutter rule turns into the rule between them. */
+@media (max-width: 640px) {
+  .spread {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+  }
+
+  .verso {
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+    padding-right: 0;
+    padding-bottom: 22px;
+    min-height: 0;
+  }
 }
 
 /* The rule lighting is the only motion in the app, and it is the one thing

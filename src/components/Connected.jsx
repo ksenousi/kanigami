@@ -9,6 +9,7 @@ export default function Connected({
   user,
   onDisconnect,
   onStartReview,
+  onStartLessons,
   starting,
   startError,
   dryRun,
@@ -66,31 +67,38 @@ export default function Connected({
                 <span>lessons waiting</span>
               </div>
             </div>
-            {counts.reviews > 0 ? (
-              <>
-                <button type="button" onClick={onStartReview} disabled={starting}>
-                  {starting ? 'Loading' : 'Review'}
-                </button>
-
-                {/* The gate on the write path. It reads as a statement of
-                    what will happen, because that is the only thing about it
-                    worth reading. */}
-                <div className="dryrun">
-                  <button className="quiet" type="button" onClick={() => onDryRun(!dryRun)}>
-                    {dryRun ? 'dry run · on' : 'dry run · off'}
+            {counts.reviews > 0 || counts.lessons > 0 ? (
+              <div className="ways">
+                {counts.reviews > 0 ? (
+                  <button type="button" onClick={onStartReview} disabled={starting}>
+                    {starting ? 'Loading' : 'Review'}
                   </button>
-                  <p className={dryRun ? 'why' : 'why hot'}>
-                    {dryRun
-                      ? 'Answers are graded and queued for real; the request to WaniKani is logged instead of sent.'
-                      : 'Answers will be submitted to WaniKani as items finish. There is no undo for a submitted review.'}
-                  </p>
-                </div>
-              </>
+                ) : null}
+                {counts.lessons > 0 ? (
+                  <button type="button" onClick={onStartLessons} disabled={starting}>
+                    {starting ? 'Loading' : 'Learn'}
+                  </button>
+                ) : null}
+              </div>
             ) : (
               <p className="lede">
                 Nothing due. {counts.nextAt ? `Next review ${counts.nextAt}.` : ''}
               </p>
             )}
+
+            {/* The gate on the write path, and it covers both ways in. It
+                reads as a statement of what will happen, because that is the
+                only thing about it worth reading. */}
+            <div className="dryrun">
+              <button className="quiet" type="button" onClick={() => onDryRun(!dryRun)}>
+                {dryRun ? 'dry run · on' : 'dry run · off'}
+              </button>
+              <p className={dryRun ? 'why' : 'why hot'}>
+                {dryRun
+                  ? 'Answers are graded and queued for real; the request to WaniKani is logged instead of sent.'
+                  : 'Reviews will be submitted and lessons started for real, as items finish. There is no undo for either.'}
+              </p>
+            </div>
 
             {startError ? <p className="error">{startError}</p> : null}
           </>

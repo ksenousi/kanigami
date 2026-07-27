@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import TokenGate from './components/TokenGate.jsx'
 import Connected from './components/Connected.jsx'
 import Review from './components/Review.jsx'
-import { getUser, submitReview } from './lib/wanikani.js'
-import { loadReviewSession } from './lib/queue.js'
-import { createSubmitter } from './lib/submit.js'
+import Lesson from './components/Lesson.jsx'
+import { getUser, startAssignment, submitReview } from './lib/wanikani.js'
+import { loadLessonBatch, loadReviewSession } from './lib/queue.js'
+import { createSubmitter, startLine } from './lib/submit.js'
 import { clearToken, readToken } from './lib/token.js'
 
 export default function App() {
@@ -14,6 +15,9 @@ export default function App() {
   // A loaded session and its synonyms. There is no router, so which screen
   // the app is on is this being null or not.
   const [review, setReview] = useState(null)
+  // A lesson batch is read first and quizzed second, so it carries which of
+  // the two it is in.
+  const [lesson, setLesson] = useState(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   // On, and it starts on again after every reload. Turning it off is a
@@ -48,31 +52,58 @@ export default function App() {
     setToken('')
     setUser(null)
     setReview(null)
+    setLesson(null)
   }
 
-  async function startReview() {
+  // Both submitters are built here, once per session, because this is the
+  // only place holding both the token and the dry-run decision. Neither
+  // screen sees either.
+  async function start(load, build, empty) {
     setLoading(true)
     setLoadError('')
     try {
-      const loaded = await loadReviewSession(token)
-      if (loaded.session.items.length === 0) {
-        setLoadError('Nothing is due right now.')
-      } else {
-        // The submitter is built here, once per session, because this is the
-        // only place that holds both the token and the dry-run decision. The
-        // review screen never sees either.
+      const loaded = await load()
+      if (loaded.session.items.length === 0) setLoadError(empty)
+      else build(loaded)
+    } catch (problem) {
+      setLoadError(problem.message)
+    }
+    setLoading(false)
+  }
+
+  function startReview() {
+    return start(
+      () => loadReviewSession(token),
+      loaded =>
         setReview({
           ...loaded,
           submitter: createSubmitter({
             send: review => submitReview(token, review),
             dryRun
           })
-        })
-      }
-    } catch (problem) {
-      setLoadError(problem.message)
-    }
-    setLoading(false)
+        }),
+      'Nothing is due right now.'
+    )
+  }
+
+  function startLessons() {
+    return start(
+      () => loadLessonBatch(token),
+      loaded =>
+        setLesson({
+          ...loaded,
+          reading: true,
+          // A lesson writes to a different endpoint with a different body,
+          // so its dry run says a different thing. Only `assignmentId` is
+          // read; the counts a review would carry mean nothing here.
+          submitter: createSubmitter({
+            send: ({ assignmentId }) => startAssignment(token, assignmentId),
+            describe: startLine,
+            dryRun
+          })
+        }),
+      'No lessons waiting.'
+    )
   }
 
   if (restoring) {
@@ -107,12 +138,37 @@ export default function App() {
     )
   }
 
+  if (lesson?.reading) {
+    return (
+      <Lesson
+        items={lesson.items}
+        onQuiz={() => setLesson(current => ({ ...current, reading: false }))}
+        onExit={() => setLesson(null)}
+      />
+    )
+  }
+
+  // The quiz over a batch is a quiz, so it happens on the ink surface where
+  // quizzes live. Its submitter starts assignments instead of posting
+  // reviews; the screen cannot tell, and does not need to.
+  if (lesson) {
+    return (
+      <Review
+        session={lesson.session}
+        synonyms={lesson.synonyms}
+        submitter={lesson.submitter}
+        onExit={() => setLesson(null)}
+      />
+    )
+  }
+
   return (
     <Connected
       token={token}
       user={user}
       onDisconnect={disconnect}
       onStartReview={startReview}
+      onStartLessons={startLessons}
       starting={loading}
       startError={loadError}
       dryRun={dryRun}
