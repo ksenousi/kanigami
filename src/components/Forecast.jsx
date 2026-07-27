@@ -1,39 +1,55 @@
+import { useState } from 'react'
 import { forecast, nextDue, peak } from '../lib/standing.js'
 
 // The footline track, carrying the next 24 hours.
 //
 // Every screen already draws a 1px rule across the bottom. On home that rule
-// is the forecast: 24 segments rising from it, the current hour lit, the
-// next few warm, empty hours staying exactly as tall as the rule they are
-// part of. Nothing here is a chart — it is the rule, told what it knows.
+// is the forecast: 24 segments rising from it, the next few warm, empty hours
+// staying exactly as tall as the rule they are part of. Nothing here is a
+// chart — it is the rule, told what it knows.
 //
 // **The backlog does not set the scale.** WaniKani's first bucket holds
 // everything already due, which on a neglected account is larger than the
 // rest of the day put together — and it is already the biggest number on the
 // screen above. Letting it scale the rule spends the whole width saying that
 // twice and flattens the twenty-three hours this exists to show. So the
-// current hour is drawn full height as a marker, and the hours after it are
-// scaled among themselves.
+// current hour is a narrow full-height tick, a marker rather than a quantity,
+// and the hours after it are scaled among themselves.
+//
+// **Hovering an hour re-points the label** rather than floating a box over
+// the page. The line of type is already there and already says something
+// about the forecast; under the cursor it says something more specific. No
+// tooltip, no card, nothing that appears and covers.
 const HOURS = 24
 const TALLEST = 20
 const WARM = 4 // hours after this one that stay near the accent
 
 export default function Forecast({ summary }) {
+  const [reading, setReading] = useState(null)
   const hours = forecast(summary, HOURS)
-  const [now, ...ahead] = hours
-  const tallest = peak(ahead)
+  const tallest = peak(hours.slice(1))
 
   return (
     <div className="footline forecast">
-      <span className="when">{nextLabel(summary, now)}</span>
+      <span className="when">
+        {reading === null ? nextLabel(summary, hours[0]) : hourLabel(hours[reading], reading)}
+      </span>
 
-      <div className="track hours" aria-hidden="true">
+      <div
+        className="track hours"
+        onPointerLeave={() => setReading(null)}
+      >
         {hours.map((hour, index) => (
           <span
             key={hour.at}
-            className={`hour${warmth(hour, index)}`}
-            style={{ height: `${height(hour, index, tallest)}px` }}
-          />
+            className={`hour${warmth(hour, index)}${reading === index ? ' reading' : ''}`}
+            // Pointer rather than mouse, so a tap on a touch screen reads the
+            // same hour a hover would.
+            onPointerEnter={() => setReading(index)}
+            onPointerDown={() => setReading(index)}
+          >
+            <i style={{ height: `${height(hour, index, tallest)}px` }} />
+          </span>
         ))}
       </div>
 
@@ -60,14 +76,24 @@ function warmth(hour, index) {
   return index <= WARM ? ' soon' : ''
 }
 
+function clock(at) {
+  return new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+}
+
+// What the label says while an hour is under the cursor.
+function hourLabel(hour, index) {
+  if (!hour) return ''
+  if (index === 0) return `${hour.count} due now`
+  if (hour.count === 0) return `${clock(hour.at)} · none`
+  return `${clock(hour.at)} · ${hour.count}`
+}
+
 function nextLabel(summary, now) {
   const when = nextDue(summary)
   if (!when) return 'nothing in 24h'
 
   const at = new Date(when)
-  if (at <= new Date()) {
-    // Something is already due. Say how much, and when the next lot lands.
-    return `${now.count} due`
-  }
-  return `next at ${at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`
+  // Something is already due, and how much is the useful part.
+  if (at <= new Date()) return `${now.count} due`
+  return `next at ${clock(when)}`
 }

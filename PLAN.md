@@ -225,6 +225,24 @@ already standing above it. It is drawn as a **3px full-height tick in
 it are scaled among themselves. `364 due` sits at the left and `+24h` at the
 right; with nothing due the left reads `next at 18:00`, or `nothing in 24h`.
 
+**Hovering an hour re-points that label** — `20:00 · 7`, or `20:00 · none`,
+or `364 due now` over the tick — and lights the hour under the cursor in
+`--text-soft`. No tooltip and no card: the line of type is already there and
+already talking about the forecast, so under the cursor it just says
+something more specific. Two things this depends on and a later change must
+not break:
+
+- **Each hour is a full-height column with the bar drawn inside it.** An
+  empty hour is 1px tall and would otherwise be an impossible target.
+- **The label's width is reserved for the longest string it can hold.** If it
+  resized, the track would shift out from under the cursor. `ch` units alone
+  are not enough — they measure the font and not the 0.18em letter-spacing on
+  that line.
+
+The bar is a mouse affordance over information that is already in text, so
+nothing is only available on hover. Pointer events rather than mouse events,
+so a tap reads the same hour.
+
 Rejected: **time leading**, with the forecast as a full chart mid-screen and
 the SRS spread demoted to a rule — clearer at a glance, but it makes the
 screen mostly about a chart. **Peers**, one hairline row each — the safe

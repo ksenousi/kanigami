@@ -514,26 +514,45 @@ body {
 
 /* The footline track, carrying the next 24 hours. Empty hours are 1px — the
    baseline itself, not a gap in it. */
+/* Fixed width, because this line changes as you move along the track and a
+   label that resizes would drag the hour out from under the cursor. 18ch
+   rather than the longest string's 14 characters: `ch` measures the font,
+   and the 0.18em letter-spacing on this line is not in it. */
 .forecast .when {
-  min-width: 12ch;
+  min-width: 18ch;
 }
 
 /* No gaps between the hours: an empty hour is 1px of the baseline, and a
    gutter between them turns the rule this is supposed to be into a row of
    ticks. */
-.forecast .hours {
+/* `.track.hours`, not `.hours`: this element carries both classes, and
+   `.footline .track` sets height 1px further down the file at the same
+   specificity — so the plain selector loses the tie and the columns collapse
+   to a hairline with nothing to hover. */
+.footline .track.hours {
   display: flex;
   align-items: flex-end;
   height: 24px;
   background: transparent;
 }
 
+/* Each hour is a full-height column so there is something to hover; the bar
+   inside it is what you actually see. A 1px empty hour is otherwise an
+   impossible target. */
 .forecast .hour {
   flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.forecast .hour i {
+  display: block;
+  width: 100%;
   background: var(--rule);
 }
 
-.forecast .hour.soon {
+.forecast .hour.soon i {
   background: color-mix(in srgb, var(--accent) 55%, var(--ground));
 }
 
@@ -543,7 +562,16 @@ body {
 .forecast .hour.now {
   flex: 0 0 3px;
   margin-right: 4px;
+}
+
+.forecast .hour.now i {
   background: var(--accent);
+}
+
+/* Under the cursor. Neutral rather than accented, so the highlight does not
+   claim the meaning that vermilion carries everywhere else. */
+.forecast .hour.reading i {
+  background: var(--text-soft);
 }
 
 /* The write path's switch, on the way into a session. */
