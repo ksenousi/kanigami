@@ -861,6 +861,19 @@ by dropping back to one face, that is the trade being reversed, not a win.
   is what separates the skeleton from the styling, and it is precisely what
   the review must not offer: side by side, the character is given away.
 
+**The face belongs to the question, and turns over with it.** Reported as
+the review flickering, and it was: `Review.jsx` recomputed `faceFor(asked,
+faces)` on every render and incremented `asked` inside `submit`, at the
+moment of answering — while the question just answered was still on screen
+under its verdict. So pressing Enter restyled the character you were looking
+at, and the next question then arrived in the face you had already been
+shown twice. The rotation was right and its timing was off by half a step.
+Recomputing at render had a second door too: the list from `useFaces` narrows
+when a webfont turns out to be blocked, and that re-indexed the rotation
+under a glyph mid-question. The face is now picked once, when the question
+goes up, and held — one piece of state carrying both the count and the face,
+because a count that disagreed with what was on screen is the whole bug.
+
 **The four, and the one that lost.** Noto Sans JP (gothic — what WaniKani
 itself uses, and what is on every sign and screen), Noto Serif JP (mincho —
 books and newspapers), Klee One (the forms a hand makes), Zen Maru Gothic

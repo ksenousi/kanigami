@@ -29,11 +29,24 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
   const [judged, setJudged] = useState(null)
   const [nudge, setNudge] = useState(null)
   const [sync, setSync] = useState(() => submitter.state())
-  // How many questions this screen has put up, which is what rotates the
-  // face. Counted here rather than derived from the session, because a
+  // How many questions this screen has put up, and the face the current one
+  // is set in. Counted here rather than derived from the session, because a
   // missed item comes round again and should not come back in the face it
   // was missed in — that would let the face itself become the cue.
-  const [asked, setAsked] = useState(0)
+  //
+  // The face is *held*, not recomputed each render, and it turns over when a
+  // new question goes up rather than when an answer is given. Both halves of
+  // that were wrong and both showed as flicker. The count was incremented in
+  // `submit`, while the question just answered was still on screen under its
+  // verdict — so pressing Enter restyled the character you were looking at,
+  // and the next question then arrived in the face you had already been
+  // shown. And the list from `useFaces` narrows if a webfont turns out to be
+  // blocked, which re-indexed the rotation under a glyph mid-question. A
+  // face belongs to a question: picked once with it, kept until it goes.
+  //
+  // One piece of state and not two, because a count that disagreed with the
+  // face on screen is the bug being fixed.
+  const [rotation, setRotation] = useState(() => ({ asked: 0, face: faceFor(0, FACES) }))
   const { faces, settled: facesSettled } = useFaces()
   const online = useOnline()
 
@@ -61,6 +74,10 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
     if (judged) {
       setJudged(null)
       setTyped('')
+      // The question is turning over, so the face does — here and nowhere
+      // else. `faces` is read at this moment rather than at render, which is
+      // what keeps a narrowing font list out of the glyph already on screen.
+      setRotation(({ asked }) => ({ asked: asked + 1, face: faceFor(asked + 1, faces) }))
       return
     }
     if (!asking) return
@@ -84,7 +101,6 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
     // a tab closed halfway through should lose the queue and nothing else.
     if (next.justCompleted) submitter.push(next.justCompleted)
 
-    setAsked(n => n + 1)
     setJudged({
       question: asking,
       verdict,
@@ -116,7 +132,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
                 being tested, so it is the thing that varies — see faces.js
                 for why this is the review's job and the collection is the
                 lesson's. */}
-            <Glyph subject={showing.subject} face={faceFor(asked, faces)} />
+            <Glyph subject={showing.subject} face={rotation.face} />
 
             <form onSubmit={event => event.preventDefault()}>
               <AnswerField
