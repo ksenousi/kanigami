@@ -155,26 +155,37 @@ export default function Home({
             {/* The gate on the write path, covering both doors. It reads as a
                 statement of what will happen, because that is the only thing
                 about it worth reading. */}
-            {/* `dry run · on` read as an instruction to turn it on as easily
+            {/* Only in development — see the note in App.jsx.
+
+                Gated on the build as well as on the prop. `onDryRun` being
+                absent is enough to stop it rendering, but the branch is still
+                reachable code, so its markup and copy ship in the bundle. The
+                literal `import.meta.env.DEV` folds to false at build time and
+                the whole block is dropped: the deployed app does not merely
+                decline to show a dry-run switch, it does not contain one.
+
+                `dry run · on` read as an instruction to turn it on as easily
                 as a statement that it is on, which is a bad ambiguity for the
                 one control deciding whether real SRS history gets written.
-                The label now names the state in words that cannot be read as
-                an imperative, and aria-pressed gives it to a screen reader. */}
-            <div className={dryRun ? 'dryrun' : 'dryrun live'}>
-              <button
-                className="quiet"
-                type="button"
-                aria-pressed={dryRun}
-                onClick={() => onDryRun(!dryRun)}
-              >
-                {dryRun ? 'dry run · nothing is sent' : 'live · writing to wanikani'}
-              </button>
-              <p className={dryRun ? 'why' : 'why hot'}>
-                {dryRun
-                  ? 'Answers are graded and queued for real; the request to WaniKani is logged instead of sent.'
-                  : 'Reviews will be submitted and lessons started for real, as items finish. There is no undo for either.'}
-              </p>
-            </div>
+                The label names the state in words that cannot be read as an
+                imperative, and aria-pressed gives it to a screen reader. */}
+            {import.meta.env.DEV && onDryRun ? (
+              <div className={dryRun ? 'dryrun' : 'dryrun live'}>
+                <button
+                  className="quiet"
+                  type="button"
+                  aria-pressed={dryRun}
+                  onClick={() => onDryRun(!dryRun)}
+                >
+                  {dryRun ? 'dry run · nothing is sent' : 'live · writing to wanikani'}
+                </button>
+                <p className={dryRun ? 'why' : 'why hot'}>
+                  {dryRun
+                    ? 'Answers are graded and queued for real; the request to WaniKani is logged instead of sent.'
+                    : 'Reviews will be submitted and lessons started for real, as items finish. There is no undo for either.'}
+                </p>
+              </div>
+            ) : null}
           </>
         )}
       </div>

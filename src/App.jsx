@@ -24,10 +24,20 @@ export default function App() {
   const [wrap, setWrap] = useState(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
-  // On, and it starts on again after every reload. Turning it off is a
-  // decision to write to a real account, and that decision does not survive
-  // a refresh by accident.
-  const [dryRun, setDryRun] = useState(true)
+  // Dry run is a development gate, not a feature, and it does not ship.
+  //
+  // In dev it is on and starts on again after every reload: turning it off is
+  // a decision to write to a real account, and that decision should not
+  // survive a refresh by accident. In a built app it is off and there is no
+  // control for it — somebody doing their reviews on the deployed site wants
+  // them recorded, and a client that grades you and then quietly throws the
+  // answer away is broken rather than careful.
+  //
+  // What does not change is `createSubmitter`'s own default, which is still
+  // dry run. That is the structural safety: code that forgets to think about
+  // this writes nothing. This line is the one caller that has thought about
+  // it.
+  const [dryRun, setDryRun] = useState(import.meta.env.DEV)
 
   // A token from a previous visit still has to be proven against the API —
   // it may have been revoked since.
@@ -198,7 +208,10 @@ export default function App() {
       starting={loading}
       error={loadError}
       dryRun={dryRun}
-      onDryRun={setDryRun}
+      // Absent in a built app, and Home draws no switch when it has none to
+      // throw. Which build this is stays known here rather than being asked
+      // again on the screen.
+      onDryRun={import.meta.env.DEV ? setDryRun : null}
     />
   )
 }

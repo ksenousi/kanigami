@@ -141,8 +141,15 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
           answer while offline produced something that read as a miss. The
           footline already reports what the session is doing. */}
       <div className="footline" role="status">
+        {/* Plain, not accented. `submitting` used to take the accent to mark
+            a session that had the dry run switched off — worth shouting when
+            that was a deliberate, unusual act. In a built app it is every
+            session, and a permanent vermilion word on the surface where
+            vermilion means *wrong* is a collision rather than a warning. The
+            accent stays on the thing that is genuinely exceptional: answers
+            that failed to send. */}
         {online ? (
-          <span className={sync.dryRun ? '' : 'live'}>{sync.dryRun ? 'dry run' : 'submitting'}</span>
+          <span>{sync.dryRun ? 'dry run' : 'submitting'}</span>
         ) : (
           <span>offline · paused, nothing answered is lost</span>
         )}
