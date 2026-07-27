@@ -88,12 +88,13 @@ function hourLabel(hour, index) {
   return `${clock(hour.at)} · ${hour.count}`
 }
 
+// The first bucket is the current hour, so it already says whether anything
+// is due — no need to compare its timestamp against the clock, which got this
+// wrong whenever the two disagreed. If nothing is due now, the next bucket
+// holding anything is in the future by definition.
 function nextLabel(summary, now) {
-  const when = nextDue(summary)
-  if (!when) return 'nothing in 24h'
+  if (now?.count > 0) return `${now.count} due`
 
-  const at = new Date(when)
-  // Something is already due, and how much is the useful part.
-  if (at <= new Date()) return `${now.count} due`
-  return `next at ${clock(when)}`
+  const when = nextDue(summary)
+  return when ? `next at ${clock(when)}` : 'nothing in 24h'
 }

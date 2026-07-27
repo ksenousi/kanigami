@@ -82,17 +82,23 @@
   /* ---- type scale ----
      Not part of the palette and not themeable: this is how big the app is,
      and every size in the file comes from here. The mono labels used to sit
-     at 9.5–10px with 0.2em of tracking, which is small enough to have to
-     lean in — letter-spacing that wide costs legibility that a 10px face has
-     none of to spare. --label is the floor now, and nothing may go under it.
+     at 9.5–10px with up to 0.3em of tracking, which is small enough to have
+     to lean in — letter-spacing that wide costs legibility a 10px face has
+     none of to spare. --label is the floor now, and nothing goes under it.
 
-     One place to change if it is still too small. Raise the whole scale
-     rather than one rule, or the hierarchy quietly flattens. */
-  --label: 12px;   /* mono eyebrows, footline, counts, folios */
-  --small: 15px;   /* secondary prose — the dry-run note, an error */
-  --body: 17px;    /* prose meant to be read: mnemonics, the lede */
-  --input: 18px;   /* what you type */
-  --control: 13px; /* buttons */
+     Size was only part of it. Two other things were making this harder to
+     read than it needed to be, and both are fixed alongside:
+       * **Tracking is capped around 0.19em.** Past that, uppercase mono
+         stops reading as words and starts reading as separate letters.
+       * **No font-smoothing override.** See `body` below.
+
+     One place to change if it is still not comfortable. Raise the whole
+     scale rather than one rule, or the hierarchy quietly flattens. */
+  --label: 13px;   /* mono eyebrows, footline, counts, folios */
+  --small: 16px;   /* secondary prose — the dry-run note, an error */
+  --body: 18px;    /* prose meant to be read: mnemonics, the lede */
+  --input: 19px;   /* what you type */
+  --control: 14px; /* buttons */
 
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
   --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -167,9 +173,14 @@ body {
   background: var(--ground);
   color: var(--text);
   font-family: var(--sans);
-  line-height: 1.55;
-  -webkit-font-smoothing: antialiased;
+  line-height: 1.65;
 }
+
+/* `-webkit-font-smoothing: antialiased` used to be here and is deliberately
+   gone. It thins every stroke, which on a dark ground is the wrong direction
+   — light type on dark already looks lighter than it is, and thinning it
+   costs legibility for a fashion. The default rendering leaves the type
+   with the weight the face actually has. */
 
 /* The ink surface. Reviews live here. */
 .surface-ink {
@@ -196,7 +207,7 @@ body {
 .masthead .tag {
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.28em;
+  letter-spacing: 0.19em;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -240,7 +251,7 @@ body {
   margin: 0;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.3em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -290,7 +301,7 @@ body {
 .movement {
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.22em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -341,6 +352,36 @@ body {
   min-width: 2.2em;
 }
 
+.missed .ch.wk-radical {
+  color: var(--wk-radical);
+}
+
+.missed .ch.wk-kanji {
+  color: var(--wk-kanji);
+}
+
+.missed .ch.wk-vocabulary {
+  color: var(--wk-vocab);
+}
+
+/* The session's own tally, in the spread's grammar. Right and wrong keep the
+   colours they wore all session. */
+.tally .segment.right {
+  background: var(--ok);
+}
+
+.tally .segment.wrong {
+  background: var(--accent);
+}
+
+.counts .right {
+  color: var(--ok);
+}
+
+.counts .wrong {
+  color: var(--accent);
+}
+
 .missed .gl {
   flex: 1;
   font-size: var(--small);
@@ -361,7 +402,7 @@ body {
   margin: 0;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -372,7 +413,7 @@ body {
   margin: 0;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -506,7 +547,7 @@ body {
 .door .key {
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.28em;
+  letter-spacing: 0.19em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -622,7 +663,7 @@ body {
   margin: 0;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.3em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -828,7 +869,7 @@ button.quiet:hover:not(:disabled) {
 .figure span {
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -884,7 +925,7 @@ button.quiet:hover:not(:disabled) {
   gap: 14px;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.24em;
+  letter-spacing: 0.17em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -956,7 +997,7 @@ button.quiet:hover:not(:disabled) {
   margin: 0;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -987,7 +1028,7 @@ button.quiet:hover:not(:disabled) {
   margin-bottom: 4px;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.24em;
+  letter-spacing: 0.17em;
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -1004,7 +1045,7 @@ button.quiet:hover:not(:disabled) {
   margin: 0;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.24em;
+  letter-spacing: 0.17em;
   text-transform: uppercase;
   color: var(--dim);
 }

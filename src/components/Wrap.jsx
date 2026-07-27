@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { sessionReport } from '../lib/session.js'
 import { getSummary } from '../lib/wanikani.js'
-import { acceptedAnswers, glyphFor } from '../lib/subject.js'
+import { acceptedAnswers, glyphFor, subjectTypeName } from '../lib/subject.js'
 import Forecast from './Forecast.jsx'
 
 // The end of a session, on the ink surface.
@@ -48,8 +48,28 @@ export default function Wrap({ token, session, submitter, onDone, onDisconnect }
 
         <p className="eyebrow">
           {report.completed} of {report.total} finished
-          {report.accuracy === null ? '' : ` · ${Math.round(report.accuracy * 100)}% of ${report.asked} answers`}
         </p>
+
+        {/* The session's own spread, in the same grammar as home's: one
+            segmented hairline, and the counts beneath it wearing the colours
+            of the segments. Celadon and vermilion already mean right and
+            wrong everywhere else in the app, so this needed no new colour —
+            only the two it has been using all session. */}
+        {report.asked > 0 ? (
+          <div className="spreadline tally">
+            <div className="segments" aria-hidden="true">
+              <span className="segment right" style={{ flexGrow: report.correct }} />
+              {report.wrong > 0 ? (
+                <span className="segment wrong" style={{ flexGrow: report.wrong }} />
+              ) : null}
+            </div>
+            <p className="counts">
+              <span className="right">{report.correct} right</span>
+              {report.wrong > 0 ? <span className="wrong">{report.wrong} wrong</span> : null}
+              <span>{Math.round(report.accuracy * 100)}% of {report.asked}</span>
+            </p>
+          </div>
+        ) : null}
 
         <p className="lede">{whatBecameOfIt(sync, report)}</p>
 
@@ -68,7 +88,11 @@ export default function Wrap({ token, session, submitter, onDone, onDisconnect }
             <ul>
               {report.missed.map(item => (
                 <li key={item.subjectId}>
-                  <span className="ch">{glyphFor(item.subject).text ?? '〓'}</span>
+                  {/* The glyph takes its subject colour, so the list says
+                      what kind of thing you are losing as well as which. */}
+                  <span className={`ch wk-${subjectTypeName(item.type)}`}>
+                    {glyphFor(item.subject).text ?? '〓'}
+                  </span>
                   <span className="gl">{acceptedAnswers(item.subject, 'meaning')[0]}</span>
                   <span className="n">
                     {item.incorrectMeaning + item.incorrectReading}×
