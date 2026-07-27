@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { getLevelKanji, getStartedAssignments, getSummary } from '../lib/wanikani.js'
 import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
 import Forecast from './Forecast.jsx'
+import FaceWarning from './FaceWarning.jsx'
+import useFaces from './useFaces.js'
 import useOnline from './useOnline.js'
 
 // 家 Home — the ink surface, standing led.
@@ -29,6 +31,7 @@ export default function Home({
   // Bumped to re-run the three reads. A failed load used to offer only the
   // door out, so a dropped connection cost you the token.
   const [attempt, setAttempt] = useState(0)
+  const faces = useFaces()
   const online = useOnline()
 
   useEffect(() => {
@@ -89,6 +92,10 @@ export default function Home({
         {!online ? (
           <p className="eyebrow hot">offline · this app is online only</p>
         ) : null}
+
+        {/* Before the counts, because it is about what the app can do rather
+            than about the queue. */}
+        <FaceWarning faces={faces} />
 
         {failure ? (
           // A revoked token and a dropped connection are not the same

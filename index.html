@@ -11,6 +11,27 @@
          alpha channel, because Safari flattens transparency onto white and
          that is where the halo around the seal came from. -->
     <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <!-- The four Japanese faces the review shuffles between and the lesson
+         shows together. They are the feature, not decoration: seeing a kanji
+         in one face only teaches the picture rather than the character.
+
+         Four families spanning what you actually meet — gothic on every sign
+         and screen, mincho in books and newspapers, Klee for the written
+         stroke forms, rounded on packaging. Google serves each one split by
+         unicode-range, so a browser fetches only the chunks holding glyphs
+         that are on screen rather than the several-MB whole.
+
+         `display=swap` so a slow font never blanks the glyph, and the app
+         checks at runtime which of these actually arrived — see faces.js.
+         If they are blocked, the shuffle quietly narrows instead of showing
+         the same face under four names. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Klee+One&family=Noto+Sans+JP&family=Noto+Serif+JP&family=Zen+Maru+Gothic&display=swap"
+    />
+
     <title>kanigami</title>
     <meta name="description" content="A quiet WaniKani client. Ink for reviews, paper for lessons." />
   </head>

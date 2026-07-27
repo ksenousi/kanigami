@@ -795,6 +795,62 @@ body {
   color: var(--accent);
 }
 
+/* The typefaces did not arrive.
+   A line of type over a hairline, which is this app's banner — never a
+   bordered box, and never dismissable, because it states what the app can
+   currently do rather than announcing news. */
+.banner {
+  align-self: stretch;
+  max-width: 62ch;
+  margin: 0 auto;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.banner .why {
+  margin: 0;
+  font-size: var(--small);
+  line-height: 1.7;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+/* The lesson's collection: one character, every face, side by side. What is
+   the same across all four is the character; what differs is the typeface
+   having an opinion. The review must never show this — comparison is a
+   giveaway when the character is the question. */
+.collection {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 26px;
+  align-items: flex-end;
+}
+
+.collection figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.collection .ch {
+  font-size: var(--display-lg);
+  line-height: 1.15;
+  color: var(--text-strong);
+}
+
+.collection figcaption {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.12em;
+  color: var(--dim);
+}
+
 /* A session that is really writing says so for its whole length. */
 .footline .live {
   color: var(--accent);

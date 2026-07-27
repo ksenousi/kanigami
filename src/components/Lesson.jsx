@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { acceptedAnswers, glyphFor, readingTypeLabel, subjectTypeName } from '../lib/subject.js'
 import Mnemonic from './Mnemonic.jsx'
+import useFaces from './useFaces.js'
 
 // 紙 Paper — the lesson surface.
 //
@@ -13,6 +14,7 @@ import Mnemonic from './Mnemonic.jsx'
 // session to quiz — starting an assignment happens on the far side of that.
 export default function Lesson({ items, onQuiz, onExit }) {
   const [at, setAt] = useState(0)
+  const faces = useFaces()
   const item = items[at]
   const last = at === items.length - 1
 
@@ -54,6 +56,7 @@ export default function Lesson({ items, onQuiz, onExit }) {
         <div className="verso">
           <Face subject={item.subject} />
           <p className="stat">{glyphCount(item.subject)}</p>
+          <Collection subject={item.subject} faces={faces} />
           <Sentences sentences={item.subject.context_sentences} />
         </div>
 
@@ -83,6 +86,36 @@ export default function Lesson({ items, onQuiz, onExit }) {
           {last ? 'Quiz' : 'Next'}
         </button>
       </div>
+    </div>
+  )
+}
+
+// The same character in every face at once.
+//
+// The review varies the face one card at a time, which is retrieval practice
+// under changing conditions. This is the other half and it belongs here,
+// where you are meeting the character rather than being tested on it: side
+// by side, what is identical across all four *is* the character and what
+// differs is the typeface's opinion. Comparison is what makes that split
+// visible, and it is exactly what the review must not offer.
+//
+// Only for characters. A radical drawn as a stroke image has no typeface to
+// vary, and one face is not a collection — with the fonts blocked this would
+// otherwise be the same drawing repeated, which teaches the opposite lesson.
+function Collection({ subject, faces }) {
+  const { text } = glyphFor(subject)
+  if (!text || faces.length < 2) return null
+
+  return (
+    <div className="collection" aria-hidden="true">
+      {faces.map(face => (
+        <figure key={face.key}>
+          <span className="ch" style={{ fontFamily: face.stack }}>
+            {text}
+          </span>
+          <figcaption>{face.label}</figcaption>
+        </figure>
+      ))}
     </div>
   )
 }

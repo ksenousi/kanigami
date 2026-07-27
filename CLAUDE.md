@@ -58,6 +58,15 @@ a real account and the Safety procedure to re-accept.
   changing `vite.config.js` 404s every asset on Pages.
 - **Radicals may have no Unicode character.** Fall back to
   `character_images` (prefer SVG) and invert for the ink ground.
+- **The Japanese faces are a feature, not styling.** `src/lib/faces.js` holds
+  four families; the review rotates one per question and the lesson shows all
+  four together. A kanji met in one face teaches that picture rather than the
+  character. **Never test whether a webfont arrived with
+  `document.fonts.check`** — it answers "could this text be rendered with
+  this list", the list ends in a fallback, and it returns `true` for a font
+  that does not exist. Use `FontFace.status === 'loaded'`, which is what
+  `useFaces.js` does; getting this wrong reports four faces while drawing
+  one.
 
 ## This repo is public
 

@@ -3,6 +3,8 @@ import { answer, nextQuestion, sessionProgress } from '../lib/session.js'
 import { grade } from '../lib/grade.js'
 import { movement } from '../lib/srs.js'
 import { acceptedAnswers, echoesAnswer, questionParts, subjectTypeName } from '../lib/subject.js'
+import { FACES, faceFor } from '../lib/faces.js'
+import useFaces from './useFaces.js'
 import AnswerField from './AnswerField.jsx'
 import Glyph from './Glyph.jsx'
 import useOnline from './useOnline.js'
@@ -27,6 +29,12 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
   const [judged, setJudged] = useState(null)
   const [nudge, setNudge] = useState(null)
   const [sync, setSync] = useState(() => submitter.state())
+  // How many questions this screen has put up, which is what rotates the
+  // face. Counted here rather than derived from the session, because a
+  // missed item comes round again and should not come back in the face it
+  // was missed in — that would let the face itself become the cue.
+  const [asked, setAsked] = useState(0)
+  const faces = useFaces()
   const online = useOnline()
 
   useEffect(() => submitter.watch(setSync), [submitter])
@@ -76,6 +84,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
     // a tab closed halfway through should lose the queue and nothing else.
     if (next.justCompleted) submitter.push(next.justCompleted)
 
+    setAsked(n => n + 1)
     setJudged({
       question: asking,
       verdict,
@@ -103,7 +112,11 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
           <>
             <Question item={showing.item} questionType={showing.questionType} />
 
-            <Glyph subject={showing.subject} />
+            {/* One face per question, rotating. The character is the thing
+                being tested, so it is the thing that varies — see faces.js
+                for why this is the review's job and the collection is the
+                lesson's. */}
+            <Glyph subject={showing.subject} face={faceFor(asked, faces)} />
 
             <form onSubmit={event => event.preventDefault()}>
               <AnswerField
@@ -155,6 +168,11 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
         )}
         <span className="track" />
         <span>
+          {/* Home carries the explanation; here it is one more exceptional
+              thing alongside unsent answers, in the same register. */}
+          {faces.length < FACES.length ? (
+            <span className="live">{faces.length} of {FACES.length} typefaces · </span>
+          ) : null}
           {sync.failed.length > 0 ? (
             <span className="live">{sync.failed.length} unsent · </span>
           ) : null}

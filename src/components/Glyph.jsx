@@ -6,10 +6,18 @@ import { glyphFor } from '../lib/subject.js'
 //
 // The image is decorative to a screen reader on purpose: its alt text would
 // be the answer to the question being asked.
-export default function Glyph({ subject }) {
+export default function Glyph({ subject, face }) {
   const { text, image } = glyphFor(subject)
 
-  if (text) return <div className="glyph">{text}</div>
+  // Only the character takes the face. A radical drawn as an image has no
+  // typeface to vary, and 〓 is the app's own mark rather than the subject's.
+  if (text) {
+    return (
+      <div className="glyph" style={face ? { fontFamily: face.stack } : undefined}>
+        {text}
+      </div>
+    )
+  }
   if (image) {
     return (
       <div className="glyph">
