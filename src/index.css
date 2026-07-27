@@ -72,12 +72,27 @@
      --accent, which already says what it needs to.
 
      These label the counts as well as drawing the bar, so each one has to be
-     readable as 9.5px type on the ground. 灰 ash is what burned is for:
+     readable as --label type on the ground. 灰 ash is what burned is for:
      --rule measured 1.28:1 and simply could not be read. */
   --srs-guru: #8a6f4a;
   --srs-master: #4f6b78;
   --srs-enlightened: #5a5f7a;
   --srs-burned: #8b8275;
+
+  /* ---- type scale ----
+     Not part of the palette and not themeable: this is how big the app is,
+     and every size in the file comes from here. The mono labels used to sit
+     at 9.5–10px with 0.2em of tracking, which is small enough to have to
+     lean in — letter-spacing that wide costs legibility that a 10px face has
+     none of to spare. --label is the floor now, and nothing may go under it.
+
+     One place to change if it is still too small. Raise the whole scale
+     rather than one rule, or the hierarchy quietly flattens. */
+  --label: 12px;   /* mono eyebrows, footline, counts, folios */
+  --small: 15px;   /* secondary prose — the dry-run note, an error */
+  --body: 17px;    /* prose meant to be read: mnemonics, the lede */
+  --input: 18px;   /* what you type */
+  --control: 13px; /* buttons */
 
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
   --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -173,14 +188,14 @@ body {
 
 .masthead .wordmark {
   font-family: var(--jp-serif);
-  font-size: 21px;
+  font-size: 23px;
   letter-spacing: 0.12em;
   color: var(--text);
 }
 
 .masthead .tag {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--accent);
@@ -224,7 +239,7 @@ body {
 .question {
   margin: 0;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--dim);
@@ -257,7 +272,7 @@ body {
 
 .answers {
   font-family: var(--jp-serif);
-  font-size: 20px;
+  font-size: 23px;
   color: var(--accent);
 }
 
@@ -274,7 +289,7 @@ body {
 /* What WaniKani said the item did. One dim line, never a badge. */
 .movement {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--dim);
@@ -321,21 +336,21 @@ body {
 
 .missed .ch {
   font-family: var(--jp-serif);
-  font-size: 22px;
+  font-size: 24px;
   color: var(--text-strong);
   min-width: 2.2em;
 }
 
 .missed .gl {
   flex: 1;
-  font-size: 15px;
+  font-size: var(--small);
   color: var(--text-soft);
   text-align: left;
 }
 
 .missed .n {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.16em;
   color: var(--accent);
 }
@@ -345,7 +360,7 @@ body {
 .passed {
   margin: 0;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--dim);
@@ -356,7 +371,7 @@ body {
 .learned {
   margin: 0;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--dim);
@@ -377,7 +392,7 @@ body {
 /* The SRS spread: one segmented hairline, and the counts beneath it as one
    line of type. Never five cards with five numbers in them. */
 .spreadline {
-  width: min(520px, 100%);
+  width: min(620px, 100%);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -419,12 +434,15 @@ body {
 
 .counts {
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 18px;
   font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.16em;
+  font-size: var(--label);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--dim);
-  text-align: center;
 }
 
 .counts .srs-apprentice {
@@ -471,7 +489,7 @@ body {
 
 .door .name {
   font-family: var(--jp-serif);
-  font-size: 26px;
+  font-size: 29px;
   letter-spacing: 0.04em;
   color: var(--text-strong);
   transition: color 0.15s;
@@ -487,7 +505,7 @@ body {
 
 .door .key {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: var(--label);
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--dim);
@@ -585,7 +603,7 @@ body {
 
 .dryrun .why {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--small);
   line-height: 1.7;
   color: var(--text-soft);
   text-align: center;
@@ -603,7 +621,7 @@ body {
 .eyebrow {
   margin: 0;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--dim);
@@ -620,7 +638,7 @@ body {
 .lede {
   max-width: 46ch;
   color: var(--text-soft);
-  font-size: 16px;
+  font-size: var(--body);
   line-height: 1.8;
 }
 
@@ -651,7 +669,7 @@ body {
   padding: 0;
   list-style: none;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: var(--label);
   letter-spacing: 0.06em;
   line-height: 2;
   color: var(--text-soft);
@@ -667,7 +685,7 @@ body {
 }
 
 .perms .why {
-  font-size: 14px;
+  font-size: var(--small);
   line-height: 1.75;
   color: var(--text-soft);
 }
@@ -687,7 +705,7 @@ body {
   padding: 6px 2px;
   color: var(--text);
   font-family: var(--mono);
-  font-size: 15px;
+  font-size: var(--input);
   letter-spacing: 0.06em;
   text-align: center;
 }
@@ -741,7 +759,7 @@ body {
 
 button {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--control);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text);
@@ -780,7 +798,7 @@ button.quiet:hover:not(:disabled) {
 
 .error {
   color: var(--accent);
-  font-size: 14px;
+  font-size: var(--small);
   max-width: 42ch;
 }
 
@@ -800,7 +818,7 @@ button.quiet:hover:not(:disabled) {
 
 .figure b {
   font-family: var(--jp-serif);
-  font-size: 46px;
+  font-size: 50px;
   font-weight: 300;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -809,7 +827,7 @@ button.quiet:hover:not(:disabled) {
 
 .figure span {
   font-family: var(--mono);
-  font-size: 9.5px;
+  font-size: var(--label);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--dim);
@@ -828,7 +846,7 @@ button.quiet:hover:not(:disabled) {
   align-items: center;
   gap: 16px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--dim);
@@ -865,7 +883,7 @@ button.quiet:hover:not(:disabled) {
   align-items: center;
   gap: 14px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--dim);
@@ -937,7 +955,7 @@ button.quiet:hover:not(:disabled) {
 .verso .stat {
   margin: 0;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--dim);
@@ -960,7 +978,7 @@ button.quiet:hover:not(:disabled) {
 
 .readings {
   margin: 0;
-  font-size: 22px;
+  font-size: 24px;
   color: var(--text);
 }
 
@@ -968,7 +986,7 @@ button.quiet:hover:not(:disabled) {
   display: block;
   margin-bottom: 4px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--dim);
@@ -985,7 +1003,7 @@ button.quiet:hover:not(:disabled) {
 .mnemonic-label {
   margin: 0;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--label);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--dim);
@@ -994,7 +1012,7 @@ button.quiet:hover:not(:disabled) {
 .mnemonic {
   margin: 0;
   max-width: 42ch;
-  font-size: 16px;
+  font-size: var(--body);
   line-height: 1.85;
   color: var(--text-soft);
 }
@@ -1052,14 +1070,14 @@ button.quiet:hover:not(:disabled) {
 }
 
 .sentences .ja {
-  font-size: 18px;
+  font-size: 19px;
   line-height: 1.9;
   color: var(--text);
 }
 
 .sentences .en {
   margin-top: 4px;
-  font-size: 14px;
+  font-size: var(--small);
   line-height: 1.7;
   color: var(--text-soft);
 }

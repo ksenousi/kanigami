@@ -92,6 +92,11 @@ removes. Assume every commit is permanent and public.
 - Two surfaces, tokens in `src/index.css`: 墨 ink for reviews, 紙 paper for
   lessons. De-boxed — no borders or cards that only group things. A hairline
   that lights is the house pattern, not an outlined box.
+- **Type sizes come from the scale, never from a number.** `--label`,
+  `--small`, `--body`, `--input`, `--control` in `src/index.css`. `--label` is
+  the floor and nothing goes under it — the mono labels sat at 9.5–10px with
+  0.2em of tracking and were reported as hard to read. Raise the whole scale
+  rather than one rule, or the hierarchy flattens.
 - **`src/index.css` is layered palette → roles → surfaces.** Components read
   role tokens (`--ground`, `--text`, `--text-strong`, `--text-soft`, `--dim`,
   `--rule`, `--accent`) and never the palette underneath. Reaching past the

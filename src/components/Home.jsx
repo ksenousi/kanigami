@@ -208,14 +208,16 @@ function Spread({ spread: bands }) {
       </div>
       {/* Each count wears its band's colour, which is what ties it to the
           segment above — the words are evenly spaced and the segments are
-          proportional, so position cannot do that job. */}
+          proportional, so position cannot do that job.
+
+          Laid out with gaps rather than written with · separators: at five
+          bands this line wraps on a narrow screen, and a wrapped separator
+          strands a dot at the start of the second row. The colours already
+          do the separating. */}
       <p className="counts">
-        {bands.bands.map((band, index) => (
-          <span key={band.key}>
-            {index > 0 ? ' · ' : ''}
-            <span className={`srs-${band.key}`}>
-              {band.key} {band.count}
-            </span>
+        {bands.bands.map(band => (
+          <span key={band.key} className={`srs-${band.key}`}>
+            {band.key} {band.count}
           </span>
         ))}
       </p>
