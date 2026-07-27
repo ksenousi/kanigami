@@ -594,8 +594,8 @@ radicals, one of them missed on purpose:
   4h out — WaniKani's halved intervals for levels 1–2, which again is a
   number the app was told rather than one it derived.
 
-**Still unproven:** `startAssignment`. Reviews write; starting a lesson has
-never been run against a real account.
+With Phase 5's lesson batch already accepted live, this was the second of the
+two write paths and the last one outstanding. Both now write for real.
 
 - **Dry run is the default in the constructor**, not in the caller. A
   submitter built by code that forgot to think about this writes nothing, and

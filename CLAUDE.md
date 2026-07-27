@@ -5,10 +5,10 @@ entirely in the browser on GitHub Pages.
 
 **Read [PLAN.md](PLAN.md) before doing anything.** It holds the phased build
 plan, the design spec for both surfaces, and the safety procedure for testing
-against a real WaniKani account. Every phase is built. Phase 4 has been
-accepted live — reviews really submit — so the one path never run against a
-real account is `startAssignment`, which needs a real account and the Safety
-procedure.
+against a real WaniKani account. Every phase is built, and both write paths
+are now accepted live against a throwaway account: `startAssignment` in
+Phase 5, `submitReview` in Phase 4. Anything that touches either still needs
+a real account and the Safety procedure to re-accept.
 
 ## Architecture
 
@@ -45,8 +45,8 @@ procedure.
 - **The write path is gated.** `submitReview` reaches the network from one
   place only — `App.jsx`, handed to `createSubmitter` as `send` — and a
   submitter is in dry run unless its caller says otherwise. `startAssignment`
-  stays uncalled until Phase 5. See Safety in PLAN.md; there is no undo for a
-  submitted review.
+  is gated the same way and reaches the network only from `App.jsx`. See
+  Safety in PLAN.md; there is no undo for either.
 - **`base` and the repo name are coupled.** Renaming the repo without
   changing `vite.config.js` 404s every asset on Pages.
 - **Radicals may have no Unicode character.** Fall back to
