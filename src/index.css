@@ -247,13 +247,29 @@ body {
 
 /* What is being asked, and of what. This one line is where WaniKani's
    subject colours live — never as a field of colour behind anything. */
+/* The pieces are set apart on purpose. `meaning` and `reading` are the whole
+   difference between two otherwise identical screens, so the asked thing is
+   the loud one; the subject type and the which-one hint stay quiet beside it
+   in the subject's colour. Gaps rather than · separators, the same as the SRS
+   counts, so a wrap never strands a dot. */
 .question {
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 12px;
   font-family: var(--mono);
   font-size: var(--label);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dim);
+}
+
+.question .asked {
+  font-size: 19px;
+  letter-spacing: 0.2em;
+  color: var(--text-strong);
 }
 
 .question.wk-radical {

@@ -77,11 +77,26 @@ slightly back at `#cfc6b4` (`--text-soft`).
 - The answer field is a hairline, not a box: transparent input, 1px rule
   underneath that lights vermilion on focus. Never add a border, card, or
   filled background around it.
-- The question type is a single line of letter-spaced uppercase mono above
-  the glyph — `kanji · reading · on'yomi`. **This is where WaniKani's subject
-  colours live**: radical `#00aaff`, kanji `#ff00aa`, vocabulary `#aa00ff`,
-  applied to that line of type only. Never as a full-bleed background, which
-  is precisely what we are replacing.
+- The question is a single line of letter-spaced uppercase mono above the
+  glyph, in **three pieces set apart from each other** — `kanji` **READING**
+  `on'yomi`. **This is where WaniKani's subject colours live**: radical
+  `#00aaff`, kanji `#ff00aa`, vocabulary `#aa00ff`, on the quiet pieces only.
+  Never as a full-bleed background, which is precisely what we are replacing.
+  - **What is being asked is the loud piece** — 19px in `--text-strong`
+    against `--label` for the rest. It shipped as one uniform line, where
+    `meaning` and `reading` differed by a single word set exactly like every
+    word beside it, so telling two otherwise identical screens apart meant
+    reading 13px mono. The asked word is the whole difference; it gets the
+    weight.
+  - **The third piece answers *which*.** A reading names its type whenever
+    every accepted reading agrees on one; when they disagree, and for any
+    subject with more than one accepted answer, it reads `any of 3` instead.
+    Saying nothing there is what made a four-meaning vocabulary feel like a
+    guess when in fact any of them is taken.
+  - **The field's placeholder says it a second time**, quietly, where the eye
+    already is at the moment of typing: `meaning`, or `かな` for a reading —
+    which also tells you the field is converting romaji before you type a
+    character.
 - **The two verdicts do not share a colour.** Decided from a prototype after
   the first build shipped them both in vermilion, which meant the accent
   fired on every answer and so carried no information at all.

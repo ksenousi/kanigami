@@ -36,17 +36,41 @@ export function readingTypeLabel(readings) {
   return types.size === 1 ? READING_LABELS[[...types][0]] ?? null : null
 }
 
-// The line above the glyph: what this is, and what is being asked of it.
-export function questionLine(item, questionType) {
-  const parts = [subjectTypeName(item.type), questionType]
+// The line above the glyph, in pieces, because the screen sets them
+// differently: what kind of subject this is stays quiet and keeps its subject
+// colour, and **what is being asked** is the loud part. The two question types
+// used to differ by one word set exactly like every word around it.
+export function questionParts(item, questionType) {
+  const accepted = acceptedAnswers(item.subject, questionType)
+  const readings = (item.subject.readings ?? []).filter(r => r.accepted_answer)
 
-  if (questionType === 'reading') {
-    const accepted = (item.subject.readings ?? []).filter(r => r.accepted_answer)
-    const label = readingTypeLabel(accepted)
-    if (label) parts.push(label)
+  return {
+    kind: subjectTypeName(item.type),
+    asked: questionType,
+    hint: hintFor(questionType, accepted, readings)
   }
+}
 
-  return parts.join(' · ')
+// Which reading, and which meaning.
+//
+// A reading question names the type whenever every accepted reading agrees on
+// one — that is the answer to "which". When they disagree there is no which,
+// and the useful thing to say is that any of them will do. Same for a word
+// with four accepted meanings: WaniKani takes any, and leaving that unsaid is
+// what makes a four-meaning vocabulary feel like a guess.
+function hintFor(questionType, accepted, readings) {
+  if (questionType === 'reading') {
+    const label = readingTypeLabel(readings)
+    if (label) return label
+  }
+  return accepted.length > 1 ? `any of ${accepted.length}` : null
+}
+
+// The same thing as one string, for anywhere that cannot set the pieces
+// apart — a label, a title.
+export function questionLine(item, questionType) {
+  const { kind, asked, hint } = questionParts(item, questionType)
+  return [kind, asked, hint].filter(Boolean).join(' · ')
 }
 
 // What to show once the answer has been judged. Only the accepted ones: a

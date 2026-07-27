@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { answer, nextQuestion, sessionProgress } from '../lib/session.js'
 import { grade } from '../lib/grade.js'
 import { movement } from '../lib/srs.js'
-import { acceptedAnswers, questionLine, subjectTypeName } from '../lib/subject.js'
+import { acceptedAnswers, questionParts, subjectTypeName } from '../lib/subject.js'
 import AnswerField from './AnswerField.jsx'
 import Glyph from './Glyph.jsx'
 import useOnline from './useOnline.js'
@@ -100,9 +100,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
       <div className={judged?.verdict === 'correct' ? 'centred ok' : 'centred'}>
         {showing ? (
           <>
-            <p className={`question wk-${subjectTypeName(showing.item.type)}`}>
-              {questionLine(showing.item, showing.questionType)}
-            </p>
+            <Question item={showing.item} questionType={showing.questionType} />
 
             <Glyph subject={showing.subject} />
 
@@ -115,6 +113,9 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
                 }}
                 onEnter={submit}
                 kana={showing.questionType === 'reading'}
+                // A second, quieter answer to the same question, sitting
+                // where the eye already is at the moment of typing.
+                placeholder={showing.questionType === 'reading' ? 'かな' : 'meaning'}
                 lit={judged?.verdict ?? null}
                 locked={Boolean(judged) || !online}
                 focusKey={judged ? 'judged' : `${asking.item.subjectId}:${asking.questionType}`}
@@ -148,6 +149,26 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
         </span>
       </div>
     </div>
+  )
+}
+
+// What is being asked, above the glyph.
+//
+// The two question types used to differ by one word set exactly like every
+// word beside it, so telling them apart meant reading a line of 13px mono.
+// Now the asked thing is the loud part — larger, in the display ink — and the
+// subject type stays quiet in its own colour beside it. The third piece
+// answers *which*: the reading's type when the accepted readings agree on
+// one, and otherwise how many answers will do.
+function Question({ item, questionType }) {
+  const { kind, asked, hint } = questionParts(item, questionType)
+
+  return (
+    <p className={`question wk-${subjectTypeName(item.type)}`}>
+      <span className="kind">{kind}</span>
+      <span className="asked">{asked}</span>
+      {hint ? <span className="kind">{hint}</span> : null}
+    </p>
   )
 }
 

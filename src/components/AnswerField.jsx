@@ -17,7 +17,16 @@ import { toKana } from 'wanakana'
 //
 // `lit` carries the verdict rather than a boolean, because the rule reports
 // which verdict it is: celadon for right, vermilion for wrong.
-export default function AnswerField({ value, onChange, onEnter, kana, lit, locked, focusKey }) {
+export default function AnswerField({
+  value,
+  onChange,
+  onEnter,
+  kana,
+  lit,
+  locked,
+  placeholder,
+  focusKey
+}) {
   const input = useRef(null)
 
   useEffect(() => {
@@ -42,6 +51,7 @@ export default function AnswerField({ value, onChange, onEnter, kana, lit, locke
         onChange={event => onChange(kana ? toKana(event.target.value, { IMEMode: true }) : event.target.value)}
         onKeyDown={keyDown}
         lang={kana ? 'ja' : 'en'}
+        placeholder={placeholder}
         aria-label={kana ? 'Reading' : 'Meaning'}
         autoComplete="off"
         autoCapitalize="off"

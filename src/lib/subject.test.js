@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { acceptedAnswers, glyphFor, questionLine, readingTypeLabel, subjectTypeName } from './subject.js'
+import {
+  acceptedAnswers,
+  glyphFor,
+  questionLine,
+  questionParts,
+  readingTypeLabel,
+  subjectTypeName
+} from './subject.js'
 
 // Hand-authored, minimal, and fake. Never paste a live API payload in here.
 const mountain = {
@@ -109,9 +116,10 @@ describe('questionLine', () => {
     expect(questionLine(item('kanji', mountain), 'reading')).toBe("kanji · reading · on'yomi")
   })
 
-  // 上 accepts both readings, so naming one would be a lie.
-  it('leaves the reading type off when the accepted readings disagree', () => {
-    expect(questionLine(item('kanji', above), 'reading')).toBe('kanji · reading')
+  // 上 accepts both readings, so naming one would be a lie — but saying
+  // nothing leaves you guessing which is wanted when the answer is "either".
+  it('says how many will do when the accepted readings disagree', () => {
+    expect(questionLine(item('kanji', above), 'reading')).toBe('kanji · reading · any of 2')
   })
 
   it('leaves it off for vocabulary, whose readings have no type', () => {
@@ -139,5 +147,50 @@ describe('acceptedAnswers', () => {
 
   it('has nothing to show for a subject with no readings', () => {
     expect(acceptedAnswers(drawnRadical, 'reading')).toEqual([])
+  })
+})
+
+describe('questionParts — which reading, which meaning', () => {
+  // Four accepted meanings and no way to know any will do.
+  const manyMeanings = {
+    characters: '折角',
+    meanings: [
+      { meaning: 'With Trouble', accepted_answer: true },
+      { meaning: 'Valuable', accepted_answer: true },
+      { meaning: 'Precious', accepted_answer: true },
+      { meaning: 'Rare', accepted_answer: false }
+    ],
+    readings: [{ reading: 'せっかく', accepted_answer: true }]
+  }
+
+  it('names the reading type when every accepted reading agrees', () => {
+    expect(questionParts(item('kanji', mountain), 'reading')).toEqual({
+      kind: 'kanji',
+      asked: 'reading',
+      hint: "on'yomi"
+    })
+  })
+
+  it('says how many will do when they disagree', () => {
+    expect(questionParts(item('kanji', above), 'reading').hint).toBe('any of 2')
+  })
+
+  it('says how many will do for a word with several accepted meanings', () => {
+    expect(questionParts(item('vocabulary', manyMeanings), 'meaning').hint).toBe('any of 3')
+  })
+
+  it('counts only the accepted ones', () => {
+    // Rare is on the subject but not an accepted answer.
+    expect(questionParts(item('vocabulary', manyMeanings), 'meaning').hint).not.toBe('any of 4')
+  })
+
+  it('says nothing when there is only one right answer', () => {
+    expect(questionParts(item('kanji', mountain), 'meaning').hint).toBe(null)
+    expect(questionParts(item('vocabulary', skill), 'reading').hint).toBe(null)
+  })
+
+  it('keeps the subject kind separate from what is being asked', () => {
+    const { kind, asked } = questionParts(item('radical', drawnRadical), 'meaning')
+    expect([kind, asked]).toEqual(['radical', 'meaning'])
   })
 })
