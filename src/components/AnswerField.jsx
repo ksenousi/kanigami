@@ -14,6 +14,9 @@ import { toKana } from 'wanakana'
 //
 // Once an answer is judged the field goes read-only rather than disabled: a
 // disabled input drops focus, and the next Enter has to land here to advance.
+//
+// `lit` carries the verdict rather than a boolean, because the rule reports
+// which verdict it is: celadon for right, vermilion for wrong.
 export default function AnswerField({ value, onChange, onEnter, kana, lit, locked, focusKey }) {
   const input = useRef(null)
 
@@ -46,7 +49,15 @@ export default function AnswerField({ value, onChange, onEnter, kana, lit, locke
         spellCheck="false"
         readOnly={locked}
       />
-      <div className={lit ? 'rule lit' : 'rule'} />
+      <div className={ruleClass(lit)} />
     </div>
   )
+}
+
+// `lit` is the verdict, not a boolean: null while asking, then 'correct' or
+// 'incorrect'. The two do not share a colour, which is the whole point —
+// vermilion fired on every answer before and so reported nothing.
+function ruleClass(lit) {
+  if (!lit) return 'rule'
+  return lit === 'correct' ? 'rule lit ok' : 'rule lit'
 }

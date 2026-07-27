@@ -97,7 +97,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
         </button>
       </header>
 
-      <div className="centred">
+      <div className={judged?.verdict === 'correct' ? 'centred ok' : 'centred'}>
         {showing ? (
           <>
             <p className={`question wk-${subjectTypeName(showing.item.type)}`}>
@@ -115,7 +115,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
                 }}
                 onEnter={submit}
                 kana={showing.questionType === 'reading'}
-                lit={Boolean(judged)}
+                lit={judged?.verdict ?? null}
                 locked={Boolean(judged) || !online}
                 focusKey={judged ? 'judged' : `${asking.item.subjectId}:${asking.questionType}`}
               />
@@ -151,19 +151,21 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
   )
 }
 
-// Correct and incorrect both light the same rule — there is one accent in
-// this surface and no red flood. The line of type is what differs, and the
-// accepted answer appears either way: getting it wrong is when you most need
-// to see it.
+// The two verdicts do not share a colour: celadon for right, vermilion for
+// wrong, on the rule, the verdict line and the accepted answer together. That
+// hue split is the entire signal — no shake, no red flood, and deliberately
+// nothing stacked on top of it. The accepted answer appears either way, since
+// getting it wrong is when you most need to see it.
 function Verdict({ judged, outcome }) {
   const separator = judged.question.questionType === 'reading' ? '、' : ', '
+  const right = judged.verdict === 'correct'
 
   return (
     <>
-      <p className={judged.verdict === 'correct' ? 'eyebrow' : 'eyebrow hot'}>
-        {judged.verdict === 'correct' ? 'correct' : 'incorrect · it comes back'}
+      <p className={right ? 'eyebrow ok' : 'eyebrow hot'}>
+        {right ? 'correct' : 'incorrect · it comes back'}
       </p>
-      <p className="answers">{judged.answers.join(separator)}</p>
+      <p className={right ? 'answers ok' : 'answers'}>{judged.answers.join(separator)}</p>
       {judged.completed ? <p className="movement">{movementLine(outcome)}</p> : null}
     </>
   )

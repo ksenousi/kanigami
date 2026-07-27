@@ -17,6 +17,11 @@
    paper has a night stock, not a dark mode. Themes sit
    underneath both — a theme restyles ink *and* paper.
 
+   One more role than the surfaces started with: --ok, what a
+   right answer lights. Vermilion used to fire on every answer
+   and so said nothing; now --accent means wrong and --ok means
+   right, and the difference is a hue you catch without reading.
+
    WaniKani's subject colours are information, not decoration —
    radical blue, kanji pink, vocabulary purple. They survive in
    both worlds as a line of type, never as a field of colour, and
@@ -34,19 +39,25 @@
   --ink-soft: #cfc6b4;   /* running prose, set back from the body text */
   --ink-dim: #6b6255;
   --vermilion: #c8452c;
+  /* 青磁 celadon — what a right answer lights. The traditional foil to
+     vermilion, and desaturated enough never to read as a success badge. The
+     two verdicts sharing one accent is what made a miss easy to miss. */
+  --celadon: #7fa693;
   /* WaniKani's radical stroke images are black on transparent, so they need
      turning inside out to sit on a dark ground. It belongs with the palette
      because a light theme would set it to none. */
   --ink-strokes: invert(1);
 
-  --paper: #f3ede0;
-  --paper-line: #d8cfba;
-  --paper-text: #221f1a;
-  --paper-strong: #14110d; /* display type — the character, the gloss */
-  --paper-soft: #4a443a;   /* running prose, set back from the body text */
-  --paper-dim: #7d7362;
-  --seal: #9e3b26;
-  --paper-strokes: none;
+  /* 藍 indigo — paper's night stock. A blue-black against ink's brown-black,
+     which is what keeps the two surfaces apart now that both are dark. */
+  --paper: #11141b;
+  --paper-line: #252c3a;
+  --paper-text: #dfe3ec;
+  --paper-strong: #f0f3fa; /* display type — the character, the gloss */
+  --paper-soft: #aeb5c4;   /* running prose, set back from the body text */
+  --paper-dim: #6f7788;
+  --seal: #d4593c;         /* lifted from #9e3b26 to carry on a dark ground */
+  --paper-strokes: invert(1);
 
   /* Not themeable. These are WaniKani's, and they carry meaning. */
   --wk-radical: #00aaff;
@@ -76,11 +87,15 @@
    [data-theme='<name>'] {
      --ink: …; --ink-raised: …; --ink-line: …; --ink-text: …;
      --ink-strong: …; --ink-soft: …; --ink-dim: …; --vermilion: …;
-     --ink-strokes: …;
+     --celadon: …; --ink-strokes: …;
      --paper: …; --paper-line: …; --paper-text: …; --paper-strong: …;
      --paper-soft: …; --paper-dim: …; --seal: …; --paper-strokes: …;
      --srs-guru: …; --srs-master: …; --srs-enlightened: …;
    }
+
+   Both surfaces are dark now — ink is a warm brown-black and paper a blue-
+   black night stock — but they are still committed worlds rather than a
+   light/dark pair. A theme restyles both.
 
    Set it on <html> and every surface follows. If a theme needs a
    rule changed rather than a colour, the rule is reaching past
@@ -98,6 +113,7 @@
   --text-soft: var(--ink-soft);
   --dim: var(--ink-dim);
   --accent: var(--vermilion);
+  --ok: var(--celadon);
   --strokes: var(--ink-strokes);
 }
 
@@ -110,9 +126,10 @@
   --text-soft: var(--paper-soft);
   --dim: var(--paper-dim);
   --accent: var(--seal);
+  --ok: var(--celadon);
   --strokes: var(--paper-strokes);
 
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * {
@@ -232,6 +249,16 @@ body {
   font-family: var(--jp-serif);
   font-size: 20px;
   color: var(--accent);
+}
+
+.answers.ok {
+  color: var(--ok);
+}
+
+/* The glyph's halo follows the verdict too — the largest thing on screen,
+   changing by a hue rather than by a flash. */
+.centred.ok .glyph {
+  text-shadow: 0 0 60px rgb(from var(--ok) r g b / 0.16);
 }
 
 /* What WaniKani said the item did. One dim line, never a badge. */
@@ -496,6 +523,10 @@ body {
   color: var(--accent);
 }
 
+.eyebrow.ok {
+  color: var(--ok);
+}
+
 .lede {
   max-width: 46ch;
   color: var(--text-soft);
@@ -588,13 +619,19 @@ body {
 
 /* Reviews keep focus in the field from the first question to the last, so a
    rule that lit on focus would never once be dark. Here it answers the
-   question instead: lit means judged. */
+   question instead — and it answers *which* question, because the two
+   verdicts do not share a colour. Vermilion means wrong; celadon means
+   right. */
 .field.review:focus-within .rule::after {
   opacity: 0;
 }
 
 .field.review .rule.lit::after {
   opacity: 1;
+}
+
+.field.review .rule.ok::after {
+  background: linear-gradient(90deg, transparent, var(--ok) 12%, var(--ok) 88%, transparent);
 }
 
 button {

@@ -82,19 +82,55 @@ slightly back at `#cfc6b4` (`--text-soft`).
   colours live**: radical `#00aaff`, kanji `#ff00aa`, vocabulary `#aa00ff`,
   applied to that line of type only. Never as a full-bleed background, which
   is precisely what we are replacing.
-- Correct: the rule lights, the accepted reading appears in vermilion beneath
-  it, and the SRS movement is one dim line of type (`apprentice IV → guru I`).
-- Wrong: the rule stays lit in vermilion, the item returns to the queue. No
-  shake, no red flood, no sound.
+- **The two verdicts do not share a colour.** Decided from a prototype after
+  the first build shipped them both in vermilion, which meant the accent
+  fired on every answer and so carried no information at all.
+  - Correct: the rule lights **青磁 celadon `#7fa693` (`--ok`)**, the accepted
+    answer and the verdict line take it too, and the glyph's halo warms to it.
+    The SRS movement stays one dim line of type (`apprentice IV → guru I`).
+  - Wrong: the rule lights **vermilion (`--accent`)**, and the item returns to
+    the queue. Still no shake, no red flood, no sound — the hue split is the
+    whole signal, and it is pre-attentive, so a miss cannot slide past.
+- Celadon is the traditional foil to vermilion, desaturated enough never to
+  read as a success badge and far enough from the paper surface's indigo to
+  keep the two apart. Rejected: **藍 indigo**, the widest hue separation, but
+  it is now the paper stock and would be doing two unrelated jobs; **若草**, an
+  olive too close to conventional green-means-right; **金茶 gold**, warm and
+  companionable but vermilion's near neighbour and the easiest to confuse at a
+  glance; **no hue at all**, cleanest by the one-accent rule and the weakest
+  signal of the five.
+- Also prototyped and rejected for the wrong state: striking through what you
+  typed (見せ消ち), severing the rule, dimming the glyph, and thickening the
+  hairline. The hue split alone was judged enough; **do not stack a second
+  device on top of it.**
 - Footer is one hairline track with `n left` at the right. Stats do not
   belong on this screen.
 
 ### 紙 Paper — the lesson surface
 
-Lessons are reading material, so typeset them. Warm stock `#f3ede0`
-(`--ground`), ink `#221f1a` (`--text`), rules `#d8cfba` (`--rule`), seal-red
-accent `#9e3b26` (`--accent`), mincho throughout, display type at `#14110d`
-(`--text-strong`) and running prose set back at `#4a443a` (`--text-soft`).
+Lessons are reading material, so typeset them.
+
+**The stock is 藍 indigo, a night stock.** Decided from a prototype; it
+replaces the warm light stock this surface shipped with, because going from a
+review to a lesson flashed you. Ground `#11141b` (`--ground`), rules `#252c3a`
+(`--rule`), text `#dfe3ec` (`--text`), display type `#f0f3fa`
+(`--text-strong`), running prose `#aeb5c4` (`--text-soft`), seal-red accent
+lifted to `#d4593c` (`--accent`) to carry on a dark ground. Mincho throughout,
+exactly as before — **the whole change is one block of palette values, and no
+component rule moved.** That is what the palette → roles → surfaces layering
+was built for; if a future stock needs a rule changed, the rule is reaching
+past the role layer.
+
+The two surfaces are still committed worlds, not a light/dark pair. Paper's
+ground is a blue-black and ink's is a warm brown-black, which is what keeps
+them apart now that both are dark. Rejected: a **warm night stock**, the same
+paper under a lamp, which read as ink with different type; and **one world**,
+dropping the paper palette entirely so lessons differ only in typography —
+the simplest answer to the request, and it costs the thesis the app is built
+on.
+
+Radical stroke images invert on this surface now (`--paper-strokes:
+invert(1)`), the same as on ink, because the ground is no longer light.
 
 - Two columns, a book spread: **verso** holds the character large with its
   reading as `<ruby>`; **recto** holds the meaning as a display-size heading,
