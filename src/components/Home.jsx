@@ -31,7 +31,7 @@ export default function Home({
   // Bumped to re-run the three reads. A failed load used to offer only the
   // door out, so a dropped connection cost you the token.
   const [attempt, setAttempt] = useState(0)
-  const faces = useFaces()
+  const { faces, settled: facesSettled } = useFaces()
   const online = useOnline()
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function Home({
 
         {/* Before the counts, because it is about what the app can do rather
             than about the queue. */}
-        <FaceWarning faces={faces} />
+        <FaceWarning faces={faces} settled={facesSettled} />
 
         {failure ? (
           // A revoked token and a dropped connection are not the same

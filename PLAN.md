@@ -889,6 +889,22 @@ shipped that way and would have reported four faces while drawing one.
 until something asks for a glyph — with a kanji as the probe, since a
 Japanese font's Latin subset is a separate file that can arrive alone.
 
+**And one probe is not enough**, which is the second way this shipped broken.
+The stylesheet is an external `<link>`; a screen can mount before it is
+parsed, and until then `document.fonts` holds no face of these families at
+all — so `load()` matches nothing and resolves *successfully*, and a single
+probe concludes four missing fonts for good, since an effect with no
+dependencies never runs again. It put the banner on a machine whose fonts
+were entirely fine. `useFaces` now retries on a backoff and on every
+`loadingdone` until all four are in or eight seconds pass.
+
+**The banner stays quiet until then.** Fonts are missing for the first
+seconds of every visit — that is what loading is — and a warning that appears
+and then vanishes is how you teach somebody to ignore it the one time it
+matters. Verified across all three: fonts fine (never appears), stylesheet
+three seconds late (never flashes, recovers), genuinely blocked (speaks at
+~10s and stays).
+
 ---
 
 ## Reference

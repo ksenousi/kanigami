@@ -14,7 +14,7 @@ import useFaces from './useFaces.js'
 // session to quiz — starting an assignment happens on the far side of that.
 export default function Lesson({ items, onQuiz, onExit }) {
   const [at, setAt] = useState(0)
-  const faces = useFaces()
+  const { faces } = useFaces()
   const item = items[at]
   const last = at === items.length - 1
 

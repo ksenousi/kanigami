@@ -11,7 +11,13 @@ import { FACES } from '../lib/faces.js'
 // A line of type over a hairline rather than a bordered box: a banner in this
 // app's language. Nothing here is dismissable, because it is a statement of
 // what the app is currently able to do rather than news.
-export default function FaceWarning({ faces }) {
+//
+// `settled` is the whole reason this does not flash. Fonts are missing for
+// the first seconds of every visit — that is what loading is — and saying
+// they are blocked in that window is a false alarm that then vanishes,
+// which teaches you to ignore the banner the one time it is true.
+export default function FaceWarning({ faces, settled }) {
+  if (!settled) return null
   const missing = FACES.length - faces.length
   if (missing <= 0) return null
 

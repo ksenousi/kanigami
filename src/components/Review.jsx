@@ -34,7 +34,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
   // missed item comes round again and should not come back in the face it
   // was missed in — that would let the face itself become the cue.
   const [asked, setAsked] = useState(0)
-  const faces = useFaces()
+  const { faces, settled: facesSettled } = useFaces()
   const online = useOnline()
 
   useEffect(() => submitter.watch(setSync), [submitter])
@@ -170,7 +170,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
         <span>
           {/* Home carries the explanation; here it is one more exceptional
               thing alongside unsent answers, in the same register. */}
-          {faces.length < FACES.length ? (
+          {facesSettled && faces.length < FACES.length ? (
             <span className="live">{faces.length} of {FACES.length} typefaces · </span>
           ) : null}
           {sync.failed.length > 0 ? (
