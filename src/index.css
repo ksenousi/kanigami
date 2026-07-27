@@ -251,6 +251,58 @@ body {
   justify-content: center;
 }
 
+/* The items that were missed — the useful part of a session, so they get the
+   room. One line each, no ranking, no score. */
+.missed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(420px, 100%);
+}
+
+.missed ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.missed li {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 9px 2px;
+  border-top: 1px solid var(--rule);
+}
+
+.missed li:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.missed .ch {
+  font-family: var(--jp-serif);
+  font-size: 22px;
+  color: var(--text-strong);
+  min-width: 2.2em;
+}
+
+.missed .gl {
+  flex: 1;
+  font-size: 15px;
+  color: var(--text-soft);
+  text-align: left;
+}
+
+.missed .n {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+
 /* ---- 家 Home ---- */
 
 .passed {

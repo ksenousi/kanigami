@@ -29,6 +29,14 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
 
   useEffect(() => submitter.watch(setSync), [submitter])
 
+  // Nothing left to ask. The wrap takes it from here — this screen has no
+  // finished state of its own, which is why it cannot disagree with the one
+  // the wrap draws.
+  const done = !judged && nextQuestion(session) === null
+  useEffect(() => {
+    if (done) onExit(session)
+  }, [done, session, onExit])
+
   // While a verdict is showing, `session` is already the next generation —
   // the question on screen is the one held in `judged`.
   const asking = judged ? null : nextQuestion(session)
@@ -76,8 +84,10 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
       <header className="masthead">
         <span className="wordmark">蟹紙</span>
         <span className="sp" />
-        <button className="quiet" type="button" onClick={onExit}>
-          {showing ? 'Wrap up' : 'Done'}
+        {/* Ends the session early. Everything finished is already submitted,
+            so there is nothing to lose by stopping. */}
+        <button className="quiet" type="button" onClick={() => onExit(session)}>
+          Wrap up
         </button>
       </header>
 
@@ -113,21 +123,7 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
               ) : null}
             </div>
           </>
-        ) : (
-          // Phase 7 replaces this with the session wrap. Until then, the
-          // honest minimum: it is over, and this is what became of it.
-          <>
-            <div className="glyph">終</div>
-            <p className="eyebrow">{progress.total} items · session finished</p>
-            <p className="lede">
-              {sync.dryRun
-                ? 'Dry run — every submission was logged to the console instead of sent.'
-                : sync.failed.length > 0
-                  ? `${sync.failed.length} ${sync.failed.length === 1 ? 'answer' : 'answers'} could not be submitted: ${sync.failed[0].message}`
-                  : 'Everything was submitted to WaniKani.'}
-            </p>
-          </>
-        )}
+        ) : null}
       </div>
 
       <div className="footline">

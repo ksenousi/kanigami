@@ -4,7 +4,8 @@ import {
   createSession,
   isComplete,
   nextQuestion,
-  sessionProgress
+  sessionProgress,
+  sessionReport
 } from './session.js'
 
 // Trimmed-down API resources. The engine only reads `id`, `object` and
@@ -296,5 +297,62 @@ describe('immutability', () => {
     expect(session.queue).toHaveLength(queueLength)
     expect(session.items[0].incorrectMeaning).toBe(0)
     expect(session.lastSubjectId).toBe(null)
+  })
+})
+
+describe('sessionReport', () => {
+  it('has nothing to report about a session nobody answered', () => {
+    const report = sessionReport(createSession(tenKanji()))
+    expect(report).toMatchObject({ correct: 0, wrong: 0, asked: 0, accuracy: null, missed: [] })
+  })
+
+  it('counts questions rather than items', () => {
+    // Five kanji, two questions each, every one right first time.
+    const { session } = play(createSession(tenKanji().slice(0, 5)))
+    const report = sessionReport(session)
+    expect(report).toMatchObject({ correct: 10, wrong: 0, asked: 10, accuracy: 1 })
+  })
+
+  it('counts every miss, including repeated ones on the same question', () => {
+    // Miss the first question twice, then answer everything correctly.
+    let misses = 0
+    const { session } = play(createSession(tenKanji().slice(0, 2)), question => {
+      const first = question.item.subjectId === 100 && question.questionType === 'meaning'
+      if (first && misses < 2) {
+        misses += 1
+        return 'incorrect'
+      }
+      return 'correct'
+    })
+
+    const report = sessionReport(session)
+    expect(report.wrong).toBe(2)
+    expect(report.correct).toBe(4)
+    expect(report.asked).toBe(6)
+    expect(report.accuracy).toBeCloseTo(4 / 6)
+  })
+
+  it('names the items that were missed and no others', () => {
+    const { session } = play(createSession(tenKanji().slice(0, 3)), question =>
+      question.item.subjectId === 101 && question.questionType === 'reading' ? 'incorrect' : 'correct'
+    )
+    const report = sessionReport(session)
+    expect(report.missed.map(item => item.subjectId)).toEqual([101])
+  })
+
+  // A session ended early still has answers in it, and they still count.
+  it('reports a session that was walked away from', () => {
+    let session = createSession(tenKanji().slice(0, 4))
+    session = ask(session, 'correct')
+    session = ask(session, 'incorrect')
+
+    const report = sessionReport(session)
+    expect(report).toMatchObject({ correct: 1, wrong: 1, asked: 2, completed: 0, total: 4 })
+    expect(report.accuracy).toBeCloseTo(0.5)
+  })
+
+  it('carries the item counts alongside the answer counts', () => {
+    const { session } = play(createSession([radical(1, '一'), ...tenKanji().slice(0, 2)]))
+    expect(sessionReport(session)).toMatchObject({ completed: 3, total: 3, remaining: 0 })
   })
 })

@@ -536,13 +536,30 @@ for the same reason.
 
 ---
 
-## Phase 7 — session wrap
+## Phase 7 — session wrap ✅ done
 
-**Files:** `src/components/Wrap.jsx`
+**Files:** `src/components/Wrap.jsx`, `sessionReport` in `src/lib/session.js`
 
 End-of-session summary on the ink surface: count, accuracy, the items that
 were missed, and what the queue looks like next. No confetti, no streak
-mechanics, no scores out of five.
+mechanics, no scores out of five — the missed items are the useful part of a
+session and they get the room.
+
+**Shipped:** 6 further vitest cases on `sessionReport`, and the review →
+wrap handoff driven in the browser.
+
+- **Every session ends here, and only here.** `Review.jsx` no longer has a
+  finished state of its own; it calls `onExit(session)` both when it runs out
+  of questions and when the wrap-up control is used, so the two paths cannot
+  disagree. That control is also Phase 8's early-exit: everything finished is
+  already submitted, so stopping loses nothing.
+- **Accuracy is counted over questions, not items** — a kanji whose reading
+  you missed twice and then got right is one item and three answers. It holds
+  for a session ended early, and it is null rather than 100% when nothing was
+  asked.
+- **The summary is fetched here rather than handed down**, because the
+  session just changed it. The end of a session is the only moment the
+  forecast is certainly fresh.
 
 ---
 

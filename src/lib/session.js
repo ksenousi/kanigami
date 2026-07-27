@@ -161,3 +161,34 @@ export function sessionProgress(session) {
   const completed = session.items.filter(isComplete).length
   return { remaining: session.items.length - completed, completed, total: session.items.length }
 }
+
+// What the session came to, for the screen at the end of it.
+//
+// Counted over questions rather than items, because that is what accuracy
+// means here: a kanji you missed the reading of twice and then got right is
+// one item and three answers. Everything holds for a session ended early —
+// an unfinished item's correct answers still count as correct.
+export function sessionReport(session) {
+  const items = session.items
+
+  const correct = items.reduce(
+    (total, item) => total + (item.meaningDone ? 1 : 0) + (item.readingDone ? 1 : 0),
+    0
+  )
+  const wrong = items.reduce(
+    (total, item) => total + item.incorrectMeaning + item.incorrectReading,
+    0
+  )
+  const asked = correct + wrong
+
+  return {
+    ...sessionProgress(session),
+    correct,
+    wrong,
+    asked,
+    // Null rather than 100% for a session where nothing was asked: there is
+    // no accuracy to report, and a cheerful number would be a lie.
+    accuracy: asked === 0 ? null : correct / asked,
+    missed: items.filter(item => item.incorrectMeaning + item.incorrectReading > 0)
+  }
+}

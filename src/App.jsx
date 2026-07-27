@@ -3,6 +3,7 @@ import TokenGate from './components/TokenGate.jsx'
 import Home from './components/Home.jsx'
 import Review from './components/Review.jsx'
 import Lesson from './components/Lesson.jsx'
+import Wrap from './components/Wrap.jsx'
 import { getUser, startAssignment, submitReview } from './lib/wanikani.js'
 import { loadLessonBatch, loadReviewSession } from './lib/queue.js'
 import { createSubmitter, startLine } from './lib/submit.js'
@@ -18,6 +19,9 @@ export default function App() {
   // A lesson batch is read first and quizzed second, so it carries which of
   // the two it is in.
   const [lesson, setLesson] = useState(null)
+  // A finished session, held for the wrap. It carries the submitter too, so
+  // the wrap can say what is still in flight.
+  const [wrap, setWrap] = useState(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   // On, and it starts on again after every reload. Turning it off is a
@@ -127,13 +131,29 @@ export default function App() {
     )
   }
 
+  // Every session ends at the wrap, whether it ran out of questions or was
+  // walked away from. Both paths land here, so there is only one ending.
+  if (wrap) {
+    return (
+      <Wrap
+        token={token}
+        session={wrap.session}
+        submitter={wrap.submitter}
+        onDone={() => setWrap(null)}
+      />
+    )
+  }
+
   if (review) {
     return (
       <Review
         session={review.session}
         synonyms={review.synonyms}
         submitter={review.submitter}
-        onExit={() => setReview(null)}
+        onExit={finished => {
+          setWrap({ session: finished, submitter: review.submitter })
+          setReview(null)
+        }}
       />
     )
   }
@@ -157,7 +177,10 @@ export default function App() {
         session={lesson.session}
         synonyms={lesson.synonyms}
         submitter={lesson.submitter}
-        onExit={() => setLesson(null)}
+        onExit={finished => {
+          setWrap({ session: finished, submitter: lesson.submitter })
+          setLesson(null)
+        }}
       />
     )
   }
