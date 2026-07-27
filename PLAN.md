@@ -618,11 +618,11 @@ two write paths and the last one outstanding. Both now write for real.
   does. It reads `submitting` until the response lands and only ever shows
   what came back.
 
-**Still to do, and it is the acceptance:** run a real session against a real
-account. Safety steps 4 to 6 are the procedure — take the `GET /assignments`
-baseline first, let exactly one item through, check the stage and next-review
-time on wanikani.com against what the response said, and rotate the token
-afterwards. Nothing in this repo has yet written to a real account.
+**Done, and it was the acceptance:** a real session against a throwaway
+account, written up under Phase 4 above. Safety steps 4 to 6 remain the
+procedure for re-accepting this — baseline `GET /assignments` first, let one
+item through, check the stage and next-review time on wanikani.com against
+what the response said, and rotate the token afterwards.
 
 ---
 

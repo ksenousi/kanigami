@@ -92,11 +92,16 @@ export default function TokenGate({ onConnected }) {
           <p className="scopes off">
             study_materials:create · study_materials:update · user:update
           </p>
+          {/* This paragraph used to say kanigami wrote nothing until you
+              turned its dry run off, and that the two scopes were optional.
+              Both were true when the dry run shipped and neither is now: the
+              deployed app always submits, so leaving those boxes unchecked
+              buys a 403 on every answer rather than safety. */}
           <p className="why">
-            Reading needs no permission at all, and kanigami writes nothing until you turn its
-            dry run off. Check the two above only if you want it to submit; leave the rest
-            unchecked, and WaniKani refuses those writes itself — a stronger promise than
-            anything this code can make.
+            Reading needs no permission at all. Check both of the above — kanigami submits each
+            review as you finish it, and without them WaniKani refuses the write and your session
+            goes unrecorded. Leave the other three unchecked: WaniKani will then refuse those
+            writes itself, which is a stronger promise than anything this code can make.
           </p>
         </div>
       </div>

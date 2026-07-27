@@ -15,18 +15,20 @@ and redistributes nothing.
 
 ## Status
 
-Everything in the plan is built: the home surface, reviews on the ink
+Everything in the plan is built — the home surface, reviews on the ink
 surface, lessons typeset on paper, submission, the session wrap, and the
-edges.
+edges — and both write paths have been accepted against a real account.
+Reviews submit; lessons start.
 
-**Submission is behind a dry run that is on by default**, and turns itself
-back on after every reload. In dry run every answer is graded and queued for
-real and the request to WaniKani is logged to the console instead of sent, so
-a read-only token is enough to use the whole app. Turning it off writes to
-your real SRS progress, and there is no undo for a submitted review.
+**The deployed app writes to your real SRS progress.** Each review goes to
+WaniKani as you finish the item, and there is no undo for a submitted review.
+Answering here is answering for real.
 
-What is left is not code: nothing here has yet written to a real WaniKani
-account. See **Safety** in [PLAN.md](PLAN.md) before turning the dry run off.
+Dry run is a development gate and is not built into the deployed site. Under
+`npm run dev` it is on by default and turns itself back on after every
+reload: answers are graded and queued for real, and the request is logged to
+the console instead of sent. See **Safety** in [PLAN.md](PLAN.md) before
+turning it off against an account you care about.
 
 ## Running it
 
@@ -37,12 +39,15 @@ npm run dev
 
 Then paste a token from
 [your WaniKani settings](https://www.wanikani.com/settings/personal_access_tokens).
-Read-only scope is enough until Phase 4; submitting reviews needs write.
+It wants two scopes — `reviews:create` and `assignments:start`. Reading takes
+no permission at all, so on the dev server, where the dry run is on, a
+read-only token walks the whole app without writing anything.
 
 | What | Command |
 |---|---|
 | Dev server | `npm run dev` |
 | Build | `npm run build` |
+| Tests | `npm test` |
 | Lint | `npm run lint` |
 
 ## Deploying
