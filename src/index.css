@@ -97,6 +97,11 @@
    black night stock — but they are still committed worlds rather than a
    light/dark pair. A theme restyles both.
 
+   A theme with a *light* ground has one trap: it must set --ink-strokes and
+   --paper-strokes to none. They are invert(1) here because radical stroke
+   images arrive black and both grounds are dark; leave them inverted on a
+   light ground and those radicals turn white on white and disappear.
+
    Set it on <html> and every surface follows. If a theme needs a
    rule changed rather than a colour, the rule is reaching past
    the role layer — fix that instead of adding a theme selector
