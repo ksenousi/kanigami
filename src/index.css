@@ -523,13 +523,29 @@ body {
 
 /* ---- 家 Home ---- */
 
+/* How far off the next level is, and the position it comes from. Two pieces
+   laid out with a gap rather than written with a · separator, for the reason
+   .learned and .counts already are: a wrapped separator strands a dot at the
+   end of a line. The gap is wider than theirs because nothing else separates
+   these two — .learned has the subject colours doing it. */
 .passed {
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 26px;
   font-family: var(--mono);
   font-size: var(--label);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dim);
+}
+
+/* The answer to the question the line exists to answer, one step forward of
+   the figure behind it. No hue: the accent belongs to reviews due, and this
+   is a standing figure rather than something to act on. */
+.passed .to {
+  color: var(--text-soft);
 }
 
 /* Everything taught so far. The subject colours label it, which is the one

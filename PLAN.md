@@ -233,8 +233,9 @@ since there is no router it is a state in `App.jsx`, not a route.
 It is the ink surface. Masthead, then the middle carries **position**:
 
 - Reviews due and lessons waiting as standing figures, reviews in `--accent`
-  when there are any and `--dim` when there are none. Beneath them, kanji
-  passed this level as a smaller figure.
+  when there are any and `--dim` when there are none. Beneath them, **how far
+  off the next level is** — `9 kanji to level 11`, with `18 of 27 passed`
+  beside it.
 - The SRS spread as **one segmented hairline** 2px tall, with the counts as
   one line of letter-spaced mono beneath. Never five cards with five numbers
   in them, which is the thing being replaced. Apprentice takes `--accent`;
@@ -706,12 +707,29 @@ the browser — reviews due, nothing due, lessons only, loading, token revoked.
   The current hour in `--accent` carries it, the next four sit at
   `color-mix(… 55% …)`, and an empty hour is 1px — the baseline itself, not a
   gap in it. The 2px fallback was not needed.
-- **Three reads, once, on mount and never on a timer.** `/summary` carries
+- **Four reads, once, on mount and never on a timer.** `/summary` carries
   both counts *and* the forecast, which is cheaper than the two
   immediately-available collections it replaces. `/assignments?started=true`
   is the paginated one, for the spread. `/assignments?levels=N&
   subject_types=kanji` is a server-side filter, which is what makes the
   passed-this-level figure cheap rather than a scan.
+- **The fourth read is the denominator, and it is the one that is easy to
+  talk yourself out of.** The line leads with how far off the next level is,
+  which needs the level's kanji count, and the assignments above are not
+  that: an assignment does not exist until its kanji is unlocked, so early in
+  a level most of them have none and the collection grows as you go. Counted
+  from the assignments, the threshold grows too — a level holding thirty-two
+  kanji with four unlocked reads `4 kanji to level 11` instead of `29`.
+  `getLevelKanjiCount` reads `total_count` off
+  `/subjects?types=kanji&levels=N&hidden=false` and follows no pagination,
+  because only the number is wanted. `hidden=false` drops subjects WaniKani
+  has retired, which do not count toward levelling up.
+- **The denominator on screen is the threshold, not the level.** `9 kanji to
+  level 11 · 18 of 27 passed` adds up; `18 of 29 passed` beside the same 9 is
+  equally true and reads as an arithmetic error, because the two kanji of
+  slack above 90% appear nowhere on the line. The level's own total surfaces
+  only where nothing is being counted toward — past the threshold, and at
+  level 60, where there is no next level to name.
 - **A count of nothing is `--dim`.** Only reviews take `--accent`, and only
   when there is something to act on.
 - `r` and `l` open the two doors, and only when a door is open.

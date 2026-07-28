@@ -56,6 +56,15 @@ a real account and the Safety procedure to re-accept.
   **Running `npm run dev` is what protects a real account, not the UI.**
 - **`base` and the repo name are coupled.** Renaming the repo without
   changing `vite.config.js` 404s every asset on Pages.
+- **A level's kanji assignments are not a level's kanji.** An assignment is
+  created only once its subject is unlocked, so
+  `/assignments?levels=N&subject_types=kanji` returns what you have reached
+  and grows all through the level. It is the numerator of home's level-up
+  line and never the denominator — WaniKani levels you up at 90% of the
+  level's kanji passed, and the level's kanji come from
+  `getLevelKanjiCount`, which reads `total_count` off `/subjects`. Counting
+  the denominator out of the assignments says `4 kanji to level 11` on a
+  level holding thirty-two.
 - **Radicals may have no Unicode character.** Fall back to
   `character_images` (prefer SVG) and invert for the ink ground.
 - **The Japanese faces are a feature, not styling.** `src/lib/faces.js` holds

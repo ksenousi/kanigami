@@ -113,11 +113,29 @@ export function getStartedAssignments(token) {
   return collection(token, '/assignments?started=true')
 }
 
-// The kanji of one level. WaniKani levels you up at 90% of these passed, so
-// it is the figure that actually moves you — and `levels` is a server-side
-// filter, which is why this is cheap rather than a scan.
+// The kanji of one level that the user has actually reached. WaniKani levels
+// you up at 90% of the level's kanji passed, so this carries the numerator —
+// and `levels` is a server-side filter, which is why it is cheap rather than
+// a scan.
 export function getLevelKanji(token, level) {
   return collection(token, `/assignments?levels=${level}&subject_types=kanji`)
+}
+
+// How many kanji the level *has*, which is a different question and the
+// denominator of that 90%. An assignment does not exist until its kanji is
+// unlocked — the radicals in it have to be passed first — so at the start of
+// a level most of the level's kanji have none, and a denominator counted out
+// of `getLevelKanji` above starts small and grows as you unlock. That reads
+// as `4 kanji to level 11` on a level with thirty-two of them.
+//
+// Only the count is wanted, so this reads `total_count` off the response and
+// follows no pagination; a level's kanji are a few dozen and fit one page
+// whatever the page size. `hidden=false` leaves out subjects WaniKani has
+// retired, which do not count toward levelling up.
+export function getLevelKanjiCount(token, level) {
+  return request(token, `/subjects?types=kanji&levels=${level}&hidden=false`).then(
+    page => page.total_count
+  )
 }
 
 // An id filter goes in the query string, and a full review queue is enough

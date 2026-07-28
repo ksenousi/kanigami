@@ -75,12 +75,27 @@ export function learned(assignments = []) {
   return { ...counts, total: counts.radical + counts.kanji + counts.vocabulary }
 }
 
-// Progress toward the next level. WaniKani levels you up at 90% of the
-// level's kanji passed, so this is the figure that actually moves you.
-// `assignments` are from `/assignments?levels=N&subject_types=kanji`.
-export function kanjiPassed(assignments = []) {
+// WaniKani levels you up when 90% of the level's kanji have passed — reached
+// guru, which is what `passed_at` records.
+export const LEVEL_UP_RATIO = 0.9
+
+// Progress toward the next level, and the only figure on home that says how
+// far off it is. `assignments` are from
+// `/assignments?levels=N&subject_types=kanji` and carry the numerator;
+// `total` is the level's kanji count from `getLevelKanjiCount`.
+//
+// **It takes two reads and the second is not optional.** An assignment
+// exists only once its kanji is unlocked, so `assignments.length` is what
+// you have reached rather than what the level holds, and it grows all
+// through the level. Using it as the denominator makes `needed` grow too, so
+// `remaining` reads as a handful at the start of a level that in fact wants
+// thirty. The default is there so a caller without the count degrades to the
+// old passed-of-reached line rather than to NaN — it is not a supported way
+// to ask for `remaining`.
+export function kanjiPassed(assignments = [], total = assignments.length) {
   const passed = assignments.filter(a => Boolean(a?.data?.passed_at)).length
-  return { passed, total: assignments.length }
+  const needed = Math.ceil(total * LEVEL_UP_RATIO)
+  return { passed, total, needed, remaining: Math.max(0, needed - passed) }
 }
 
 // The tallest bucket sets the scale; an empty forecast has no scale at all

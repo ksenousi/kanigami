@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import { getLevelKanji, getStartedAssignments, getSummary } from '../lib/wanikani.js'
+import {
+  getLevelKanji,
+  getLevelKanjiCount,
+  getStartedAssignments,
+  getSummary
+} from '../lib/wanikani.js'
 import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
 import Forecast from './Forecast.jsx'
 import FaceWarning from './FaceWarning.jsx'
@@ -12,9 +17,11 @@ import useOnline from './useOnline.js'
 // it worth entering now*. There is no router, so it is a state in App.jsx
 // rather than a route.
 //
-// Three reads, once, on mount and never on a timer: the summary carries both
+// Four reads, once, on mount and never on a timer: the summary carries both
 // counts and the forecast, the started assignments carry the spread, and the
-// level's kanji carry the one figure that actually moves you up a level.
+// level's kanji take two — the assignments for how many are passed, and a
+// count of the level's kanji subjects for how many there are to pass. See
+// `getLevelKanjiCount` for why that second one is not the same number.
 export default function Home({
   token,
   user,
@@ -37,13 +44,18 @@ export default function Home({
   useEffect(() => {
     let live = true
     setFailure(null)
-    Promise.all([getSummary(token), getStartedAssignments(token), getLevelKanji(token, user.level)])
-      .then(([summary, started, kanji]) => {
+    Promise.all([
+      getSummary(token),
+      getStartedAssignments(token),
+      getLevelKanji(token, user.level),
+      getLevelKanjiCount(token, user.level)
+    ])
+      .then(([summary, started, kanji, kanjiTotal]) => {
         if (!live) return
         setStanding({
           summary,
           spread: spread(started),
-          kanji: kanjiPassed(kanji),
+          kanji: kanjiPassed(kanji, kanjiTotal),
           // The same collection, counted by kind rather than by stage.
           learned: learned(started)
         })
@@ -131,11 +143,7 @@ export default function Home({
               </div>
             </div>
 
-            <p className="passed">
-              {standing.kanji.total > 0
-                ? `${standing.kanji.passed} of ${standing.kanji.total} kanji passed this level`
-                : 'no kanji at this level yet'}
-            </p>
+            <LevelUp kanji={standing.kanji} level={user.level} />
 
             <Learned learned={standing.learned} />
 
@@ -207,6 +215,53 @@ export default function Home({
         </div>
       )}
     </div>
+  )
+}
+
+// WaniKani stops at 60. There is no level to count toward from there, so the
+// line stops counting rather than promising a level 61.
+const TOP_LEVEL = 60
+
+// The one figure that actually moves you up, led by how far off it is.
+//
+// The denominator is the threshold rather than the level's kanji, so the two
+// halves agree: 27 needed less 18 passed is the 9 in front of them. Written
+// the other way — `18 of 29 passed · 9 to level 11` — both halves are true
+// and they look like an arithmetic error, because the two kanji of slack
+// above 90% are nowhere on the line.
+function LevelUp({ kanji, level }) {
+  if (kanji.total === 0) return <p className="passed">no kanji at this level yet</p>
+
+  // Past the threshold, WaniKani has the level-up and has not announced it
+  // yet. Counting to a number already met would read as stuck, and `28 of 27`
+  // reads as broken, so this states the position against the whole level
+  // instead — which is the one moment that is the interesting number.
+  if (kanji.remaining === 0 || level >= TOP_LEVEL) {
+    return (
+      <p className="passed">
+        {/* At 60 the lead is a label rather than an answer, so it stays back
+            with the figure. Below it, the answer takes the step forward. */}
+        {level >= TOP_LEVEL ? (
+          <span>level {level}</span>
+        ) : (
+          <span className="to">ready for level {level + 1}</span>
+        )}
+        <span>
+          {kanji.passed} of {kanji.total} kanji passed
+        </span>
+      </p>
+    )
+  }
+
+  return (
+    <p className="passed">
+      <span className="to">
+        {kanji.remaining} kanji to level {level + 1}
+      </span>
+      <span>
+        {kanji.passed} of {kanji.needed} passed
+      </span>
+    </p>
   )
 }
 

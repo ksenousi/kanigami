@@ -113,17 +113,42 @@ describe('nextDue', () => {
 
 describe('kanjiPassed', () => {
   const kanji = passedAt => ({ data: { passed_at: passedAt } })
+  const reached = (passed, count) =>
+    Array.from({ length: count }, (_, i) => kanji(i < passed ? '2026-07-01T00:00:00.000Z' : null))
 
   it('counts the ones with a passed date against the level', () => {
-    expect(kanjiPassed([kanji('2026-07-01T00:00:00.000Z'), kanji(null), kanji(null)])).toEqual({
-      passed: 0 + 1,
-      total: 3
-    })
+    expect(kanjiPassed(reached(1, 3), 3)).toMatchObject({ passed: 1, total: 3 })
+  })
+
+  it('wants 90% of the level, rounded up to a whole kanji', () => {
+    expect(kanjiPassed([], 29)).toMatchObject({ needed: 27, remaining: 27 })
+    expect(kanjiPassed([], 30)).toMatchObject({ needed: 27, remaining: 27 })
+    expect(kanjiPassed([], 20)).toMatchObject({ needed: 18, remaining: 18 })
+    // 90% of one is not one, and you cannot pass nine tenths of a kanji.
+    expect(kanjiPassed([], 1)).toMatchObject({ needed: 1, remaining: 1 })
+  })
+
+  it('counts down to the threshold, not to the whole level', () => {
+    // Twenty-nine kanji wants twenty-seven; the last two are slack.
+    expect(kanjiPassed(reached(18, 29), 29)).toMatchObject({ passed: 18, remaining: 9 })
+  })
+
+  // Level-up is WaniKani's to declare and there is a beat before it does, so
+  // the count has to survive going past its own threshold.
+  it('never counts below zero once the threshold is met', () => {
+    expect(kanjiPassed(reached(28, 29), 29)).toMatchObject({ needed: 27, remaining: 0 })
+  })
+
+  // The denominator is the level's kanji, not the ones unlocked so far —
+  // early in a level those are far apart, and the assignments only cover the
+  // second. Four reached out of thirty-two still wants twenty-nine.
+  it('takes the total from the level rather than from the assignments', () => {
+    expect(kanjiPassed(reached(0, 4), 32)).toMatchObject({ total: 32, needed: 29, remaining: 29 })
   })
 
   it('is zero of zero at the start of a level', () => {
-    expect(kanjiPassed([])).toEqual({ passed: 0, total: 0 })
-    expect(kanjiPassed()).toEqual({ passed: 0, total: 0 })
+    expect(kanjiPassed([], 0)).toEqual({ passed: 0, total: 0, needed: 0, remaining: 0 })
+    expect(kanjiPassed()).toEqual({ passed: 0, total: 0, needed: 0, remaining: 0 })
   })
 })
 
