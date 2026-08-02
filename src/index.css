@@ -1340,6 +1340,17 @@ button.quiet:hover:not(:disabled) {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  /* The cap is written in ch so it follows the scale — but ch resolves
+     against this element's own font-size, and without one of its own the
+     recto measured it at the inherited 16px, a size nothing on this page is
+     set in. Every child names its own step, so the only thing 16px was
+     deciding was this cap: 433px, on a page whose prose wants 42ch of
+     --body ≈ 590. The gloss wrapped, the mnemonics ran nine characters
+     narrow, and the fold arrived 138px early beside an empty right margin.
+     The third measurement the scale raise was silently holding up —
+     .judgement's reserved height and the token field were the two it
+     caught. */
+  font-size: var(--body);
   max-width: 46ch;
 }
 

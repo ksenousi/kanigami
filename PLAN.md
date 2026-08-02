@@ -88,8 +88,14 @@ elsewhere in this document are the sizes at the time that passage was written;
 also broke two rules that had a measurement of the old scale baked into them —
 the height `.judgement` reserves so the glyph does not jump, and the width of
 the token field, which was 36 characters of the old mono and stopped being 36
-characters of the new. **A measurement in CSS is a dependency of the scale.**
-Grep for one before moving the scale again.
+characters of the new. A third surfaced only when the lesson page grew a
+scroll: the recto capped itself at `46ch` without naming a font-size, so `ch`
+resolved against the inherited 16px — a size nothing on that page is set in —
+and once the prose wanted 42ch of `--body` the cap was the wall it hit. The
+page squeezed to 433px beside an empty margin and the fold arrived early.
+**A measurement in CSS is a dependency of the scale.** Grep for one before
+moving the scale again — and `ch` is only scale-relative if the element
+carries the size it is measuring.
 
 
 ### 墨 Ink — the review surface
