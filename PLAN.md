@@ -495,6 +495,23 @@ broken immediately, and it is the reason people distrust third-party clients.
   This one behaviour accounts for most of the perceived unfairness in naive
   clients.
 - Vocabulary readings must match exactly; there is no partial credit.
+- A single-character vocabulary answered with its kanji's reading returns
+  `'retry'` with *"We want the vocabulary reading, not the kanji reading"* —
+  にん is right about 人 the character and wrong about 人 the word, and
+  WaniKani shakes it rather than counting it. The word's subject does not
+  carry its kanji's readings, so the loader fetches the component kanji
+  alongside the session and hands the grader their readings as
+  `kanjiReadings` (see `componentReadings` in queue.js).
+- The meaning typed into a reading question retries too, mirrored from the
+  meaning side: the field converts romaji as it is typed, so English arrives
+  part-kana — もうんたいn for `mountain` — and the grader undoes the
+  conversion (`toRomaji`) and asks whether the answer would have passed as a
+  meaning, typo tolerance and synonyms included. If it would: `'retry'` with
+  *"We want the reading, not the meaning"*. Anything else that is not kana
+  after conversion — a wrong English word, stray Latin — retries with *"We
+  want the reading, in kana"*, because an answer that is not kana cannot be
+  graded as a reading, only shaken off. A wrong reading *in kana* is still
+  a real miss.
 
 **Meanings**
 
@@ -517,9 +534,11 @@ broken immediately, and it is the reason people distrust third-party clients.
   first, so a romaji synonym the user added themselves is still accepted as
   the meaning it is.
 
-**Shipped:** 71 table-driven cases including `さん`/`やま` for 山, blacklist
+**Shipped:** 82 table-driven cases including `さん`/`やま` for 山, blacklist
 rejection, every typo-tolerance band at both edges, a user synonym,
-kana-in-a-meaning-box, and romaji-in-a-meaning-box.
+kana-in-a-meaning-box, romaji-in-a-meaning-box, English-in-a-reading-box in
+the shape the field actually hands over, and the kanji reading at 人 the
+word.
 
 Two behaviours worth knowing before changing anything here:
 

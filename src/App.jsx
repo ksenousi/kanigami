@@ -162,6 +162,7 @@ export default function App() {
       <Review
         session={review.session}
         synonyms={review.synonyms}
+        kanjiReadings={review.kanjiReadings}
         submitter={review.submitter}
         onExit={finished => {
           setWrap({ session: finished, submitter: review.submitter })
@@ -189,6 +190,7 @@ export default function App() {
       <Review
         session={lesson.session}
         synonyms={lesson.synonyms}
+        kanjiReadings={lesson.kanjiReadings}
         submitter={lesson.submitter}
         onExit={finished => {
           setWrap({ session: finished, submitter: lesson.submitter })

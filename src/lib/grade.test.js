@@ -85,6 +85,18 @@ const toEat = {
   readings: [{ primary: true, reading: 'たべる', accepted_answer: true }]
 }
 
+// A single-character word sharing its glyph with a kanji. The loader hands
+// the grader that kanji's readings as `kanjiReadings`, so the word's reading
+// question can shake off the kanji's — にん is right about 人 the character
+// and wrong about 人 the word.
+const person = {
+  characters: '人',
+  meanings: [{ meaning: 'Person', primary: true, accepted_answer: true }],
+  auxiliary_meanings: [],
+  readings: [{ primary: true, reading: 'ひと', accepted_answer: true }]
+}
+const personKanji = ['にん', 'じん', 'ひと', 'と']
+
 // A radical: meaning only, and no readings field at all.
 const lid = {
   characters: '亠',
@@ -107,13 +119,16 @@ const forType = questionType => cases => cases.map(c => ({ ...c, questionType })
 const readings = forType('reading')
 const meanings = forType('meaning')
 
-function check({ subject, questionType, input, synonyms, verdict, hint = null }) {
-  expect(grade({ subject, questionType, input, synonyms })).toEqual({ verdict, hint })
+function check({ subject, questionType, input, synonyms, kanjiReadings, verdict, hint = null }) {
+  expect(grade({ subject, questionType, input, synonyms, kanjiReadings })).toEqual({ verdict, hint })
 }
 
 const ONYOMI = "WaniKani wants the on'yomi"
 const OTHER_READING = 'WaniKani wants a different reading'
 const NOT_THE_READING = 'We want the meaning, not the reading'
+const NOT_THE_MEANING = 'We want the reading, not the meaning'
+const KANJI_READING = 'We want the vocabulary reading, not the kanji reading'
+const IN_KANA = 'We want the reading, in kana'
 
 describe('readings', () => {
   it.each(
@@ -125,7 +140,6 @@ describe('readings', () => {
       { name: '山 やま — the kun\'yomi', subject: mountain, input: 'やま', verdict: 'retry', hint: ONYOMI },
       { name: '山 yama as romaji', subject: mountain, input: 'yama', verdict: 'retry', hint: ONYOMI },
       { name: '山 a reading it does not have', subject: mountain, input: 'し', verdict: 'incorrect' },
-      { name: '山 the meaning in the reading box', subject: mountain, input: 'mountain', verdict: 'incorrect' },
       { name: '山 nothing typed', subject: mountain, input: '', verdict: 'retry' },
       { name: '上 じょう', subject: above, input: 'じょう', verdict: 'correct' },
       { name: '上 うえ', subject: above, input: 'うえ', verdict: 'retry', hint: ONYOMI },
@@ -197,6 +211,53 @@ describe('the reading typed into a meaning box', () => {
       { name: 'a blacklisted answer that converts to kana', subject: woman, input: 'male', verdict: 'incorrect' }
     ])
   )('$name', check)
+})
+
+// The mirror of the block above. The review field converts romaji as it is
+// typed, so English arrives at the grader already part-kana — もうんたいn is
+// what the field actually holds after someone types 'mountain' — and the raw
+// romaji covers the grader called on its own.
+describe('the meaning typed into a reading box', () => {
+  it.each(
+    readings([
+      { name: '山 the meaning, raw', subject: mountain, input: 'mountain', verdict: 'retry', hint: NOT_THE_MEANING },
+      { name: '山 the meaning as the field holds it', subject: mountain, input: 'もうんたいn', verdict: 'retry', hint: NOT_THE_MEANING },
+      { name: '山 the meaning with a typo', subject: mountain, input: 'mauntain', verdict: 'retry', hint: NOT_THE_MEANING },
+      { name: '山 a user synonym', subject: mountain, input: 'peak', synonyms: ['peak'], verdict: 'retry', hint: NOT_THE_MEANING },
+      // すん is clean kana, so only the round trip back to romaji can tell
+      // that it started as English.
+      { name: '日 a meaning that converts to clean kana', subject: sun, input: 'sun', verdict: 'retry', hint: NOT_THE_MEANING },
+      // Not kana, not a meaning — there is nothing here to grade, only the
+      // keyboard mode to point at.
+      { name: '山 a wrong word that will not convert', subject: mountain, input: 'river', verdict: 'retry', hint: IN_KANA },
+      // Kana through and through stays gradable: a wrong reading in the
+      // right script is a real miss.
+      { name: '山 a wrong reading in kana still counts', subject: mountain, input: 'かわ', verdict: 'incorrect' }
+    ])
+  )('$name', check)
+})
+
+// One glyph, two subjects. The kanji's reading typed at the single-character
+// word is right about the character and wrong about the word — WaniKani
+// shakes it off, and so does this, when the loader has supplied the
+// component kanji's readings.
+describe('the kanji reading typed at its vocabulary', () => {
+  it.each([
+    ...readings([
+      { name: '人 ひと', subject: person, kanjiReadings: personKanji, input: 'ひと', verdict: 'correct' },
+      { name: '人 にん — the kanji reading', subject: person, kanjiReadings: personKanji, input: 'にん', verdict: 'retry', hint: KANJI_READING },
+      { name: '人 jin as romaji', subject: person, kanjiReadings: personKanji, input: 'jin', verdict: 'retry', hint: KANJI_READING },
+      // Without the loader's list there is nothing to recognise, and the
+      // answer grades as the miss it would otherwise be.
+      { name: '人 にん with no kanji readings in hand', subject: person, input: 'にん', verdict: 'incorrect' },
+      { name: '人 something else entirely', subject: person, kanjiReadings: personKanji, input: 'かわ', verdict: 'incorrect' }
+    ]),
+    ...meanings([
+      { name: '人 person', subject: person, kanjiReadings: personKanji, input: 'person', verdict: 'correct' },
+      // The same mix-up in the other box gets the other box's nudge.
+      { name: '人 nin in the meaning box', subject: person, kanjiReadings: personKanji, input: 'nin', verdict: 'retry', hint: NOT_THE_READING }
+    ])
+  ])('$name', check)
 })
 
 describe('typo tolerance', () => {

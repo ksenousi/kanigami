@@ -23,7 +23,7 @@ import useOnline from './useOnline.js'
 // The screen never talks to the API. It hands completed items to `submitter`,
 // which decides whether anything is actually sent — so a session can be run
 // with a submitter that only logs, which is the default and the point.
-export default function Review({ session: opening, synonyms = {}, submitter, onExit }) {
+export default function Review({ session: opening, synonyms = {}, kanjiReadings = {}, submitter, onExit }) {
   const [session, setSession] = useState(opening)
   const [typed, setTyped] = useState('')
   const [judged, setJudged] = useState(null)
@@ -90,7 +90,8 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
       subject: asking.subject,
       questionType: asking.questionType,
       input: typed,
-      synonyms: synonyms[asking.item.subjectId] ?? []
+      synonyms: synonyms[asking.item.subjectId] ?? [],
+      kanjiReadings: kanjiReadings[asking.item.subjectId] ?? []
     })
 
     if (verdict === 'retry') {
