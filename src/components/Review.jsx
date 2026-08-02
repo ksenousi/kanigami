@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { answer, nextQuestion, sessionProgress } from '../lib/session.js'
+import { answer, nextQuestion, sessionReport } from '../lib/session.js'
 import { grade } from '../lib/grade.js'
 import { movement } from '../lib/srs.js'
 import { acceptedAnswers, echoesAnswer, questionParts, subjectTypeName } from '../lib/subject.js'
@@ -64,7 +64,11 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
   // the question on screen is the one held in `judged`.
   const asking = judged ? null : nextQuestion(session)
   const showing = judged?.question ?? asking
-  const progress = sessionProgress(session)
+  // The same report the wrap draws, read one session-generation at a time.
+  // The footline says less than the wrap does — no missed list, no spread —
+  // but it says it out of the same counts, so the two can never disagree
+  // about how the session went.
+  const report = sessionReport(session)
 
   function submit() {
     // Paused. Answers already given are held by the submitter and will go
@@ -182,7 +186,17 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
         ) : (
           <span>offline · paused, nothing answered is lost</span>
         )}
-        <span className="track" />
+        {/* The track was a hairline doing nothing but separating the two ends
+            of this line, and the line's whole subject is how far along the
+            session is — so it fills. A hairline that lights is the house
+            pattern, and this is the one that was already drawn. It stays the
+            neutral dim: the wrap's spread splits right from wrong in celadon
+            and vermilion, but that is a screen you read once at the end.
+            Vermilion sitting on the review surface for the length of a
+            session is the collision the footline text already avoids. */}
+        <span className="track">
+          <i style={{ width: `${percent(report.completed, report.total)}%` }} />
+        </span>
         <span>
           {/* Home carries the explanation; here it is one more exceptional
               thing alongside unsent answers, in the same register. */}
@@ -193,11 +207,27 @@ export default function Review({ session: opening, synonyms = {}, submitter, onE
             <span className="live">{sync.failed.length} unsent · </span>
           ) : null}
           {sync.syncing > 0 ? `${sync.syncing} syncing · ` : ''}
-          {progress.remaining} {progress.remaining === 1 ? 'item' : 'items'} left
+          {/* Done and left are items; the percentage is answers, which is the
+              only thing accuracy can mean while items are still half-finished
+              — so it says `correct` rather than trailing a count that would
+              read as items. Null until something has been asked, exactly as
+              the wrap does: there is no accuracy yet and 100% would be a lie
+              told before the first question. */}
+          {report.completed > 0 ? `${report.completed} done · ` : ''}
+          {report.accuracy === null ? '' : `${Math.round(report.accuracy * 100)}% correct · `}
+          {report.remaining} {report.remaining === 1 ? 'item' : 'items'} left
         </span>
       </div>
     </div>
   )
+}
+
+// How far the track is lit. An empty session is 0 rather than a division by
+// zero — it cannot happen, since a session with no items never reaches this
+// screen, but the guard costs a comparison and the alternative is NaN in a
+// style attribute.
+function percent(part, whole) {
+  return whole === 0 ? 0 : (part / whole) * 100
 }
 
 // What is being asked, above the glyph.

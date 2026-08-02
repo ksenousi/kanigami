@@ -1217,6 +1217,22 @@ button.quiet:hover:not(:disabled) {
   background: var(--rule);
 }
 
+/* The lit part of the track — the review's progress, drawn on the rule that
+   was already there rather than as a bar added beside it. Dim on --rule is
+   the same one-step lift the forecast's hours use, which is as loud as a
+   1px line needs to be to read as filled.
+
+   The transition is what makes it a fill rather than a jump, and it is
+   deliberately slower than the rest of the screen: an item finishing is not
+   the event here, and a hairline snapping forward in the corner while you
+   are reading a verdict is a second thing moving. */
+.footline .track i {
+  display: block;
+  height: 100%;
+  background: var(--dim);
+  transition: width 400ms ease-out;
+}
+
 /* ============================================================
    紙 Paper — the lesson surface.
 
@@ -1464,6 +1480,7 @@ button.quiet:hover:not(:disabled) {
   .field .rule::after,
   .door .name,
   .door .rule,
+  .footline .track i,
   button {
     transition: none;
   }
