@@ -214,7 +214,44 @@ invert(1)`), the same as on ink, because the ground is no longer light.
   hiding or cutting anything. Rejected: splitting the reading mnemonic onto
   its own page (doubles the Nexts in a batch), and letting the recto scroll
   inside a viewport-capped spread — worth revisiting only if a mnemonic ever
-  overflows even a balanced spread.
+  overflows even a balanced spread. **That condition arrived** when the type
+  scale went up a third: a kanji carrying two full mnemonics wants ~1,390px
+  of a window that has ~880, and no rearrangement closes it — two prose
+  columns measured 192px past the fold, leading 1.7 still 434, and squeezing
+  the verso for a wider recto wraps the sentences and makes the *left* page
+  the tall one. The revisit was taken, decided from a prototype of four
+  directions beside WaniKani's own rendition; the block below is the result.
+- **場 The page is a place.** The lesson is pinned to the window — running
+  head, character, collection, and folio never move — and the reading matter
+  alone flows, inside a region (`Flow` in `Lesson.jsx`, `.flows`/`.flow`/
+  `.fold` in the stylesheet). The fold under it is the house hairline: lit
+  `--accent` with `more ↓` while prose remains below the window, back to
+  `--rule` once the end is reached, and not drawn at all when the page fits —
+  a fitting page renders exactly as if the mechanism did not exist, which the
+  short-vocabulary and radical fixtures verify at 0px overflow. No scrollbar;
+  the lit rule is the affordance, and a bar beside the prose would be the
+  boxed version of the same sentence.
+  - The verso's sentences get the same treatment, because they are that
+    page's one flexible block: at 1280×800 they are what overflows (195px
+    measured) while the recto barely moves. The character never scrolls.
+  - `↓`/`↑` walk the prose by most of a window; `← →` still walk the spread,
+    and Next never changes meaning. The `more ↓` label is the affordance's
+    own hint, so the folio's key line stays `← →`.
+  - The fold state is **measured, never assumed** — on scroll, on the
+    region's box changing, and on its children changing height, which is
+    what a webfont arriving late does to a paragraph measured in the
+    fallback face. A new subject remounts its region (`key={at}`), so every
+    page opens at its own top with the fold fresh.
+  - Under 640px the spread stacks and the pin comes off — two pages sharing
+    one window height would both be slivers, so a narrow window reads as the
+    document it was before and the folds stand down.
+  - Rejected, from the same prototype: **素 the honest page** (the page
+    scrolls when long — the character and the folio leave the window
+    mid-read, which was the complaint); **頁 the leaf** (multicol inner
+    pagination, line-perfect and never scrolling, but it breaks mid-sentence
+    at the leaf edge and charges a keystroke to finish reading); **畳 the
+    tuck** (mnemonics folded to six lines — it hides half of a memory aid
+    behind a click, every time); and the measured dead ends above.
 - This originally asked for a stroke count on the verso and furigana on the
   context sentences. The API carries neither; see Phase 5 for what they
   became.

@@ -1241,8 +1241,16 @@ button.quiet:hover:not(:disabled) {
    mincho throughout, seal red where ink uses vermilion.
    ============================================================ */
 
+/* The page is a place — decided from a prototype of four directions against
+   the fold. It is pinned to the window: running head, character, sentences'
+   ground, and folio never move, and the prose alone flows inside `.flows`
+   below. A kanji carrying two full mnemonics wants ~1,390px of a window
+   that has ~880, and no rearrangement closes that — two prose columns
+   measured 192px past the fold, leading 1.7 still 434 — so what moves is
+   the reading matter, never the page. */
 .surface-paper {
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   padding: 26px clamp(20px, 5vw, 56px) 22px;
@@ -1271,8 +1279,12 @@ button.quiet:hover:not(:disabled) {
 
 .spread {
   flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+  /* One explicit row the height of the spread, so the pages' 100% has a
+     definite figure to resolve against in every engine. */
+  grid-template-rows: minmax(0, 1fr);
   gap: clamp(28px, 5vw, 72px);
   align-items: start;
 }
@@ -1285,7 +1297,8 @@ button.quiet:hover:not(:disabled) {
   /* The gutter of the spread, and the only rule between the two pages. */
   border-right: 1px solid var(--rule);
   padding-right: clamp(20px, 4vw, 56px);
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   /* Both pages start at the top, the way a spread does. Centring the verso
      floats the character halfway down whenever the recto is short — which a
      radical with one mnemonic and no sentences always is. */
@@ -1352,6 +1365,83 @@ button.quiet:hover:not(:disabled) {
      caught. */
   font-size: var(--body);
   max-width: 46ch;
+  height: 100%;
+  min-height: 0;
+}
+
+/* A flowing region and its fold. The scroller is inside a positioned
+   wrapper because an absolutely positioned fold inside the scroller itself
+   would ride away with the content — the classic reason the rule hangs off
+   the wrapper. The fold takes no column height: a page that fits must
+   render exactly as if none of this existed. */
+.flows {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.flow {
+  height: 100%;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  /* No scrollbar. The lit rule below is the affordance — a bar beside the
+     prose would be the boxed version of the same sentence. */
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.flow::-webkit-scrollbar {
+  display: none;
+}
+
+/* The fold, in the house grammar: a hairline that lights. Lit --accent with
+   `more ↓` while prose remains below the window; back to --rule once the end
+   is reached; not drawn at all when the page fits. It hangs just under the
+   region, into the gap above the folio, and takes no pointer. */
+.fold {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  transform: translateY(100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--dim);
+  pointer-events: none;
+}
+
+.fold .rule {
+  width: 100%;
+  height: 1px;
+  background: var(--rule);
+  transition: background 0.18s ease;
+}
+
+.fold .hint {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.fold.fits {
+  visibility: hidden;
+}
+
+.fold.more .rule {
+  background: var(--accent);
+}
+
+.fold.more .hint {
+  opacity: 1;
+  color: var(--accent);
 }
 
 .gloss {
@@ -1469,10 +1559,19 @@ button.quiet:hover:not(:disabled) {
 }
 
 /* The spread stacks rather than squeezing: verso above, recto below, and the
-   gutter rule turns into the rule between them. */
+   gutter rule turns into the rule between them. Stacked, the pin comes off —
+   two pages sharing one window height would both be slivers, so a narrow
+   window reads as the document it was before and the folds stand down. */
 @media (max-width: 640px) {
+  .surface-paper {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
   .spread {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
     gap: 26px;
   }
 
@@ -1481,7 +1580,25 @@ button.quiet:hover:not(:disabled) {
     border-bottom: 1px solid var(--rule);
     padding-right: 0;
     padding-bottom: 22px;
+    height: auto;
     min-height: 0;
+  }
+
+  .recto {
+    height: auto;
+  }
+
+  .flows {
+    flex: none;
+  }
+
+  .flow {
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .fold {
+    display: none;
   }
 }
 
@@ -1492,7 +1609,13 @@ button.quiet:hover:not(:disabled) {
   .door .name,
   .door .rule,
   .footline .track i,
+  .fold .rule,
+  .fold .hint,
   button {
     transition: none;
+  }
+
+  .flow {
+    scroll-behavior: auto;
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { acceptedAnswers, glyphFor, readingTypeLabel, subjectTypeName } from '../lib/subject.js'
 import Mnemonic from './Mnemonic.jsx'
 import useFaces from './useFaces.js'
@@ -15,11 +15,15 @@ import useFaces from './useFaces.js'
 export default function Lesson({ items, onQuiz, onExit }) {
   const [at, setAt] = useState(0)
   const { faces } = useFaces()
+  const prose = useRef(null)
   const item = items[at]
   const last = at === items.length - 1
 
   // Left and right walk the spread; Enter moves on and, at the end, into the
-  // quiz. The keyboard gets through a batch without reaching for the mouse.
+  // quiz. Down and up walk the prose when it runs past the fold — the page
+  // itself is pinned and cannot scroll, so without these the keyboard could
+  // start a long mnemonic and never finish it. The keyboard gets through a
+  // batch without reaching for the mouse.
   useEffect(() => {
     function key(event) {
       // Enter on a focused button already fires that button's onClick, and
@@ -32,6 +36,15 @@ export default function Lesson({ items, onQuiz, onExit }) {
       if (event.key === 'ArrowRight' || event.key === 'Enter') {
         if (last && event.key === 'Enter') onQuiz()
         else setAt(n => Math.min(items.length - 1, n + 1))
+      }
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const region = prose.current
+        if (!region) return
+        // Most of a window of prose, so consecutive lines are never orphaned
+        // on either side of a step. Behaviour comes from the stylesheet,
+        // where reduced motion already turns it off.
+        const step = Math.round(region.clientHeight * 0.6)
+        region.scrollBy({ top: event.key === 'ArrowDown' ? step : -step })
       }
     }
     window.addEventListener('keydown', key)
@@ -50,26 +63,33 @@ export default function Lesson({ items, onQuiz, onExit }) {
 
       <div className="spread">
         {/* The context sentences sit under the character rather than at the
-            bottom of the recto. The recto was running past the fold on any
-            subject with two long mnemonics while this column stopped a third
-            of the way down — one page overflowing beside an empty one. */}
+            bottom of the recto, balancing the spread — and they are the
+            verso's one flexible block, so they are the part that flows when
+            a narrow window leaves them no room. The character stands. */}
         <div className="verso">
           <Face subject={item.subject} />
           <p className="stat">{glyphCount(item.subject)}</p>
           <Collection subject={item.subject} faces={faces} />
-          <Sentences sentences={item.subject.context_sentences} />
+          <Flow key={`v${at}`}>
+            <Sentences sentences={item.subject.context_sentences} />
+          </Flow>
         </div>
 
         <div className="recto">
-          <h1 className="gloss">{acceptedAnswers(item.subject, 'meaning').join(', ')}</h1>
+          {/* Keyed by position so a new subject opens at the top of its own
+              page with the fold measured fresh — a remount, not a reset,
+              because a reset is a second thing to keep in step. */}
+          <Flow key={at} regionRef={prose}>
+            <h1 className="gloss">{acceptedAnswers(item.subject, 'meaning').join(', ')}</h1>
 
-          <Readings subject={item.subject} />
+            <Readings subject={item.subject} />
 
-          {/* Labelled, because a real subject carries two of these and they
-              are otherwise two untitled paragraphs of similar length. On a
-              long one you cannot tell where the meaning ends. */}
-          <Mnemonic source={item.subject.meaning_mnemonic} label="meaning" />
-          <Mnemonic source={item.subject.reading_mnemonic} label="reading" />
+            {/* Labelled, because a real subject carries two of these and they
+                are otherwise two untitled paragraphs of similar length. On a
+                long one you cannot tell where the meaning ends. */}
+            <Mnemonic source={item.subject.meaning_mnemonic} label="meaning" />
+            <Mnemonic source={item.subject.reading_mnemonic} label="reading" />
+          </Flow>
         </div>
       </div>
 
@@ -85,6 +105,66 @@ export default function Lesson({ items, onQuiz, onExit }) {
         <button type="button" onClick={() => (last ? onQuiz() : setAt(n => n + 1))}>
           {last ? 'Quiz' : 'Next'}
         </button>
+      </div>
+    </div>
+  )
+}
+
+// A flowing region under a fold that says so.
+//
+// The page is a place: it is pinned to the window and the reading matter
+// alone moves, inside this region. The fold beneath it is the house
+// hairline — lit with `more ↓` while prose remains below the window, back
+// to the quiet rule at the end, and not drawn at all when everything fits.
+// The state is measured, never assumed: on scroll, when the region's box
+// changes with the window, and when its children change height — which is
+// what a webfont arriving late does to a paragraph that was measured in
+// the fallback face.
+function Flow({ children, regionRef }) {
+  const region = useRef(null)
+  const [fold, setFold] = useState('fits')
+
+  useEffect(() => {
+    const el = region.current
+    function update() {
+      const over = el.scrollHeight - el.clientHeight
+      // A few pixels of tolerance on both edges: line-height rounding can
+      // leave a fitting page 2–4px "scrollable", and a fold that lights for
+      // pixels nobody can read teaches the eye to ignore the lit rule.
+      setFold(
+        over < 8 ? 'fits'
+        : el.scrollTop + el.clientHeight < el.scrollHeight - 4 ? 'more'
+        : 'end'
+      )
+    }
+    update()
+    const watch = new ResizeObserver(update)
+    watch.observe(el)
+    for (const child of el.children) watch.observe(child)
+    el.addEventListener('scroll', update, { passive: true })
+    return () => {
+      watch.disconnect()
+      el.removeEventListener('scroll', update)
+    }
+  }, [])
+
+  // The caller may need the scroller too — the keyboard walks the recto's
+  // prose from the window handler.
+  function hold(el) {
+    region.current = el
+    if (regionRef) regionRef.current = el
+  }
+
+  return (
+    <div className="flows">
+      <div className="flow" ref={hold}>
+        {children}
+      </div>
+      {/* Decoration to a screen reader — the prose itself is ordinary flow
+          content and needs no announcement to be reached. */}
+      <div className={`fold ${fold}`} aria-hidden="true">
+        <span className="rule" />
+        <span className="hint">more ↓</span>
       </div>
     </div>
   )
