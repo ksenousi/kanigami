@@ -80,15 +80,18 @@ a real account and the Safety procedure to re-accept.
   respecting the cap on the client: both session reads pass the cap and
   `grantedLevels` filters server-side. Neither number is optional — dropping
   either makes the session disagree with WaniKani about what it holds.
-- **Home's lesson figure counts Today's Lessons, not the queue, once a pace
-  is kept.** WaniKani's dashboard number is a daily remainder — "maximum
-  recommended daily lessons" less the lessons started today — and that
-  maximum is the one input `preferences` does not carry, so `pace.js`
-  mirrors it in localStorage and `todaysLessons` in `standing.js` does the
-  dashboard's arithmetic over `started_at` since local midnight, off the
-  started collection the spread already fetches. No pace mirrored means the
-  figure is the queue. The Learn door always keys off the queue, never the
-  day — a spent day still leaves WaniKani's own advanced way in.
+- **WaniKani's dashboard lesson number is not the lesson count — do not
+  "fix" home to match it.** The pink card shows Today's Lessons: the
+  "maximum recommended daily lessons" app setting less the lessons already
+  started that day. It is a countdown, and the setting behind it is the one
+  input `preferences` does not carry. The real queue is what `/summary`'s
+  lesson bucket and `/assignments?immediately_available_for_lessons` both
+  report, and home shows it on purpose — a report of the card's number
+  being "right" and home's being "wrong" is the card being misread. This
+  was settled deliberately: a mirrored daily pace was built, verified
+  against a live dashboard to the lesson, and then removed, because the
+  owner wants the true count and the mirror needed a hand-copied setting
+  the API refuses to share. The record is in PLAN.md.
 - **Radicals may have no Unicode character.** Fall back to
   `character_images` (prefer SVG) and invert for the ink ground.
 - **The Japanese faces are a feature, not styling.** `src/lib/faces.js` holds

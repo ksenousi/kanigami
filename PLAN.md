@@ -1073,24 +1073,26 @@ subject ids, so filtering it would cost the very reads it exists to replace —
 and the filtered session load already answers honestly with "No lessons
 waiting."
 
-**Today's Lessons, and the one number the API keeps to itself.** The wrong
-lesson count turned out to be this: WaniKani's dashboard does not show the
-queue, it shows what remains of "maximum recommended daily lessons" — an
-app setting `preferences` does not carry — after the lessons already
-started today. Everything else in that arithmetic was already on home: the
-queue from `/summary`, and `started_at` riding on the started collection
-the spread fetches. So `pace.js` mirrors the one missing number, stored in
-localStorage like the token and set from a quiet line under the figures.
-With a pace, the figure counts the day the way the dashboard does
-(`todaysLessons`, over lessons started since local midnight), the queue
-total moves down to the pace line, and the Learn door keys off the queue —
-a spent day still leaves WaniKani's own advanced way in. Without one,
-nothing is daily and the figure is the queue, which is every visitor who
-never asked for pacing. Verified live against a dashboard mid-day, lessons
-already done: the mirrored arithmetic and the dashboard agreed to the
-lesson. The mirror is a copy — if the WaniKani setting changes, the API
-gives it nothing to sync against, and the pace line is where it is
-corrected.
+**Today's Lessons — built, verified, and removed by decision.** The wrong
+lesson count turned out not to be a count at all: WaniKani's dashboard card
+does not show the queue, it shows what remains of "maximum recommended
+daily lessons" — an app setting `preferences` does not carry — after the
+lessons already started that day. The queue itself was confirmed twice
+over, live: `/summary`'s lesson bucket and
+`/assignments?immediately_available_for_lessons` agree with each other and
+with the site's own lesson picker, and the card's smaller figure
+reproduced exactly as the setting less the day's started lessons, to the
+lesson, before and after a batch.
+
+A mirror was built to match the card — the missing setting copied into
+localStorage like the token, the day counted off `started_at` since local
+midnight, no extra read — and it worked. It was then removed, on a
+decision: seeing the card was a daily allowance and not the total, the
+owner wants the total. The figure on home is the queue, deliberately, and
+a mirrored setting the API cannot sync was a config this app is better
+without. If daily pacing is ever wanted back, the arithmetic is
+`min(waiting, max(0, maximum − started today))` and the implementation is
+one revert away in history; what it cannot ever be is fetched.
 
 ---
 
