@@ -8,7 +8,9 @@ import {
   lessonsWaiting,
   nextDue,
   peak,
-  spread
+  spread,
+  startedSince,
+  todaysLessons
 } from './standing.js'
 
 const at = stage => ({ data: { srs_stage: stage } })
@@ -99,6 +101,53 @@ describe('the counts on the door', () => {
     expect(dueNow({})).toBe(0)
     expect(dueNow(null)).toBe(0)
     expect(lessonsWaiting(null)).toBe(0)
+  })
+})
+
+// The dashboard's arithmetic — what remains of the daily maximum, capped by
+// the queue — verified against a live dashboard before it shipped. Fake
+// numbers here, as everywhere.
+describe('todaysLessons', () => {
+  it('is what remains of the daily maximum', () => {
+    expect(todaysLessons(40, 3, 15)).toBe(12)
+  })
+
+  it('never promises more than is waiting', () => {
+    expect(todaysLessons(4, 0, 15)).toBe(4)
+  })
+
+  it('runs down to zero and stops, whatever was done past the maximum', () => {
+    expect(todaysLessons(40, 15, 15)).toBe(0)
+    expect(todaysLessons(40, 22, 15)).toBe(0)
+  })
+
+  it('is the whole queue when no pace is kept', () => {
+    expect(todaysLessons(40, 3, null)).toBe(40)
+    expect(todaysLessons(40, 3, 0)).toBe(40)
+    expect(todaysLessons(40, 3, undefined)).toBe(40)
+  })
+})
+
+describe('startedSince', () => {
+  const at = started_at => ({ data: { started_at } })
+  const midnight = Date.parse('2026-07-27T00:00:00+01:00')
+
+  it('counts what was started at or after the moment', () => {
+    const rows = [
+      at('2026-07-27T09:15:00.000000Z'),
+      at('2026-07-26T22:00:00.000000Z'),
+      at('2026-07-27T12:00:00.000000Z')
+    ]
+    expect(startedSince(rows, midnight)).toBe(2)
+  })
+
+  it('leaves out anything never started', () => {
+    expect(startedSince([at(null), {}, { data: {} }], midnight)).toBe(0)
+  })
+
+  it('counts nothing from nothing', () => {
+    expect(startedSince([], midnight)).toBe(0)
+    expect(startedSince(undefined, midnight)).toBe(0)
   })
 })
 

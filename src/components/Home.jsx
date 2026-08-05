@@ -5,7 +5,16 @@ import {
   getStartedAssignments,
   getSummary
 } from '../lib/wanikani.js'
-import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
+import {
+  dueNow,
+  kanjiPassed,
+  learned,
+  lessonsWaiting,
+  spread,
+  startedSince,
+  todaysLessons
+} from '../lib/standing.js'
+import { asPace, readPace, writePace } from '../lib/pace.js'
 import Forecast from './Forecast.jsx'
 import FaceWarning from './FaceWarning.jsx'
 import useFaces from './useFaces.js'
@@ -38,6 +47,8 @@ export default function Home({
   // Bumped to re-run the three reads. A failed load used to offer only the
   // door out, so a dropped connection cost you the token.
   const [attempt, setAttempt] = useState(0)
+  // The mirrored daily maximum, see pace.js. Null is no pacing at all.
+  const [pace, setPace] = useState(readPace)
   const { faces, settled: facesSettled } = useFaces()
   const online = useOnline()
 
@@ -52,12 +63,19 @@ export default function Home({
     ])
       .then(([summary, started, kanji, kanjiTotal]) => {
         if (!live) return
+        // Midnight here, because WaniKani's Today's Lessons is a today in
+        // the clock on the wall, and this is the moment the counting
+        // happens.
+        const midnight = new Date()
+        midnight.setHours(0, 0, 0, 0)
         setStanding({
           summary,
           spread: spread(started),
           kanji: kanjiPassed(kanji, kanjiTotal),
-          // The same collection, counted by kind rather than by stage.
-          learned: learned(started)
+          // The same collection, counted by kind rather than by stage —
+          // and once more by clock, for the lessons already done today.
+          learned: learned(started),
+          startedToday: startedSince(started, midnight.getTime())
         })
       })
       .catch(problem => {
@@ -69,7 +87,11 @@ export default function Home({
   }, [token, user.level, attempt])
 
   const reviews = standing ? dueNow(standing.summary) : 0
-  const lessons = standing ? lessonsWaiting(standing.summary) : 0
+  // Two lesson numbers with two jobs: `waiting` is the queue and opens the
+  // door — a spent pace still leaves WaniKani's own "advanced" way in — and
+  // `lessons` is the figure, counted the way the dashboard counts it.
+  const waiting = standing ? lessonsWaiting(standing.summary) : 0
+  const lessons = standing ? todaysLessons(waiting, standing.startedToday, pace) : 0
 
   // The keyboard gets in without reaching for the mouse. Only when there is
   // somewhere to go, and never while a batch is already loading.
@@ -79,11 +101,11 @@ export default function Home({
       // Typing into something else should not open a door.
       if (event.target instanceof HTMLInputElement) return
       if (event.key === 'r' && reviews > 0) onReview()
-      if (event.key === 'l' && lessons > 0) onLearn()
+      if (event.key === 'l' && waiting > 0) onLearn()
     }
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
-  }, [reviews, lessons, starting, onReview, onLearn])
+  }, [reviews, waiting, starting, onReview, onLearn])
 
   return (
     <div className="surface-ink">
@@ -139,9 +161,15 @@ export default function Home({
               </div>
               <div className={lessons > 0 ? 'figure' : 'figure none'}>
                 <b>{lessons}</b>
-                <span>lessons waiting</span>
+                <span>{pace === null ? 'lessons waiting' : 'lessons today'}</span>
               </div>
             </div>
+
+            <Pace
+              pace={pace}
+              waiting={waiting}
+              onPace={next => setPace(writePace(next))}
+            />
 
             <LevelUp kanji={standing.kanji} level={user.level} />
 
@@ -215,6 +243,49 @@ export default function Home({
         </div>
       )}
     </div>
+  )
+}
+
+// The mirrored pace behind the lessons figure. WaniKani's dashboard counts
+// Today's Lessons against "maximum recommended daily lessons" — a setting
+// its API does not share — so the dashboard's number can only be rebuilt
+// from a copy kept here. With a pace, the queue total moves to this line
+// and the figure above counts the day; without one there is nothing to say
+// but the offer.
+//
+// The input replaces the button in place: type a maximum, Enter or leave
+// commits, empty takes the pace off. Junk changes nothing — a mistype
+// should not delete a setting.
+function Pace({ pace, waiting, onPace }) {
+  const [editing, setEditing] = useState(false)
+
+  function commit(raw) {
+    if (String(raw).trim() === '') onPace(null)
+    else if (asPace(raw) !== null) onPace(asPace(raw))
+    setEditing(false)
+  }
+
+  return (
+    <p className="pace">
+      {pace !== null ? <span>{waiting} waiting</span> : null}
+      {editing ? (
+        <input
+          autoFocus
+          inputMode="numeric"
+          maxLength={3}
+          defaultValue={pace ?? ''}
+          aria-label="Daily lesson pace — a copy of WaniKani's maximum recommended daily lessons. Empty for none."
+          onBlur={event => commit(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') commit(event.target.value)
+          }}
+        />
+      ) : (
+        <button className="quiet" type="button" onClick={() => setEditing(true)}>
+          {pace !== null ? `pace · ${pace} a day` : 'set a daily pace'}
+        </button>
+      )}
+    </p>
   )
 }
 

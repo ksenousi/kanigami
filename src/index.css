@@ -1200,6 +1200,32 @@ button.quiet:hover:not(:disabled) {
   color: var(--dim);
 }
 
+/* The lesson pace — one line in the label voice under the figures. The
+   button is the control; the input takes its place while a maximum is being
+   typed, on the house hairline rather than in a box. */
+.pace {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.pace input {
+  width: 6ch;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--accent);
+  color: var(--text-strong);
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: center;
+  padding: 8px 0 7px;
+}
+
 .footline {
   display: flex;
   align-items: center;

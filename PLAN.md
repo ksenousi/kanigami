@@ -1071,10 +1071,26 @@ What did not change: home's two door counts still come from `/summary`
 alone. For a lapsed subscription the summary may overcount — it carries only
 subject ids, so filtering it would cost the very reads it exists to replace —
 and the filtered session load already answers honestly with "No lessons
-waiting." The one number the API cannot give: WaniKani's dashboard shows
-*Today's Lessons*, a recommended subset computed site-side. Kanigami's
-"lessons waiting" is the whole available queue — the lesson picker's total —
-and matching the dashboard's daily figure is not possible from the API.
+waiting."
+
+**Today's Lessons, and the one number the API keeps to itself.** The wrong
+lesson count turned out to be this: WaniKani's dashboard does not show the
+queue, it shows what remains of "maximum recommended daily lessons" — an
+app setting `preferences` does not carry — after the lessons already
+started today. Everything else in that arithmetic was already on home: the
+queue from `/summary`, and `started_at` riding on the started collection
+the spread fetches. So `pace.js` mirrors the one missing number, stored in
+localStorage like the token and set from a quiet line under the figures.
+With a pace, the figure counts the day the way the dashboard does
+(`todaysLessons`, over lessons started since local midnight), the queue
+total moves down to the pace line, and the Learn door keys off the queue —
+a spent day still leaves WaniKani's own advanced way in. Without one,
+nothing is daily and the figure is the queue, which is every visitor who
+never asked for pacing. Verified live against a dashboard mid-day, lessons
+already done: the mirrored arithmetic and the dashboard agreed to the
+lesson. The mirror is a copy — if the WaniKani setting changes, the API
+gives it nothing to sync against, and the pace line is where it is
+corrected.
 
 ---
 

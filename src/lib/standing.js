@@ -53,6 +53,24 @@ export function lessonsWaiting(summary) {
   return summary?.lessons?.[0]?.subject_ids?.length ?? 0
 }
 
+// What WaniKani's dashboard counts in its lessons card: not the queue but
+// Today's Lessons — what remains of a daily maximum after the lessons
+// already started today, never more than is actually waiting. The maximum
+// is the mirrored setting from `pace.js`; without one there is nothing
+// daily to count and the queue is the answer.
+export function todaysLessons(available, started, pace) {
+  if (!Number.isInteger(pace) || pace < 1) return available
+  return Math.min(available, Math.max(0, pace - started))
+}
+
+// Lessons started at or after `since` (epoch ms), counted off the started
+// collection the spread already fetched — `started_at` rides on every
+// record in it. The summary only says what is waiting; what was done today,
+// and when, is on the records of the doing.
+export function startedSince(assignments = [], since) {
+  return assignments.filter(a => Date.parse(a?.data?.started_at ?? '') >= since).length
+}
+
 // When something is next due, or null if nothing is in the next 24 hours.
 // The first bucket with anything in it is the answer — including the current
 // one, which means now.
