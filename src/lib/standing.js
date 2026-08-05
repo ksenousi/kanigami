@@ -34,9 +34,11 @@ export function spread(assignments = []) {
   return { bands, total: bands.reduce((sum, band) => sum + band.count, 0) }
 }
 
-// The next 24 hours, as WaniKani already buckets them. The first bucket is
-// the current hour and holds everything available right now.
-export function forecast(summary, hours = 24) {
+// Every hour WaniKani bucketed — the current one, which holds everything
+// available right now, and the 24 after it; the report carries all 25.
+// `hours` clips the window for a caller that wants less, and the default
+// clips nothing — a track labelled +24h was quietly dropping its last hour.
+export function forecast(summary, hours = Infinity) {
   return (summary?.reviews ?? []).slice(0, hours).map(bucket => ({
     at: bucket.available_at,
     count: bucket.subject_ids?.length ?? 0

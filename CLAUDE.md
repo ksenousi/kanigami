@@ -65,6 +65,21 @@ a real account and the Safety procedure to re-accept.
   `getLevelKanjiCount`, which reads `total_count` off `/subjects`. Counting
   the denominator out of the assignments says `4 kanji to level 11` on a
   level holding thirty-two.
+- **An `/assignments` read that does not say `hidden=false` counts retired
+  subjects.** WaniKani hides subjects it retires; their assignments stay in
+  every collection while WaniKani's own lessons, reviews, and counts drop
+  them. Every assignment read in `wanikani.js` carries `hidden=false` — the
+  level-kanji read without it let the numerator count a retired kanji that
+  the `hidden=false` denominator refuses, which can call a level-up early.
+- **The lesson batch size is the user's, and the subscription cap is the
+  client's job.** `lessons_batch_size` arrives on `/user` and `batchSize` in
+  `queue.js` is the one place it is read — five is WaniKani's default, not a
+  constant of this app. And the API keeps returning assignments above
+  `subscription.max_level_granted` (a lapsed subscription leaves years of
+  them behind) while refusing every write against them, so the docs put
+  respecting the cap on the client: both session reads pass the cap and
+  `grantedLevels` filters server-side. Neither number is optional — dropping
+  either makes the session disagree with WaniKani about what it holds.
 - **Radicals may have no Unicode character.** Fall back to
   `character_images` (prefer SVG) and invert for the ink ground.
 - **The Japanese faces are a feature, not styling.** `src/lib/faces.js` holds

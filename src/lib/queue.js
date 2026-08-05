@@ -18,21 +18,38 @@ import {
 } from './wanikani.js'
 import { createSession } from './session.js'
 
-// WaniKani teaches in batches, and so does this. Five is theirs.
+// WaniKani teaches in batches, and so does this. Five is their default —
+// the size the user actually chose comes back on the user resource, and
+// `batchSize` is the one place it is read.
 export const LESSON_BATCH = 5
 
-export function loadReviewSession(token) {
-  return load(token, getAvailableReviews)
+// `lessons_batch_size` from the user's own preferences, when it is a usable
+// number. Anything else falls back to the default rather than to a batch of
+// nothing.
+export function batchSize(user) {
+  const size = user?.preferences?.lessons_batch_size
+  return Number.isInteger(size) && size > 0 ? size : LESSON_BATCH
+}
+
+export function loadReviewSession(token, user) {
+  return load(token, capped(user, getAvailableReviews))
 }
 
 // The same reads, over the assignments waiting to be taught rather than
-// the ones due for review, and only one batch of them. `items` comes back
+// the ones due for review, and only one batch of them — the batch size the
+// user set on WaniKani, not a size of this app's own. `items` comes back
 // alongside because the lesson surface has to typeset them before the quiz
 // the session is for.
-export async function loadLessonBatch(token, size = LESSON_BATCH) {
-  const loaded = await load(token, getAvailableLessons, size)
+export async function loadLessonBatch(token, user) {
+  const loaded = await load(token, capped(user, getAvailableLessons), batchSize(user))
   return { ...loaded, items: loaded.session.items }
 }
+
+// The subscription's level cap rides along on both session reads. WaniKani
+// still returns assignments above it — a lapsed subscription leaves them
+// behind — and refuses the writes; a session must never hold one.
+const capped = (user, fetchAssignments) => token =>
+  fetchAssignments(token, user?.subscription?.max_level_granted)
 
 async function load(token, fetchAssignments, limit) {
   const waiting = await fetchAssignments(token)

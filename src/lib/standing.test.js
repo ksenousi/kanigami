@@ -72,6 +72,14 @@ describe('forecast', () => {
     expect(forecast(summary, 2)).toHaveLength(2)
   })
 
+  // The report carries 25 buckets — the current hour and the 24 after it —
+  // and the default keeps them all. Clipping at 24 dropped the last hour of
+  // a track labelled +24h.
+  it('keeps every bucket it is handed by default', () => {
+    const day = { reviews: Array.from({ length: 25 }, (_, i) => bucket(i % 24, 1)) }
+    expect(forecast(day)).toHaveLength(25)
+  })
+
   it('has nothing to draw for a summary that never arrived', () => {
     expect(forecast(null)).toEqual([])
     expect(forecast({})).toEqual([])

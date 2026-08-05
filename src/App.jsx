@@ -89,7 +89,7 @@ export default function App() {
 
   function startReview() {
     return start(
-      () => loadReviewSession(token),
+      () => loadReviewSession(token, user),
       loaded =>
         setReview({
           ...loaded,
@@ -104,7 +104,7 @@ export default function App() {
 
   function startLessons() {
     return start(
-      () => loadLessonBatch(token),
+      () => loadLessonBatch(token, user),
       loaded =>
         setLesson({
           ...loaded,

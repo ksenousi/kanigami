@@ -4,9 +4,10 @@ import { forecast, nextDue, peak } from '../lib/standing.js'
 // The footline track, carrying the next 24 hours.
 //
 // Every screen already draws a 1px rule across the bottom. On home that rule
-// is the forecast: 24 segments rising from it, the next few warm, empty hours
-// staying exactly as tall as the rule they are part of. Nothing here is a
-// chart — it is the rule, told what it knows.
+// is the forecast: the summary's 25 buckets — the current hour and the 24
+// after it — rising from the rule as segments, the next few warm, empty
+// hours staying exactly as tall as the rule they are part of. Nothing here
+// is a chart — it is the rule, told what it knows.
 //
 // **The backlog does not set the scale.** WaniKani's first bucket holds
 // everything already due, which on a neglected account is larger than the
@@ -26,13 +27,14 @@ import { forecast, nextDue, peak } from '../lib/standing.js'
 // reach entirely for anyone not using one. The track takes focus and the
 // arrows walk it; the label is the live region, so what a sighted user reads
 // under the cursor is the same string a screen reader is handed.
-const HOURS = 24
 const TALLEST = 20
 const WARM = 4 // hours after this one that stay near the accent
 
 export default function Forecast({ summary }) {
   const [reading, setReading] = useState(null)
-  const hours = forecast(summary, HOURS)
+  // Unclipped: WaniKani sends now plus 24 hours, and the +24h at the far end
+  // of the track is only true if the twenty-fourth is actually drawn.
+  const hours = forecast(summary)
   const tallest = peak(hours.slice(1))
 
   return (
@@ -67,7 +69,7 @@ export default function Forecast({ summary }) {
         ))}
       </div>
 
-      <span>+{HOURS}h</span>
+      <span>+24h</span>
     </div>
   )
 }

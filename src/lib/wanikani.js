@@ -98,27 +98,51 @@ export function getSummary(token) {
   return request(token, '/summary').then(r => r.data)
 }
 
-export function getAvailableReviews(token) {
-  return collection(token, '/assignments?immediately_available_for_review')
+// A subscription's level cap, as the query filter that enforces it. The API
+// keeps returning assignments above `max_level_granted` — a lapsed
+// subscription leaves years of them behind — and the write endpoints refuse
+// every one of them, so the docs put respecting the cap on the client. At
+// the full 60 there is nothing to filter; below it, `levels` names each
+// granted level and the server does the rest.
+export function grantedLevels(maxLevel) {
+  if (!Number.isInteger(maxLevel) || maxLevel >= 60) return ''
+  return '&levels=' + Array.from({ length: maxLevel }, (_, i) => i + 1).join(',')
 }
 
-export function getAvailableLessons(token) {
-  return collection(token, '/assignments?immediately_available_for_lessons')
+// Both session reads say `hidden=false`: a retired subject is out of lessons
+// and reviews on WaniKani itself, and an assignment against one is a write
+// the API will not take.
+export function getAvailableReviews(token, maxLevel) {
+  return collection(
+    token,
+    `/assignments?immediately_available_for_review&hidden=false${grantedLevels(maxLevel)}`
+  )
+}
+
+export function getAvailableLessons(token, maxLevel) {
+  return collection(
+    token,
+    `/assignments?immediately_available_for_lessons&hidden=false${grantedLevels(maxLevel)}`
+  )
 }
 
 // Every assignment that has a stage on it, for the SRS spread. This is the
 // one paginated read in the app that is not about a session, so fetch it once
-// on mount and never on a timer.
+// on mount and never on a timer. Retired subjects stay out — WaniKani drops
+// them from its own counts, and an item that can never come back to review
+// is not part of anyone's standing.
 export function getStartedAssignments(token) {
-  return collection(token, '/assignments?started=true')
+  return collection(token, '/assignments?started=true&hidden=false')
 }
 
 // The kanji of one level that the user has actually reached. WaniKani levels
 // you up at 90% of the level's kanji passed, so this carries the numerator —
 // and `levels` is a server-side filter, which is why it is cheap rather than
-// a scan.
+// a scan. `hidden=false` because the denominator in `getLevelKanjiCount`
+// already leaves retired kanji out; a numerator that counts them can pass
+// more kanji than the level holds.
 export function getLevelKanji(token, level) {
-  return collection(token, `/assignments?levels=${level}&subject_types=kanji`)
+  return collection(token, `/assignments?levels=${level}&subject_types=kanji&hidden=false`)
 }
 
 // How many kanji the level *has*, which is a different question and the

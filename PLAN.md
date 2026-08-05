@@ -1032,6 +1032,52 @@ three seconds late (never flashes, recovers), genuinely blocked (speaks at
 
 ---
 
+## The counts, read against the API that answers them ✅ done
+
+The lesson count was the visible symptom. The audit that followed read every
+count in the app against the current API docs and found four places they
+disagreed — fixed together, because they are one mistake wearing four coats:
+treating a WaniKani default, or a WaniKani-shaped read, as WaniKani's answer.
+
+- **The batch is the user's.** `LESSON_BATCH = 5` was labelled "five is
+  theirs" — five is their *default*. The size the user actually set arrives
+  on `/user` as `preferences.lessons_batch_size`, and a batch of five at a
+  setting of three teaches the wrong number of lessons every time.
+  `batchSize` in `queue.js` reads the preference and falls back to five only
+  when the user resource carries none.
+- **Retired subjects are not in anyone's queue.** WaniKani hides subjects it
+  retires, and hidden assignments stay in every `/assignments` collection —
+  while WaniKani's own lessons, reviews, and dashboard counts drop them. The
+  reads behind the spread, the learned line, and both sessions now say
+  `hidden=false`. The sharpest edge was the level-up line: the numerator
+  (`/assignments?levels=N&subject_types=kanji`) counted a retired kanji that
+  the denominator (`hidden=false` on `/subjects`) refused, so passing one
+  retired kanji could call the level-up early.
+- **The subscription cap is the client's job.** The docs are explicit:
+  content above `subscription.max_level_granted` "shouldn't be available at
+  all and will be rejected if you try and submit" — the API keeps returning
+  those assignments (a lapsed subscription leaves years of them behind) and
+  expects the client to filter. `grantedLevels` turns the cap into a
+  server-side `levels=` filter on both session reads, so a session never
+  holds an item whose write is doomed to a 422. Below-cap accounts see no
+  change; the full 60 adds no filter at all.
+- **The forecast dropped its last hour.** `/summary` carries 25 review
+  buckets — the current hour and the 24 after it. `forecast` clipped at 24,
+  so the track ended one segment short of the `+24h` printed at its end, and
+  `nextDue` (which scans all buckets) could name an hour the track did not
+  draw. The default now clips nothing.
+
+What did not change: home's two door counts still come from `/summary`
+alone. For a lapsed subscription the summary may overcount — it carries only
+subject ids, so filtering it would cost the very reads it exists to replace —
+and the filtered session load already answers honestly with "No lessons
+waiting." The one number the API cannot give: WaniKani's dashboard shows
+*Today's Lessons*, a recommended subset computed site-side. Kanigami's
+"lessons waiting" is the whole available queue — the lesson picker's total —
+and matching the dashboard's daily figure is not possible from the API.
+
+---
+
 ## Reference
 
 - API docs: <https://docs.api.wanikani.com/>
