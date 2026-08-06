@@ -579,6 +579,95 @@ body {
   color: var(--subject-vocabulary);
 }
 
+/* Each kind against how much of it WaniKani has — the house hairline lit to
+   the fraction. Three columns the spreadline's width, so the two
+   instruments align; the subject colours label a column the way they label
+   a word. */
+.fills {
+  width: min(620px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px clamp(14px, 3vw, 24px);
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.fills .kind {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.fills .wk-radical {
+  color: var(--subject-radical);
+}
+
+.fills .wk-kanji {
+  color: var(--subject-kanji);
+}
+
+.fills .wk-vocabulary {
+  color: var(--subject-vocabulary);
+}
+
+.fills .track {
+  display: block;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--rule);
+}
+
+.fills .fill {
+  display: block;
+  height: 100%;
+  border-radius: 1px;
+}
+
+.fills .fill.wk-radical {
+  background: var(--subject-radical);
+}
+
+.fills .fill.wk-kanji {
+  background: var(--subject-kanji);
+}
+
+.fills .fill.wk-vocabulary {
+  background: var(--subject-vocabulary);
+}
+
+.fills .of {
+  color: var(--dim);
+}
+
+/* Position through the sixty levels. Notches rather than a fill, because
+   levels are countable steps and the walked ones are the lit ones. */
+.ruler {
+  width: min(620px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ruler .notches {
+  display: flex;
+  gap: 2px;
+  height: 2px;
+}
+
+.ruler .notch {
+  flex: 1;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--rule);
+}
+
+.ruler .notch.lit {
+  background: var(--text-soft);
+}
+
 /* The SRS spread: one segmented hairline, and the counts beneath it as one
    line of type. Never five cards with five numbers in them. */
 .spreadline {

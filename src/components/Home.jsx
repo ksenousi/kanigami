@@ -6,6 +6,7 @@ import {
   getSummary
 } from '../lib/wanikani.js'
 import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
+import { subjectTotals } from '../lib/totals.js'
 import Forecast from './Forecast.jsx'
 import FaceWarning from './FaceWarning.jsx'
 import useFaces from './useFaces.js'
@@ -48,16 +49,21 @@ export default function Home({
       getSummary(token),
       getStartedAssignments(token),
       getLevelKanji(token, user.level),
-      getLevelKanjiCount(token, user.level)
+      getLevelKanjiCount(token, user.level),
+      // The learned line's denominators, cached a week — see totals.js.
+      // Commentary, not standing: losing them must not take home down, so
+      // this one read degrades to null rather than failing the batch.
+      subjectTotals(token).catch(() => null)
     ])
-      .then(([summary, started, kanji, kanjiTotal]) => {
+      .then(([summary, started, kanji, kanjiTotal, totals]) => {
         if (!live) return
         setStanding({
           summary,
           spread: spread(started),
           kanji: kanjiPassed(kanji, kanjiTotal),
           // The same collection, counted by kind rather than by stage.
-          learned: learned(started)
+          learned: learned(started),
+          totals
         })
       })
       .catch(problem => {
@@ -145,7 +151,9 @@ export default function Home({
 
             <LevelUp kanji={standing.kanji} level={user.level} />
 
-            <Learned learned={standing.learned} />
+            <Learned learned={standing.learned} totals={standing.totals} />
+
+            <Ruler level={user.level} />
 
             <Spread spread={standing.spread} />
 
@@ -265,21 +273,78 @@ function LevelUp({ kanji, level }) {
   )
 }
 
-// Everything taught so far, by kind. WaniKani's subject colours do the
-// labelling — this is what they are for, and a line of type is the only place
-// the design lets them appear.
-function Learned({ learned: counts }) {
+// Everything taught so far, against how much of it WaniKani has. Decided
+// from a prototype — see the learned-totals passage in PLAN.md's home spec.
+//
+// Each kind is a column the spreadline's width: the count in the subject
+// colour (the labelling those colours exist for), the house hairline lit to
+// its fraction of the whole, and the total dim beneath. The words carry
+// everything the track draws, so the track is decoration to a screen
+// reader.
+//
+// The denominators are commentary, never load-bearing: with the totals
+// read failed this falls back to the bare counts rather than hiding what
+// has been taught.
+function Learned({ learned: counts, totals }) {
   if (counts.total === 0) return null
 
+  if (!totals) {
+    return (
+      // Gaps rather than · separators, for the reason .counts already uses
+      // them: three counts wrap on a narrow screen and strand a dot at the
+      // end of the first line. The colours do the separating.
+      <p className="learned">
+        <span className="wk-radical">{counts.radical} radicals</span>
+        <span className="wk-kanji">{counts.kanji} kanji</span>
+        <span className="wk-vocabulary">{counts.vocabulary} vocabulary</span>
+      </p>
+    )
+  }
+
+  const kinds = [
+    ['radical', counts.radical, totals.radical, 'radicals'],
+    ['kanji', counts.kanji, totals.kanji, 'kanji'],
+    ['vocabulary', counts.vocabulary, totals.vocabulary, 'vocabulary']
+  ]
+
   return (
-    // Gaps rather than · separators, for the reason .counts already uses
-    // them: three counts wrap on a narrow screen and strand a dot at the end
-    // of the first line. The colours do the separating.
-    <p className="learned">
-      <span className="wk-radical">{counts.radical} radicals</span>
-      <span className="wk-kanji">{counts.kanji} kanji</span>
-      <span className="wk-vocabulary">{counts.vocabulary} vocabulary</span>
-    </p>
+    <div className="fills">
+      {kinds.map(([kind, count, total, word]) => (
+        <div key={kind} className="kind">
+          <span className={`wk-${kind}`}>
+            {count.toLocaleString()} {word}
+          </span>
+          <span className="track" aria-hidden="true">
+            <span
+              className={`fill wk-${kind}`}
+              style={{ width: `${Math.min(100, (count / total) * 100)}%` }}
+            />
+          </span>
+          <span className="of">of {total.toLocaleString()}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Position through all of WaniKani, drawn once. Sixty notches, the walked
+// ones lit; the caption is the same fact in words, which is why the notches
+// are decoration to a screen reader. Needs nothing but the level, so it
+// stands even when the totals read has failed.
+function Ruler({ level }) {
+  return (
+    <div className="ruler">
+      <div className="notches" aria-hidden="true">
+        {Array.from({ length: TOP_LEVEL }, (_, i) => (
+          <span key={i} className={i < level ? 'notch lit' : 'notch'} />
+        ))}
+      </div>
+      <p className="passed">
+        <span className="to">
+          level {level} of {TOP_LEVEL}
+        </span>
+      </p>
+    </div>
   )
 }
 

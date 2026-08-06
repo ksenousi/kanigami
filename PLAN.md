@@ -287,6 +287,22 @@ It is the ink surface. Masthead, then the middle carries **position**:
   #8b8275` — themeable, unlike WaniKani's subject colours, because they are
   ours. A walk away from the accent as items get further from needing
   attention: hot, warm, cool, cooler, and finally the colour draining out.
+- **Everything taught, against how much there is.** Decided from a
+  prototype of four directions; two were picked and merged. Each kind is a
+  column the spreadline's width: its count in the subject colour, the house
+  hairline lit to its fraction of all of WaniKani, and `of 2,074` dim
+  beneath. The denominators come live from `/subjects` `total_count`
+  (`hidden=false`, kana vocabulary counted as vocabulary) and are cached a
+  week in localStorage (`totals.js`) — three integers, not a subject sync —
+  because each read drags a full first page of subjects along. The read is
+  commentary, never load-bearing: if it fails, the line falls back to bare
+  counts. Beneath it, **position through the sixty levels** — a notched
+  ruler, the walked levels lit `--text-soft`, `level 15 of 60` in the
+  `.passed` voice; it needs only the level, so it stands whatever the
+  totals do. Rejected from the same artifact: totals written into the line
+  as type (`507 of 2,074 kanji` — six numbers on one line, and an early
+  account reads as a wall of denominators), and percentages leading (the
+  tallies are what the line exists to show).
 - **Each count is set in its own band's colour.** Decided from a prototype
   after the first build left them all `--dim`: the segments are proportional
   and the words evenly spaced, so nothing tied a number to a colour and you

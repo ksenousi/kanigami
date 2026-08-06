@@ -162,6 +162,23 @@ export function getLevelKanjiCount(token, level) {
   )
 }
 
+// How much of WaniKani there is, by kind — the denominators of home's
+// learned line. `total_count` off one filtered page per kind, the same
+// trick as getLevelKanjiCount; `hidden=false`, or the retired inflate a
+// total nobody can reach. Kana vocabulary counts as vocabulary, the same
+// as it does everywhere else. Callers cache what this returns — see
+// totals.js — because each of the three reads hauls a full first page of
+// subjects along with its one useful integer.
+export function getSubjectTotals(token) {
+  const count = types =>
+    request(token, `/subjects?types=${types}&hidden=false`).then(page => page.total_count)
+  return Promise.all([
+    count('radical'),
+    count('kanji'),
+    count('vocabulary,kana_vocabulary')
+  ]).then(([radical, kanji, vocabulary]) => ({ radical, kanji, vocabulary }))
+}
+
 // An id filter goes in the query string, and a full review queue is enough
 // ids to make that string unreasonable. Chunk it.
 function chunked(ids, size = 500) {
