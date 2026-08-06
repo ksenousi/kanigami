@@ -5,7 +5,15 @@ import {
   getStartedAssignments,
   getSummary
 } from '../lib/wanikani.js'
-import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
+import {
+  STAGES,
+  dueNow,
+  kanjiPassed,
+  learned,
+  lessonsWaiting,
+  spread,
+  stageFor
+} from '../lib/standing.js'
 import { subjectTotals } from '../lib/totals.js'
 import Forecast from './Forecast.jsx'
 import FaceWarning from './FaceWarning.jsx'
@@ -327,21 +335,35 @@ function Learned({ learned: counts, totals }) {
   )
 }
 
-// Position through all of WaniKani, drawn once. Sixty notches, the walked
-// ones lit; the caption is the same fact in words, which is why the notches
-// are decoration to a screen reader. Needs nothing but the level, so it
-// stands even when the totals read has failed.
+// Position through all of WaniKani, drawn once. Sixty notches in the six
+// decades WaniKani names — 快 pleasant through 現実 reality — the walked
+// ones lit, each decade wearing its kanji and the current decade's a step
+// forward of the rest. The caption carries the same facts in words, which
+// is why everything above it is decoration to a screen reader. Needs
+// nothing but the level, so it stands even when the totals read has failed.
 function Ruler({ level }) {
+  const stage = stageFor(level)
+
   return (
     <div className="ruler">
-      <div className="notches" aria-hidden="true">
-        {Array.from({ length: TOP_LEVEL }, (_, i) => (
-          <span key={i} className={i < level ? 'notch lit' : 'notch'} />
+      <div className="stages" aria-hidden="true">
+        {STAGES.map((s, decade) => (
+          <div key={s.name} className={s === stage ? 'stage current' : 'stage'}>
+            <div className="notches">
+              {Array.from({ length: 10 }, (_, i) => (
+                <span key={i} className={decade * 10 + i < level ? 'notch lit' : 'notch'} />
+              ))}
+            </div>
+            <span className="name">{s.kanji}</span>
+          </div>
         ))}
       </div>
       <p className="passed">
         <span className="to">
           level {level} of {TOP_LEVEL}
+        </span>
+        <span>
+          {stage.kanji} {stage.name}
         </span>
       </p>
     </div>

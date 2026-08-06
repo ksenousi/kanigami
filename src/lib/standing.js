@@ -105,3 +105,20 @@ export function kanjiPassed(assignments = [], total = assignments.length) {
 export function peak(hours) {
   return hours.reduce((highest, hour) => Math.max(highest, hour.count), 0)
 }
+
+// WaniKani names each decade of levels, and home's ruler wears the names.
+// The last stage runs to 60 and stops — there is no seventh decade, and a
+// level outside 1–60 stays clamped to the ends rather than off the scale.
+export const STAGES = [
+  { kanji: '快', name: 'pleasant' },
+  { kanji: '苦', name: 'painful' },
+  { kanji: '死', name: 'death' },
+  { kanji: '地獄', name: 'hell' },
+  { kanji: '天国', name: 'paradise' },
+  { kanji: '現実', name: 'reality' }
+]
+
+export function stageFor(level) {
+  const decade = Math.floor((level - 1) / 10)
+  return STAGES[Math.min(STAGES.length - 1, Math.max(0, decade))]
+}

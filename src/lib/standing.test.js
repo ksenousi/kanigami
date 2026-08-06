@@ -8,7 +8,8 @@ import {
   lessonsWaiting,
   nextDue,
   peak,
-  spread
+  spread,
+  stageFor
 } from './standing.js'
 
 const at = stage => ({ data: { srs_stage: stage } })
@@ -157,6 +158,22 @@ describe('kanjiPassed', () => {
   it('is zero of zero at the start of a level', () => {
     expect(kanjiPassed([], 0)).toEqual({ passed: 0, total: 0, needed: 0, remaining: 0 })
     expect(kanjiPassed()).toEqual({ passed: 0, total: 0, needed: 0, remaining: 0 })
+  })
+})
+
+describe('stageFor', () => {
+  it('names the decade the level is in', () => {
+    expect(stageFor(1).name).toBe('pleasant')
+    expect(stageFor(15).name).toBe('painful')
+    expect(stageFor(37).name).toBe('hell')
+  })
+
+  // The boundaries are where an off-by-one would put somebody in the wrong
+  // world: 10 is still pleasant, 11 is where the pain starts.
+  it('turns over exactly on the decade', () => {
+    expect(stageFor(10).name).toBe('pleasant')
+    expect(stageFor(11).name).toBe('painful')
+    expect(stageFor(60).name).toBe('reality')
   })
 })
 

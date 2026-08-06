@@ -643,12 +643,27 @@ body {
 }
 
 /* Position through the sixty levels. Notches rather than a fill, because
-   levels are countable steps and the walked ones are the lit ones. */
+   levels are countable steps and the walked ones are the lit ones — grouped
+   into the six decades WaniKani names, a wider gap between decades than
+   between levels, each wearing its kanji beneath. The current decade's
+   kanji takes the answer register; the rest stay quiet. */
 .ruler {
   width: min(620px, 100%);
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.ruler .stages {
+  display: flex;
+  gap: 10px;
+}
+
+.ruler .stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
 }
 
 .ruler .notches {
@@ -666,6 +681,18 @@ body {
 
 .ruler .notch.lit {
   background: var(--text-soft);
+}
+
+.ruler .name {
+  font-family: var(--jp-sans);
+  font-size: var(--label);
+  line-height: 1;
+  text-align: center;
+  color: var(--dim);
+}
+
+.ruler .stage.current .name {
+  color: var(--text-soft);
 }
 
 /* The SRS spread: one segmented hairline, and the counts beneath it as one

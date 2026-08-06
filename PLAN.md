@@ -297,9 +297,12 @@ It is the ink surface. Masthead, then the middle carries **position**:
   because each read drags a full first page of subjects along. The read is
   commentary, never load-bearing: if it fails, the line falls back to bare
   counts. Beneath it, **position through the sixty levels** — a notched
-  ruler, the walked levels lit `--text-soft`, `level 15 of 60` in the
-  `.passed` voice; it needs only the level, so it stands whatever the
-  totals do. Rejected from the same artifact: totals written into the line
+  ruler in the six decades WaniKani names (快 pleasant, 苦 painful, 死
+  death, 地獄 hell, 天国 paradise, 現実 reality; `STAGES`/`stageFor` in
+  `standing.js`), a wider gap between decades than between levels, each
+  decade's kanji beneath it with the current one a register forward, and
+  `level 15 of 60 · 苦 painful` in the `.passed` voice; it needs only the
+  level, so it stands whatever the totals do. Rejected from the same artifact: totals written into the line
   as type (`507 of 2,074 kanji` — six numbers on one line, and an early
   account reads as a wall of denominators), and percentages leading (the
   tallies are what the line exists to show).
