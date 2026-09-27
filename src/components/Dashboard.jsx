@@ -174,6 +174,9 @@ function withSubjects(slipping, subjects) {
 
 const TOP_LEVEL = 60
 
+// How many kanji the next-up line names before it counts them instead.
+const NAMED = 4
+
 // A section's hairline heading: what it is on the left, its one number on
 // the right. Not a box — the rule is the only thing drawn.
 function Head({ children, right }) {
@@ -274,7 +277,11 @@ function Level({ board, level }) {
         ) : null}
         {next ? (
           <span>
-            {next.kanji.map(k => k.characters).join(' ')}{' '}
+            {/* A handful reads as characters; a batch of a dozen from one
+                lesson session is a wall of them, and the count says more. */}
+            {next.kanji.length <= NAMED
+              ? next.kanji.map(k => k.characters).join(' ')
+              : `${next.kanji.length} kanji`}{' '}
             {next.at ? `up at ${clock(next.at)}` : 'due now'}
             {next.oneStep ? ', one step from passing' : ''}
           </span>
@@ -392,7 +399,8 @@ function Pace({ pace: p, level }) {
           <span
             key={b.level}
             className={b.current ? 'current' : ''}
-            style={{ height: `${Math.max(2, (b.days / tallest) * 100)}%` }}
+            // A level only days old still has to show up as a bar.
+            style={{ height: `${Math.max(8, (b.days / tallest) * 100)}%` }}
           />
         ))}
       </div>
