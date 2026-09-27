@@ -412,7 +412,11 @@ function Pace({ pace: p, level }) {
   const passed = p.levels.filter(l => !l.break).map(l => l.days)
   const tallest = Math.max(1, ...(passed.length ? passed : bars.map(b => b.days)))
   const shown = reading === null ? null : bars[reading]
-  const numbered = b => b.level === 1 || b.level % 5 === 0 || b.current || b === shown
+  // A milestone right beside this level gives way to it — 15 and 16 in
+  // adjacent slots read as 1516.
+  const near = b => p.current && Math.abs(b.level - p.current.level) === 1
+  const numbered = b =>
+    b.current || b === shown || ((b.level === 1 || b.level % 5 === 0) && !near(b))
 
   function key(event) {
     const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
