@@ -1,9 +1,8 @@
 // Where you stand, as plain numbers.
 //
-// Home's job is to answer *which of the two worlds am I entering, and is it
-// worth entering now*. Everything it needs to answer that is counted here,
-// out of what the API already returned — nothing in this file fetches, and
-// nothing decides an SRS stage. It reads the stage WaniKani recorded and
+// The board's headline counts, the spread and the forecast, counted out of
+// what the API already returned — nothing in this file fetches, and nothing
+// decides an SRS stage. It reads the stage WaniKani recorded and
 // puts it in a band.
 
 import { subjectTypeName } from './subject.js'
@@ -84,7 +83,7 @@ export const LEVEL_UP_RATIO = 0.9
 // Progress toward the next level, and the only figure on home that says how
 // far off it is. `assignments` are from
 // `/assignments?levels=N&subject_types=kanji` and carry the numerator;
-// `total` is the level's kanji count from `getLevelKanjiCount`.
+// `total` is how many kanji `getLevelKanjiSubjects` returned.
 //
 // **It takes two reads and the second is not optional.** An assignment
 // exists only once its kanji is unlocked, so `assignments.length` is what
@@ -104,21 +103,4 @@ export function kanjiPassed(assignments = [], total = assignments.length) {
 // and every segment stays on the baseline.
 export function peak(hours) {
   return hours.reduce((highest, hour) => Math.max(highest, hour.count), 0)
-}
-
-// WaniKani names each decade of levels, and home's ruler wears the names.
-// The last stage runs to 60 and stops — there is no seventh decade, and a
-// level outside 1–60 stays clamped to the ends rather than off the scale.
-export const STAGES = [
-  { kanji: '快', name: 'pleasant' },
-  { kanji: '苦', name: 'painful' },
-  { kanji: '死', name: 'death' },
-  { kanji: '地獄', name: 'hell' },
-  { kanji: '天国', name: 'paradise' },
-  { kanji: '現実', name: 'reality' }
-]
-
-export function stageFor(level) {
-  const decade = Math.floor((level - 1) / 10)
-  return STAGES[Math.min(STAGES.length - 1, Math.max(0, decade))]
 }

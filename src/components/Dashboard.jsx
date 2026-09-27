@@ -4,12 +4,23 @@ import {
   getLevelKanjiSubjects,
   getLevelProgressions,
   getReviewStatistics,
+  getSpacedRepetitionSystems,
   getStartedAssignments,
   getSubjects,
   getSummary
 } from '../lib/wanikani.js'
 import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
-import { accuracy, leeches, levelKanji, moved, nextUp, pace, week } from '../lib/board.js'
+import {
+  accuracy,
+  earliestLevelUp,
+  leeches,
+  levelKanji,
+  moved,
+  nextUp,
+  pace,
+  srsSystems,
+  week
+} from '../lib/board.js'
 import { glyphFor } from '../lib/subject.js'
 import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
@@ -26,9 +37,9 @@ import useOnline from './useOnline.js'
 //
 // It reads and never writes, so it wants a token with no permissions at
 // all. Every read happens once, on mount, never on a timer. The four the
-// screen cannot stand without fail it together; the three that are
-// commentary — statistics, level history, WaniKani's totals — degrade to
-// null and take only their own column down with them.
+// screen cannot stand without fail it together; the rest are commentary —
+// statistics, level history, WaniKani's totals, the SRS tables — and
+// degrade to null, taking only their own line down with them.
 export default function Dashboard({ token, user, onDisconnect }) {
   const [board, setBoard] = useState(null)
   const [failure, setFailure] = useState(null)
@@ -47,9 +58,10 @@ export default function Dashboard({ token, user, onDisconnect }) {
       getLevelKanjiSubjects(token, user.level),
       optional(getReviewStatistics(token)),
       optional(getLevelProgressions(token)),
-      optional(subjectTotals(token))
+      optional(subjectTotals(token)),
+      optional(getSpacedRepetitionSystems(token))
     ])
-      .then(async ([summary, started, levelAssignments, levelSubjects, statistics, progressions, totals]) => {
+      .then(async ([summary, started, levelAssignments, levelSubjects, statistics, progressions, totals, systems]) => {
         const now = new Date()
         const slipping = statistics ? leeches(statistics, started) : null
         // Only the handful on screen — never a subject sync.
@@ -58,6 +70,9 @@ export default function Dashboard({ token, user, onDisconnect }) {
           : null
         if (!live) return
         const kanji = levelKanji(levelSubjects, levelAssignments)
+        // The denominator is the level's subjects, not its assignments —
+        // see getLevelKanjiSubjects for why those are different numbers.
+        const passed = kanjiPassed(levelAssignments, levelSubjects.length)
         setBoard({
           now,
           summary,
@@ -68,9 +83,8 @@ export default function Dashboard({ token, user, onDisconnect }) {
           totals,
           kanji,
           next: nextUp(kanji, now),
-          // The denominator is the level's subjects, not its assignments —
-          // see getLevelKanjiSubjects for why those are different numbers.
-          passed: kanjiPassed(levelAssignments, levelSubjects.length),
+          passed,
+          levelUp: systems ? earliestLevelUp(kanji, srsSystems(systems), passed.remaining, now) : null,
           accuracy: statistics ? accuracy(statistics) : null,
           slipping: slipping && withSubjects(slipping, leechSubjects),
           pace: progressions ? pace(progressions, user.level, now) : null
@@ -265,8 +279,21 @@ function Level({ board, level }) {
             {next.oneStep ? ', one step from passing' : ''}
           </span>
         ) : null}
+        <LevelUpLine levelUp={board.levelUp} level={level} />
       </p>
     </section>
+  )
+}
+
+// A projection, and it says so in the same breath: the soonest this level
+// could end is only true if nothing is missed from here.
+function LevelUpLine({ levelUp, level }) {
+  if (!levelUp || level >= TOP_LEVEL) return null
+  if (levelUp.waitsOnLocked) return <span>level {level + 1} waits on locked kanji</span>
+  return (
+    <span>
+      level {level + 1} earliest {when(levelUp.at)} · if every answer is right
+    </span>
   )
 }
 
@@ -447,6 +474,13 @@ function Spread({ spread: bands }) {
 
 function clock(at) {
   return new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+}
+
+// A day and an hour, for anything more than a day out; just the hour today.
+function when(at) {
+  const sameDay = at.toDateString() === new Date().toDateString()
+  if (sameDay) return `today ${clock(at)}`
+  return `${at.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })} ${clock(at)}`
 }
 
 function dayName(day) {

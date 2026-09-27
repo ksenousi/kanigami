@@ -1,10 +1,11 @@
 // 盤 The board — everything the dashboard counts, out of what the API
 // already returned.
 //
-// Nothing here fetches and nothing here decides an SRS stage. Every stage,
-// every next-review time, and every passed or burned date is WaniKani's,
-// read off an assignment; this file only sorts them into days, levels and
-// columns. The same rule as standing.js, for the same reason.
+// Nothing here fetches. Every stage, every next-review time, and every
+// passed or burned date is WaniKani's, read off an assignment; this file
+// sorts them into days, levels and columns. The one place it looks forward
+// is `earliestLevelUp`, and that runs WaniKani's own interval table, read
+// from the API, rather than one of ours.
 
 import { subjectTypeName } from './subject.js'
 
@@ -171,7 +172,12 @@ export function levelKanji(subjects = [], assignments = []) {
     .map(subject => {
       const a = bySubject.get(subject.id)
       const meaning = subject.data.meanings?.find(m => m.primary)?.meaning ?? ''
-      const base = { id: subject.id, characters: subject.data.characters, meaning }
+      const base = {
+        id: subject.id,
+        characters: subject.data.characters,
+        meaning,
+        system: subject.data.spaced_repetition_system_id
+      }
       if (!a) return { ...base, state: 'locked', stage: null, availableAt: null }
       if (a.passed_at) return { ...base, state: 'passed', stage: a.srs_stage, availableAt: a.available_at }
       if (!a.started_at) return { ...base, state: 'lesson', stage: 0, availableAt: null }
@@ -199,4 +205,72 @@ export function nextUp(kanji = [], now = new Date()) {
     ? waiting.filter(k => Date.parse(k.availableAt) <= now.getTime())
     : waiting.filter(k => Date.parse(k.availableAt) === first)
   return { at: due ? null : waiting[0].availableAt, kanji: group, oneStep: group.every(k => k.stage === 4) }
+}
+
+const UNIT_MS = {
+  milliseconds: 1,
+  seconds: 1000,
+  minutes: 60 * 1000,
+  hours: 60 * 60 * 1000,
+  days: DAY_MS,
+  weeks: 7 * DAY_MS
+}
+
+// WaniKani's SRS systems, from `/spaced_repetition_systems`, as what the
+// projection needs: for each system, the stage that passes and how long
+// each stage waits before its next review. Levels 1–2 run the accelerated
+// system, which is why this is read rather than written down.
+export function srsSystems(records = []) {
+  const systems = new Map()
+  for (const record of records) {
+    const d = record?.data
+    if (!d?.stages) continue
+    const waits = []
+    for (const stage of d.stages) {
+      waits[stage.position] =
+        typeof stage.interval === 'number' ? stage.interval * (UNIT_MS[stage.interval_unit] ?? 1000) : null
+    }
+    systems.set(record.id, { passing: d.passing_stage_position, waits })
+  }
+  return systems
+}
+
+const HOUR_MS = 60 * 60 * 1000
+const toHour = time => Math.floor(time / HOUR_MS) * HOUR_MS
+
+// When one kanji could pass at the soonest: every review answered right, at
+// the moment it comes up. Each right answer moves it one stage and it comes
+// back that stage's wait later, rounded down to the hour the way WaniKani
+// schedules. An item still in lessons starts now; a locked one cannot be
+// projected, because it waits on its radicals.
+function earliestPass(kanji, system, now) {
+  if (!system || kanji.state === 'passed' || kanji.state === 'locked') return null
+
+  let stage = kanji.state === 'lesson' ? 0 : kanji.stage
+  let time = kanji.state === 'lesson' ? now : Math.max(Date.parse(kanji.availableAt), now)
+  // Starting a lesson is the move to stage 1; after that, each review.
+  for (;;) {
+    stage += 1
+    if (stage >= system.passing) return time
+    const wait = system.waits[stage]
+    if (typeof wait !== 'number') return null
+    time = toHour(time + wait)
+  }
+}
+
+// The earliest this level could be over: the moment the `remaining`-th
+// soonest kanji passes, if every answer from here is right. A projection,
+// and the screen says so — one miss moves it by days.
+//
+// `waitsOnLocked` is set when there are not enough unlocked kanji left to
+// reach the threshold, so the level-up hangs on kanji whose radicals come
+// first. That has no honest time, so there is none.
+export function earliestLevelUp(kanji = [], systems = new Map(), remaining = 0, now = new Date()) {
+  if (remaining <= 0) return null
+  const passes = kanji
+    .map(k => earliestPass(k, systems.get(k.system), now.getTime()))
+    .filter(time => time !== null)
+    .sort((a, b) => a - b)
+  if (passes.length < remaining) return { at: null, waitsOnLocked: true }
+  return { at: new Date(passes[remaining - 1]), waitsOnLocked: false }
 }

@@ -5,9 +5,9 @@
 // no proxy in between. The token never leaves this device.
 //
 // Two rules the rest of the app depends on:
-//   1. We never compute SRS stages ourselves. POST /reviews reports how many
-//      times the user got the meaning and reading wrong; WaniKani decides
-//      what that does to the stage and when the item comes back.
+//   1. Everything here reads. kanigami is a dashboard and asks for a token
+//      with no permissions; there is no write call in this file, and adding
+//      one is a decision, not a feature.
 //   2. We only fetch subjects we are about to show. This client is
 //      online-only by design — there is no full-database sync.
 
@@ -39,16 +39,14 @@ async function throttle() {
   recent.push(now)
 }
 
-async function request(token, path, options = {}) {
+// A GET, always — there is no other kind of request in this app.
+async function request(token, path) {
   await throttle()
   const url = path.startsWith('http') ? path : BASE + path
   const response = await fetch(url, {
-    ...options,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Wanikani-Revision': REVISION,
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-      ...options.headers
+      'Wanikani-Revision': REVISION
     }
   })
 
@@ -61,15 +59,14 @@ async function request(token, path, options = {}) {
   if (response.status === 403) {
     throw new WaniKaniError(
       'WaniKani refused that. A free account reaches level 3; past it, content ' +
-        'needs a subscription. If you are subscribed, check the token has the ' +
-        'permission this needs.',
+        'needs a subscription.',
       403
     )
   }
   if (response.status === 429) {
     // Somebody else on this device is using the same token. Wait it out once.
     await new Promise(resolve => setTimeout(resolve, 10_000))
-    return request(token, path, options)
+    return request(token, path)
   }
   if (!response.ok) {
     throw new WaniKaniError(`WaniKani returned ${response.status}.`, response.status)
@@ -98,36 +95,8 @@ export function getSummary(token) {
   return request(token, '/summary').then(r => r.data)
 }
 
-// A subscription's level cap, as the query filter that enforces it. The API
-// keeps returning assignments above `max_level_granted` — a lapsed
-// subscription leaves years of them behind — and the write endpoints refuse
-// every one of them, so the docs put respecting the cap on the client. At
-// the full 60 there is nothing to filter; below it, `levels` names each
-// granted level and the server does the rest.
-export function grantedLevels(maxLevel) {
-  if (!Number.isInteger(maxLevel) || maxLevel >= 60) return ''
-  return '&levels=' + Array.from({ length: maxLevel }, (_, i) => i + 1).join(',')
-}
-
-// Both session reads say `hidden=false`: a retired subject is out of lessons
-// and reviews on WaniKani itself, and an assignment against one is a write
-// the API will not take.
-export function getAvailableReviews(token, maxLevel) {
-  return collection(
-    token,
-    `/assignments?immediately_available_for_review&hidden=false${grantedLevels(maxLevel)}`
-  )
-}
-
-export function getAvailableLessons(token, maxLevel) {
-  return collection(
-    token,
-    `/assignments?immediately_available_for_lessons&hidden=false${grantedLevels(maxLevel)}`
-  )
-}
-
-// Every assignment that has a stage on it, for the SRS spread. This is the
-// one paginated read in the app that is not about a session, so fetch it once
+// Every assignment that has a stage on it — the spread, the week, what was
+// taught. Paginated and the largest read the board makes, so fetch it once
 // on mount and never on a timer. Retired subjects stay out — WaniKani drops
 // them from its own counts, and an item that can never come back to review
 // is not part of anyone's standing.
@@ -175,6 +144,14 @@ export function getLevelProgressions(token) {
   return collection(token, '/level_progressions')
 }
 
+// WaniKani's SRS interval tables — two records, one page. The board runs
+// them forward to say when this level could be over at the soonest, which
+// is why they are read rather than copied into the app: WaniKani can change
+// them, and levels 1–2 use the accelerated one.
+export function getSpacedRepetitionSystems(token) {
+  return collection(token, '/spaced_repetition_systems')
+}
+
 // How much of WaniKani there is, by kind — the denominators of home's
 // learned line. `total_count` off one filtered page per kind, the same
 // trick getLevelKanjiSubjects once used; `hidden=false`, or the retired inflate a
@@ -207,40 +184,3 @@ export async function getSubjects(token, ids) {
   )
   return pages.flat()
 }
-
-// User synonyms and notes. The grader has to accept these as correct
-// meanings, so they are fetched alongside the subjects, never after.
-export async function getStudyMaterials(token, subjectIds) {
-  const pages = await Promise.all(
-    chunked(subjectIds).map(chunk =>
-      collection(token, `/study_materials?subject_ids=${chunk.join(',')}`)
-    )
-  )
-  return pages.flat()
-}
-
-// The write path, parked. kanigami is a read-only dashboard now and asks for
-// a token with no write permissions, so nothing may reach these endpoints.
-// Commented out rather than deleted: the review and lesson screens are still
-// in the tree, and bringing them back starts by uncommenting these and the
-// session block in App.jsx. See "The dashboard" in PLAN.md.
-//
-// export function submitReview(token, { assignmentId, incorrectMeaning, incorrectReading }) {
-//   return request(token, '/reviews', {
-//     method: 'POST',
-//     body: JSON.stringify({
-//       review: {
-//         assignment_id: assignmentId,
-//         incorrect_meaning_answers: incorrectMeaning,
-//         incorrect_reading_answers: incorrectReading
-//       }
-//     })
-//   }).then(r => r.data)
-// }
-//
-// export function startAssignment(token, assignmentId) {
-//   return request(token, `/assignments/${assignmentId}/start`, {
-//     method: 'PUT',
-//     body: JSON.stringify({ assignment: {} })
-//   }).then(r => r.data)
-// }

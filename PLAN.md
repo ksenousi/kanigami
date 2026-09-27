@@ -4,11 +4,11 @@ A handoff document. **Every phase is built and on `main`.**
 
 **kanigami is now a read-only dashboard.** The owner uses WaniKani's
 dashboard far more than practising here, so the app was cut down to one
-screen — 盤 the board — and the review and lesson screens were parked, not
-deleted. See **The dashboard** near the end. Everything below about reviews,
-lessons and the write path describes code that is still in the tree and
-still tested but is no longer reachable from the app. The two acceptances
-below are moot until practice comes back.
+screen — 盤 the board — and the review and lesson screens were removed. See
+**The dashboard** near the end. Everything below about reviews, lessons,
+the paper surface, the Japanese faces and the write path is **history**: the
+code is gone from the tree, and the last commit holding it is `03a7aa7`.
+The two acceptances below are moot.
 
 One acceptance is outstanding, and it is not code. Phase 5's write path has
 now been run live; **Phase 4's has not**, because it cannot be until
@@ -42,7 +42,11 @@ feature that caches or ships WaniKani content to anyone else.
 1. **Never compute SRS stages.** `POST /reviews` reports how many times the
    user got the meaning and the reading wrong. WaniKani decides the resulting
    stage and the next review time, and returns them. Read them from the
-   response; never derive them locally.
+   response; never derive them locally. *(Read-only now: the rule became
+   "read stages, never decide them". The board's one projection — the
+   earliest level-up — runs WaniKani's own `/spaced_repetition_systems`
+   table forward and says on screen that it assumes every answer is right.
+   See The dashboard.)*
 2. **Never bulk-sync the subject database.** Fetch only the subjects the
    current session is about to show, via `getSubjects(token, ids)`. A full
    sync is the offline feature we are not building.
@@ -454,10 +458,9 @@ Shipped, and why it is built the way it is:
 
 ## Safety — testing against a real account
 
-**Parked with the write path.** Nothing in the app writes now: both write
-calls are commented out in `wanikani.js`, and the token gate asks for no
-permissions. This section is what to follow if practice is ever brought
-back.
+**History.** Nothing in the app writes now: `wanikani.js` makes GETs only,
+and the token gate asks for no permissions. This section is what to follow
+if a write is ever brought back.
 
 There is no staging WaniKani. Every phase is tested against somebody's real
 SRS progress, so the write path is gated deliberately.
@@ -1131,18 +1134,18 @@ one revert away in history; what it cannot ever be is fetched.
 ## The dashboard — 盤 the board ✅ done
 
 **Files:** `src/components/Dashboard.jsx`, `src/lib/board.js`, the 盤 block
-at the end of `src/index.css`. `Home.jsx` is gone; `App.jsx` renders the
-token gate and then this, and nothing else.
+at the end of `src/index.css`. `App.jsx` renders the token gate and then
+this, and nothing else.
 
 **Why.** The owner opens WaniKani for its dashboard far more than to
-practise in this client. So the app became that dashboard, made deeper, and
-the practice screens were parked: commented out of `App.jsx`, with
-`submitReview` and `startAssignment` commented out of `wanikani.js`. Their
-components (`Review`, `Lesson`, `Wrap`) and libs (`session`, `grade`,
-`submit`, `queue`) stay in the tree with their tests, so bringing practice
-back is uncommenting two blocks and re-reading Safety. **The app needs a
-read-only token** — the gate now says "Permissions · none", and a token with
-no boxes checked makes WaniKani refuse any write whatever the client does.
+practise in this client. So the app became that dashboard, made deeper.
+The practice screens were first parked (commented out, in `03a7aa7`) and
+then removed with everything only they used — `Review`, `Lesson`, `Wrap`,
+the answer field, the faces and their webfonts, the grader and `wanakana`,
+the session engine, the submitter, the queue, the mnemonic parser, both
+writes, and the paper surface's CSS. **The app needs a read-only token** —
+the gate says "Permissions · none", and a token with no boxes checked makes
+WaniKani refuse any write whatever the client does.
 
 **Decided from a prototype.** Four directions went up on one canvas beside
 WaniKani's own dashboard, redrawn: **everything at once** (a headline row
@@ -1169,9 +1172,12 @@ the most data per inch) — and **the original was kept over all four.**
   lessons or locked `--dim` — and the mark beneath is the second: four pips
   lit in `--accent` to the apprentice stage, or one `--srs-guru` rule once
   passed. Each cell's `aria-label` says it in words. Under the grid:
-  `8 to level 16 · day 12`, and the soonest unpassed kanji with their time —
+  `8 to level 16 · day 12`; the soonest unpassed kanji with their time —
   `薬 皿 up at 21:00, one step from passing` when every one of them sits at
-  apprentice IV. That is WaniKani's stage read back, not a prediction.
+  apprentice IV, which is WaniKani's stage read back; and
+  `level 16 earliest thu 1 oct 04:00 · if every answer is right`, or
+  `level 16 waits on locked kanji` when not enough are unlocked to reach
+  the threshold.
   Beneath: **taught**, home's learned line reshaped into three rows on one
   shared grid (`1,242 vocabulary` ran into the next column side by side).
 - **Column two: the week.** Seven local days, each a hairline lit to its
@@ -1192,9 +1198,10 @@ the most data per inch) — and **the original was kept over all four.**
 **subjects** (all of them, not just `total_count` — the grid draws locked
 ones, and it is one page of exactly what is on screen, so no-bulk-sync
 stands), `/review_statistics?hidden=false`, `/level_progressions`, and the
-cached totals. Then `/subjects?ids=` for the five slipping items only. The
-first four fail together; statistics, progressions and totals are
-commentary and degrade to null, taking only their own section down.
+cached totals, and `/spaced_repetition_systems` for the projection. Then
+`/subjects?ids=` for the five slipping items only. The first four fail
+together; the rest are commentary and degrade to null, taking only their
+own line down.
 
 **Counted, never decided.** `board.js` reads WaniKani's `available_at`,
 `passed_at`, `burned_at` and `srs_stage` and sorts them; it computes no
@@ -1207,12 +1214,19 @@ reached twice keeps its later record. Accuracy is summed over answers, not
 averaged over subjects, and is null — never 100% — for a side nobody has
 answered.
 
-Left out on purpose: **the earliest level-up time** that time-leads drew.
-Getting it means running WaniKani's interval table forward from each
-kanji's stage, which is computing stages by another name. If it is ever
-wanted, it needs a decision against Ground rule 1, not a quiet addition.
+**The earliest level-up is a projection, and the one place the board looks
+forward.** It was first left out as "computing stages", then added on the
+owner's say-so once the app was read-only: that rule protected the write
+path, and a wrong guess on a read-only screen corrupts nothing. What keeps
+it honest: the intervals come from `/spaced_repetition_systems`, never a
+table in this code, so the accelerated system for levels 1–2 and any
+change WaniKani makes are both picked up; each review is rounded down to
+the hour, the way WaniKani schedules; an item still in lessons starts now;
+a locked one is not projected at all; and the line says `if every answer
+is right` every time it appears. The level-up is the moment the
+`remaining`-th soonest kanji would pass.
 
-**Shipped:** 14 vitest cases on `board.js`, and the screen driven at
+**Shipped:** 21 vitest cases on `board.js`, and the screen driven at
 1440×900 against a stubbed API, checking that every request was a GET.
 
 ---

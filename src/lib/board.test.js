@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { MIN_MISSES, accuracy, leeches, levelKanji, moved, nextUp, pace, week } from './board.js'
+import {
+  MIN_MISSES,
+  accuracy,
+  earliestLevelUp,
+  leeches,
+  levelKanji,
+  moved,
+  nextUp,
+  pace,
+  srsSystems,
+  week
+} from './board.js'
 
 // Hand-authored, smallest-possible shapes. Fake ids and dates throughout.
 const NOW = new Date(2026, 0, 14, 19, 40) // local time, a Wednesday evening
@@ -158,5 +169,67 @@ describe('levelKanji and nextUp', () => {
     expect(up.at).toBeNull()
     expect(up.kanji).toHaveLength(2)
     expect(up.oneStep).toBe(true)
+  })
+})
+
+describe('earliestLevelUp', () => {
+  // WaniKani's two systems as /spaced_repetition_systems serves them, in
+  // seconds: 4h 8h 23h 47h to guru, and the accelerated 2h 4h 8h 23h.
+  const system = (id, waits) => ({
+    id,
+    data: {
+      passing_stage_position: 5,
+      stages: [null, ...waits, 601200, 1206000, 2588400, 10364400, null].map((interval, position) => ({
+        position,
+        interval,
+        interval_unit: 'seconds'
+      }))
+    }
+  })
+  const systems = srsSystems([system(1, [14400, 28800, 82800, 169200]), system(2, [7200, 14400, 28800, 82800])])
+  const H = 3600000
+  const at = hoursFromNow => new Date(NOW.getTime() + hoursFromNow * H)
+  const kanji = (state, stage, availableAt, sys = 1) => ({ state, stage, availableAt: availableAt?.toISOString() ?? null, system: sys })
+
+  it('reads the waits off the system in milliseconds', () => {
+    expect(systems.get(1).waits.slice(1, 5)).toEqual([4, 8, 23, 47].map(h => h * H))
+    expect(systems.get(1).passing).toBe(5)
+  })
+
+  it('passes an apprentice IV item at its next review', () => {
+    const up = earliestLevelUp([kanji('apprentice', 4, at(2))], systems, 1, NOW)
+    expect(up.at.getTime()).toBe(at(2).getTime())
+  })
+
+  it('walks the remaining stages, rounding each review down to the hour', () => {
+    // stage 3, up in 2h: right → IV, back 47h later on the hour → guru
+    const up = earliestLevelUp([kanji('apprentice', 3, at(2))], systems, 1, NOW)
+    const expected = Math.floor((at(2).getTime() + 47 * H) / H) * H
+    expect(up.at.getTime()).toBe(expected)
+  })
+
+  it('starts an item still in lessons now, and uses the accelerated system where it applies', () => {
+    const normal = earliestLevelUp([kanji('lesson', 0, null, 1)], systems, 1, NOW)
+    const fast = earliestLevelUp([kanji('lesson', 0, null, 2)], systems, 1, NOW)
+    expect(fast.at < normal.at).toBe(true)
+  })
+
+  it('is the moment the remaining-th soonest kanji passes', () => {
+    const up = earliestLevelUp(
+      [kanji('apprentice', 4, at(30)), kanji('apprentice', 4, at(1)), kanji('apprentice', 4, at(9))],
+      systems,
+      2,
+      NOW
+    )
+    expect(up.at.getTime()).toBe(at(9).getTime())
+  })
+
+  it('has no time when the level-up waits on locked kanji', () => {
+    const up = earliestLevelUp([kanji('apprentice', 4, at(1)), kanji('locked', null, null)], systems, 2, NOW)
+    expect(up).toEqual({ at: null, waitsOnLocked: true })
+  })
+
+  it('has nothing to project once the threshold is met', () => {
+    expect(earliestLevelUp([], systems, 0, NOW)).toBeNull()
   })
 })

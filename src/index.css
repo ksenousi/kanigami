@@ -1,5 +1,5 @@
 /* ============================================================
-   kanigami — 墨 ink for reviews, 紙 paper for lessons.
+   kanigami — 盤 the board, on the 墨 ink surface.
 
    Three layers, and they only work if the order is respected:
 
@@ -9,22 +9,14 @@
       --text, --dim, --rule, --accent. **Components read roles
       and never the palette.** A rule that reaches past this
       layer for --vermilion is a rule that a theme cannot move.
-   3. SURFACES — .surface-ink and .surface-paper bind palette to
-      roles for their subtree. :root binds ink, because ink is
-      what the app opens into.
-
-   The two surfaces are committed worlds, not a light/dark pair:
-   paper has a night stock, not a dark mode. Themes sit
-   underneath both — a theme restyles ink *and* paper.
-
-   One more role than the surfaces started with: --ok, what a
-   right answer lights. Vermilion used to fire on every answer
-   and so said nothing; now --accent means wrong and --ok means
-   right, and the difference is a hue you catch without reading.
+   3. SURFACES — .surface-ink binds palette to roles for its
+      subtree, and :root binds it too, because ink is the app.
+      Paper, the lesson surface, went with the lessons; git has
+      it if a second surface is ever wanted.
 
    WaniKani's subject colours are information, not decoration —
-   radical blue, kanji pink, vocabulary purple. They survive in
-   both worlds as a line of type, never as a field of colour, and
+   radical blue, kanji pink, vocabulary purple. They appear as a
+   line of type, never as a field of colour, and
    they are deliberately outside the palette layer: they mean the
    same thing whatever the theme is.
    ============================================================ */
@@ -32,7 +24,6 @@
 /* ---- 1. palette — 墨 sumi, the default ---- */
 :root {
   --ink: #100e0c;
-  --ink-raised: #17140f;
   --ink-line: #2a2620;
   --ink-text: #e6dfd0;
   --ink-strong: #f2ece0; /* display type — the glyph, the standing figures */
@@ -42,34 +33,18 @@
      3.21:1 on the ink and fails AA at the label size. Raising --label from
      9.5px to 13px fixed how big these were and never touched how bright.
      4.63:1 clears AA, stays a long way under --ink-soft's 11.37:1, and keeps
-     the brown bias that separates ink from paper. */
+     the ink's brown bias. */
   --ink-dim: #857b6b;
   /* 朱 vermilion. Lifted from #c8452c, which was 3.98:1 — fine on the 50px
      figures and the wrong-answer rule, under AA everywhere it carries 13–16px
      type, and that includes the retry nudge and the warning that the next
-     answer writes for real. Same hue to a tenth of a degree, so the 42° of
-     separation from --karashi that the meaning/reading split rests on is
-     untouched; only the lightness moved. 4.68:1. */
+     answer writes for real. Same hue to a tenth of a degree; only the
+     lightness moved. 4.68:1. */
   --vermilion: #d4533a;
-  /* 青磁 celadon — what a right answer lights. The traditional foil to
-     vermilion, and desaturated enough never to read as a success badge. The
-     two verdicts sharing one accent is what made a miss easy to miss. */
-  --celadon: #7fa693;
   /* WaniKani's radical stroke images are black on transparent, so they need
      turning inside out to sit on a dark ground. It belongs with the palette
      because a light theme would set it to none. */
   --ink-strokes: invert(1);
-
-  /* 藍 indigo — paper's night stock. A blue-black against ink's brown-black,
-     which is what keeps the two surfaces apart now that both are dark. */
-  --paper: #11141b;
-  --paper-line: #252c3a;
-  --paper-text: #dfe3ec;
-  --paper-strong: #f0f3fa; /* display type — the character, the gloss */
-  --paper-soft: #aeb5c4;   /* running prose, set back from the body text */
-  --paper-dim: #767f90;  /* 4.57:1, to agree with ink's dim rather than sit a step brighter */
-  --seal: #d4593c;         /* lifted from #9e3b26 to carry on a dark ground */
-  --paper-strokes: invert(1);
 
   /* Not themeable. These are WaniKani's, and they carry meaning. */
   --wk-radical: #00aaff;
@@ -79,8 +54,7 @@
   /* The SRS spread. Themeable, unlike WaniKani's colours, because these are
      ours — a walk away from the accent as items get further from needing
      attention: hot, warm, cool, cooler, and finally the colour draining out.
-     They have no per-surface role because they mean the same on both; a
-     theme moves them here. Apprentice is not in this list — it takes
+     A theme moves them here. Apprentice is not in this list — it takes
      --accent, which already says what it needs to.
 
      These label the counts as well as drawing the bar, so each one has to be
@@ -90,18 +64,6 @@
   --srs-master: #4f6b78;
   --srs-enlightened: #5a5f7a;
   --srs-burned: #8b8275;
-
-  /* What is being asked. Warm for the meaning, cool for the reading — the two
-     questions are otherwise the same screen, and hue is the difference you
-     catch without reading. Used directly rather than through a role, like the
-     SRS colours, because they mean the same on both surfaces.
-
-     芥子 karashi is 42° of hue from the vermilion, which matters: a wrong
-     verdict puts the two on screen together, and the obvious gold was only
-     29° away. 縹 hanada is 164° from it and sits opposite. Both clear 4.5:1
-     on the ink ground with room to spare. */
-  --karashi: #c9bb62; /* meaning */
-  --hanada: #6f9fc4;  /* reading */
 
   /* ---- type scale ----
      Not part of the palette and not themeable: this is how big the app is,
@@ -136,19 +98,13 @@
      left every display size where it was, flattening the hierarchy in the
      exact way the note warns about. Two near-duplicates (24px beside 23px)
      collapsed into one step on the way in. */
-  --display: 31px;    /* the wordmark, an accepted answer, a missed glyph */
-  --display-lg: 39px; /* a door */
+  --display: 31px;    /* the wordmark, a slipping character */
+  --display-lg: 39px; /* the level's kanji */
   --figure: 62px;     /* the standing figures */
 
-  /* Fluid, so they are sizes rather than steps — they answer to the
-     viewport, and the character is the interface on both surfaces.
-     The two characters are the one part of the scale the raise above left
-     alone: they are already viewport-bound and were never the thing that
-     was too small. Widening the gap to the type below them was the point,
-     and pushing 20vw higher only crowds a narrow screen. */
-  --glyph: clamp(96px, 20vw, 168px); /* the review glyph */
-  --face: clamp(84px, 14vw, 150px);  /* the lesson character */
-  --gloss: clamp(36px, 4.6vw, 50px); /* what it means, on paper */
+  /* Fluid, so it is a size rather than a step — the one character on the
+     token gate answers to the viewport. */
+  --glyph: clamp(96px, 20vw, 168px);
 
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
   --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -161,23 +117,16 @@
 /* A second theme is this shape and no more than this shape:
 
    [data-theme='<name>'] {
-     --ink: …; --ink-raised: …; --ink-line: …; --ink-text: …;
+     --ink: …; --ink-line: …; --ink-text: …;
      --ink-strong: …; --ink-soft: …; --ink-dim: …; --vermilion: …;
-     --celadon: …; --ink-strokes: …;
-     --paper: …; --paper-line: …; --paper-text: …; --paper-strong: …;
-     --paper-soft: …; --paper-dim: …; --seal: …; --paper-strokes: …;
+     --ink-strokes: …;
      --srs-guru: …; --srs-master: …; --srs-enlightened: …; --srs-burned: …;
-     --karashi: …; --hanada: …;
    }
 
-   Both surfaces are dark now — ink is a warm brown-black and paper a blue-
-   black night stock — but they are still committed worlds rather than a
-   light/dark pair. A theme restyles both.
-
-   A theme with a *light* ground has one trap: it must set --ink-strokes and
-   --paper-strokes to none. They are invert(1) here because radical stroke
-   images arrive black and both grounds are dark; leave them inverted on a
-   light ground and those radicals turn white on white and disappear.
+   A theme with a *light* ground has one trap: it must set --ink-strokes
+   to none. It is invert(1) here because radical stroke images arrive black
+   and the ground is dark; leave it inverted on a light ground and those
+   radicals turn white on white and disappear.
 
    Set it on <html> and every surface follows. If a theme needs a
    rule changed rather than a colour, the rule is reaching past
@@ -188,48 +137,22 @@
 :root,
 .surface-ink {
   --ground: var(--ink);
-  --raised: var(--ink-raised);
   --rule: var(--ink-line);
   --text: var(--ink-text);
   --text-strong: var(--ink-strong);
   --text-soft: var(--ink-soft);
   --dim: var(--ink-dim);
   --accent: var(--vermilion);
-  --ok: var(--celadon);
   --strokes: var(--ink-strokes);
 
-  /* WaniKani's colours, carried the same distance toward the surface's own
-     text on both surfaces. Bare on the ink, kanji #ff00aa out-read the word
-     it was labelling — a saturated magenta beats a desaturated blue at any
-     size, so the 13px subject type was louder than the 19px question — while
-     vocabulary #aa00ff sat at 3.81:1 and was the least legible thing on the
-     line. Paper had been mixing them at 62% since it was built; ink was not,
-     which is the two surfaces disagreeing about the same information.
+  /* WaniKani's colours, carried 38% of the way toward the text. Bare on
+     the ink, kanji #ff00aa out-shouts the word it labels while vocabulary
+     #aa00ff sits at 3.81:1 and is the least legible thing on the line.
      Mixing toward the text does both jobs at once: it drains the shout out
-     of the pink and lifts the purple to 5.30:1. Bound per surface rather
-     than at :root, because --text means different things here and there. */
+     of the pink and lifts the purple to 5.30:1. */
   --subject-radical: color-mix(in srgb, var(--wk-radical) 62%, var(--text));
   --subject-kanji: color-mix(in srgb, var(--wk-kanji) 62%, var(--text));
   --subject-vocabulary: color-mix(in srgb, var(--wk-vocab) 62%, var(--text));
-}
-
-.surface-paper {
-  --ground: var(--paper);
-  --raised: var(--paper);
-  --rule: var(--paper-line);
-  --text: var(--paper-text);
-  --text-strong: var(--paper-strong);
-  --text-soft: var(--paper-soft);
-  --dim: var(--paper-dim);
-  --accent: var(--seal);
-  --ok: var(--celadon);
-  --strokes: var(--paper-strokes);
-
-  --subject-radical: color-mix(in srgb, var(--wk-radical) 62%, var(--text));
-  --subject-kanji: color-mix(in srgb, var(--wk-kanji) 62%, var(--text));
-  --subject-vocabulary: color-mix(in srgb, var(--wk-vocab) 62%, var(--text));
-
-  color-scheme: dark;
 }
 
 * {
@@ -251,7 +174,7 @@ body {
    costs legibility for a fashion. The default rendering leaves the type
    with the weight the face actually has. */
 
-/* The ink surface. Reviews live here. */
+/* The ink surface. */
 .surface-ink {
   min-height: 100dvh;
   display: flex;
@@ -312,271 +235,6 @@ body {
   height: 0.78em;
   width: auto;
   filter: var(--strokes);
-}
-
-/* What is being asked, and of what. This one line is where WaniKani's
-   subject colours live — never as a field of colour behind anything. */
-/* The pieces are set apart on purpose. `meaning` and `reading` are the whole
-   difference between two otherwise identical screens, so the asked thing is
-   the loud one; the subject type and the which-one hint stay quiet beside it
-   in the subject's colour. Gaps rather than · separators, the same as the SRS
-   counts, so a wrap never strands a dot. */
-.question {
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4px 12px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.question .asked {
-  font-size: var(--input);
-  letter-spacing: 0.2em;
-  color: var(--text-strong);
-}
-
-/* The subject colour paints the whole line, so `any of 4` was arriving in
-   kanji-pink — a colour that means "this is a kanji" attached to a phrase
-   that says nothing about the subject type. The hint answers *which*, and
-   belongs in the quiet register with the rest of the scaffolding. */
-.question .hint {
-  color: var(--dim);
-}
-
-.question .asked.meaning {
-  color: var(--karashi);
-}
-
-.question .asked.reading {
-  color: var(--hanada);
-}
-
-.question.wk-radical {
-  color: var(--subject-radical);
-}
-
-.question.wk-kanji {
-  color: var(--subject-kanji);
-}
-
-.question.wk-vocabulary {
-  color: var(--subject-vocabulary);
-}
-
-/* Held open so the glyph does not jump when a verdict arrives — which means
-   reserving the *tallest* verdict, not the shortest. At 58px it reserved the
-   bare eyebrow and the glyph still rose 19px on every correct answer, since
-   a completed item adds the accepted answer and the movement line under it.
-   100px was the correct-with-movement case measured.
-
-   It is a measurement, so it is a dependency of the type scale: raising the
-   scale by a third left it reserving 100px for a block that now wants 123,
-   and the jump came straight back. Re-measured at the current sizes —
-   eyebrow 28 + answer 51 + movement 28, two 8px gaps. Move it whenever the
-   scale moves. */
-.judgement {
-  min-height: 124px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.judgement p {
-  margin: 0;
-}
-
-/* The accepted answer, and on a miss it used to wear the accent — which put
-   the answer at 3.98:1 next to what you wrongly typed at 14.52:1, making the
-   wrong word the brightest thing on screen and the right one the dimmest.
-   The accent already carries the rule and the verdict line in that state;
-   this was its third job and the wrong one. The hue split is untouched. */
-.answers {
-  font-family: var(--jp-serif);
-  font-size: var(--display);
-  color: var(--text-strong);
-}
-
-/* The serif is for the Japanese. An English meaning set in mincho was the
-   only Latin serif anywhere in the app, and it appeared in the state that
-   most wants plain reading — paper's .gloss has always set the same words in
-   the sans, so the two surfaces were disagreeing about this too. */
-.answers.latin {
-  font-family: var(--sans);
-  letter-spacing: 0.01em;
-}
-
-.answers.ok {
-  color: var(--ok);
-}
-
-/* The glyph's halo follows the verdict too — the largest thing on screen,
-   changing by a hue rather than by a flash. */
-.centred.ok .glyph {
-  text-shadow: 0 0 60px rgb(from var(--ok) r g b / 0.16);
-}
-
-/* What WaniKani said the item did. One dim line, never a badge. */
-.movement {
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-/* Two ways in, side by side. */
-.ways {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-/* The items that were missed — the useful part of a session, so they get the
-   room. One line each, no ranking, no score. */
-.missed {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: min(420px, 100%);
-}
-
-.missed ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.missed li {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  padding: 9px 2px;
-  border-top: 1px solid var(--rule);
-}
-
-.missed li:last-child {
-  border-bottom: 1px solid var(--rule);
-}
-
-.missed .ch {
-  font-family: var(--jp-serif);
-  font-size: var(--display);
-  color: var(--text-strong);
-  min-width: 2.2em;
-}
-
-.missed .ch.wk-radical {
-  color: var(--subject-radical);
-}
-
-.missed .ch.wk-kanji {
-  color: var(--subject-kanji);
-}
-
-.missed .ch.wk-vocabulary {
-  color: var(--subject-vocabulary);
-}
-
-/* The session's own tally, in the spread's grammar. Right and wrong keep the
-   colours they wore all session. */
-.tally .segment.right {
-  background: var(--ok);
-}
-
-.tally .segment.wrong {
-  background: var(--accent);
-}
-
-.counts .right {
-  color: var(--ok);
-}
-
-.counts .wrong {
-  color: var(--accent);
-}
-
-.missed .gl {
-  flex: 1;
-  font-size: var(--small);
-  color: var(--text-soft);
-  text-align: left;
-}
-
-.missed .n {
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.16em;
-  color: var(--accent);
-}
-
-/* ---- 家 Home ---- */
-
-/* How far off the next level is, and the position it comes from. Two pieces
-   laid out with a gap rather than written with a · separator, for the reason
-   .learned and .counts already are: a wrapped separator strands a dot at the
-   end of a line. The gap is wider than theirs because nothing else separates
-   these two — .learned has the subject colours doing it. */
-.passed {
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px 26px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-/* The answer to the question the line exists to answer, one step forward of
-   the figure behind it. No hue: the accent belongs to reviews due, and this
-   is a standing figure rather than something to act on. */
-.passed .to {
-  color: var(--text-soft);
-}
-
-/* Everything taught so far. The subject colours label it, which is the one
-   job they have — never a field of colour, only a line of type.
-
-   Laid out with gaps for the same reason .counts is, and it was written with
-   · separators anyway: three counts wrap on a narrow screen, and a wrapped
-   separator leaves a dot hanging at the end of a line. */
-.learned {
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px 16px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.learned .wk-radical {
-  color: var(--subject-radical);
-}
-
-.learned .wk-kanji {
-  color: var(--subject-kanji);
-}
-
-.learned .wk-vocabulary {
-  color: var(--subject-vocabulary);
 }
 
 /* Each kind against how much of it WaniKani has — the house hairline lit to
@@ -640,59 +298,6 @@ body {
 
 .fills .of {
   color: var(--dim);
-}
-
-/* Position through the sixty levels. Notches rather than a fill, because
-   levels are countable steps and the walked ones are the lit ones — grouped
-   into the six decades WaniKani names, a wider gap between decades than
-   between levels, each wearing its kanji beneath. The current decade's
-   kanji takes the answer register; the rest stay quiet. */
-.ruler {
-  width: min(620px, 100%);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ruler .stages {
-  display: flex;
-  gap: 10px;
-}
-
-.ruler .stage {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.ruler .notches {
-  display: flex;
-  gap: 2px;
-  height: 2px;
-}
-
-.ruler .notch {
-  flex: 1;
-  height: 100%;
-  border-radius: 1px;
-  background: var(--rule);
-}
-
-.ruler .notch.lit {
-  background: var(--text-soft);
-}
-
-.ruler .name {
-  font-family: var(--jp-sans);
-  font-size: var(--label);
-  line-height: 1;
-  text-align: center;
-  color: var(--dim);
-}
-
-.ruler .stage.current .name {
-  color: var(--text-soft);
 }
 
 /* The SRS spread: one segmented hairline, and the counts beneath it as one
@@ -771,71 +376,6 @@ body {
   color: var(--srs-burned);
 }
 
-/* Two doors. Type over a hairline that lights — the house pattern, not a
-   button with a border round it. */
-.doors {
-  display: flex;
-  gap: clamp(28px, 6vw, 64px);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.door {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  padding: 4px 6px;
-  text-transform: none;
-  letter-spacing: normal;
-}
-
-.door .name {
-  font-family: var(--jp-serif);
-  font-size: var(--display-lg);
-  letter-spacing: 0.04em;
-  color: var(--text-strong);
-  transition: color 0.15s;
-}
-
-.door .rule {
-  width: 100%;
-  min-width: 92px;
-  height: 1px;
-  background: var(--rule);
-  transition: background 0.15s;
-}
-
-.door .key {
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.19em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.door:hover:not(:disabled),
-.door:focus-visible {
-  border-color: transparent;
-}
-
-.door:hover:not(:disabled) .name,
-.door:focus-visible .name {
-  color: var(--accent);
-}
-
-.door:hover:not(:disabled) .rule,
-.door:focus-visible .rule {
-  background: var(--accent);
-}
-
-.door.off {
-  opacity: 0.35;
-}
-
 /* The footline track, carrying the next 24 hours. Empty hours are 1px — the
    baseline itself, not a gap in it. */
 /* Fixed width, because this line changes as you move along the track and a
@@ -902,108 +442,6 @@ body {
   background: var(--text-soft);
 }
 
-/* The write path's switch, on the way into a session. */
-.dryrun {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  max-width: 48ch;
-}
-
-/* At --small in --text-soft this paragraph was the loudest text on the home
-   screen — 11.37:1 sans against the 4.63:1 mono everything else is set in —
-   so the eye landed on a note about a developer safety switch before it
-   landed on the review count or either door. It is scaffolding; the control
-   above it is the thing worth reading. */
-.dryrun .why {
-  margin: 0;
-  font-size: var(--label);
-  line-height: 1.7;
-  color: var(--dim);
-  text-align: center;
-}
-
-.dryrun button.quiet {
-  color: var(--text);
-}
-
-/* Demoting the note above does not demote this one. Dry run on is the safe,
-   boring state and its explanation is scaffolding; dry run off means the next
-   answer writes to somebody's real SRS history with no undo, and that stays
-   at reading size. It is set in --text-strong rather than the accent because
-   vermilion is 3.98:1 and this is the one warning that has to be read rather
-   than noticed; the accent is on the control that turned it on. */
-.dryrun .why.hot {
-  font-size: var(--small);
-  color: var(--text-strong);
-}
-
-.dryrun.live button.quiet {
-  color: var(--accent);
-}
-
-/* The typefaces did not arrive.
-   A line of type over a hairline, which is this app's banner — never a
-   bordered box, and never dismissable, because it states what the app can
-   currently do rather than announcing news. */
-.banner {
-  align-self: stretch;
-  max-width: 62ch;
-  margin: 0 auto;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--accent);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.banner .why {
-  margin: 0;
-  font-size: var(--small);
-  line-height: 1.7;
-  color: var(--text-soft);
-  text-align: center;
-}
-
-/* The lesson's collection: one character, every face, side by side. What is
-   the same across all four is the character; what differs is the typeface
-   having an opinion. The review must never show this — comparison is a
-   giveaway when the character is the question. */
-.collection {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px 26px;
-  align-items: flex-end;
-}
-
-.collection figure {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
-
-.collection .ch {
-  font-size: var(--display-lg);
-  line-height: 1.15;
-  color: var(--text-strong);
-}
-
-.collection figcaption {
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.12em;
-  color: var(--dim);
-}
-
-/* A session that is really writing says so for its whole length. */
-.footline .live {
-  color: var(--accent);
-}
-
 .eyebrow {
   margin: 0;
   font-family: var(--mono);
@@ -1015,10 +453,6 @@ body {
 
 .eyebrow.hot {
   color: var(--accent);
-}
-
-.eyebrow.ok {
-  color: var(--ok);
 }
 
 .lede {
@@ -1045,29 +479,6 @@ body {
 
 .perms p {
   margin: 0;
-}
-
-/* The two scopes that do something sit forward; the three that do not stay
-   back. A flat list of five read as "tick them all", which is the opposite
-   of what it should say. */
-.perms .scopes {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.06em;
-  line-height: 2;
-  color: var(--text-soft);
-}
-
-.perms .scopes b {
-  font-weight: 400;
-  color: var(--accent);
-}
-
-.perms .scopes.off {
-  color: var(--dim);
 }
 
 .perms .why {
@@ -1144,89 +555,13 @@ body {
   opacity: 1;
 }
 
-/* The answer field is as wide as the answer. Fixed at the token gate's 41ch
-   it was wrong in both directions: half a line of nothing behind 「みず」,
-   and for a real vocabulary meaning — `elementary school student` — the
-   beginning of what you had typed scrolled off its own left edge, so the
-   field showed `ntary school student` and the word you were being graded on
-   was the one you could not see. The floor keeps an empty field a target,
-   the ceiling hands overflow back to the input's own scrolling once the
-   answer is wider than the column.
-
-   The measuring is a hidden copy of the text in the same grid cell as the
-   input, not a character count: `ch` is one advance of the mono zero and
-   knows nothing about かな being twice that, and the 0.06em of tracking is
-   outside it either way. The copy carries the same font and the same
-   tracking, so it is right for both scripts by construction rather than by
-   arithmetic that has to be revisited every time the scale moves. */
-.field.review {
-  width: fit-content;
-  min-width: 12ch;
-  max-width: 100%;
-}
-
-/* `clip` and not `hidden`: once an answer is past the ceiling the hidden copy
-   is wider than the cell, and an unclipped overflow — invisible or not — is
-   still part of the page's scrollable area, which put a horizontal scrollbar
-   under a centred one-screen review. `clip` takes the overflow away without
-   making this a scroll container of its own; the input keeps its own
-   scrolling, which is what should carry a long answer. */
-.field.review .grow {
-  display: grid;
-  max-width: 100%;
-  overflow: clip;
-}
-
-/* Same cell, same metrics. Any change to one of these has to be a change to
-   both or the field stops fitting what it holds. */
-.field.review .grow input,
-.field.review .grow::after {
-  grid-area: 1 / 1;
-  min-width: 0;
-  padding: 6px 2px;
-  font-family: var(--mono);
-  font-size: var(--input);
-  letter-spacing: 0.06em;
-  text-align: center;
-}
-
-.field.review .grow::after {
-  content: attr(data-value);
-  white-space: pre;
-  visibility: hidden;
-}
-
-/* Reviews keep focus in the field from the first question to the last, so a
-   rule that lit on focus would never once be dark. Here it answers the
-   question instead — and it answers *which* question, because the two
-   verdicts do not share a colour. Vermilion means wrong; celadon means
-   right. */
-.field.review:focus-within .rule::after {
-  opacity: 0;
-}
-
-.field.review .rule.lit::after {
-  opacity: 1;
-}
-
-.field.review .rule.ok::after {
-  background: linear-gradient(90deg, transparent, var(--ok) 12%, var(--ok) 88%, transparent);
-}
-
-/* Offline. The field is read-only either way, but only this reason for it
-   needs saying — after a verdict the field is meant to sit there holding
-   what you typed, while offline it is quietly refusing keys. */
-.field.review.paused {
-  opacity: 0.45;
-}
-
 /* De-boxed, like everything else. Connect, Next and Quiz were rounded
    rectangles with a border all the way round, sitting a few hundred pixels
-   from doors that are a word over a hairline — so the app was arguing both
+   from doors that were a word over a hairline — so the app was arguing both
    sides of its own thesis, and the boxed version was winning on the screens a
    first-time user sees first. The hairline is the affordance: it sits under
    the word at rest and takes the accent on hover, which is the same sentence
-   the field and the doors already say. */
+   the field already says. */
 button {
   font-family: var(--mono);
   font-size: var(--control);
@@ -1333,406 +668,12 @@ button.quiet:hover:not(:disabled) {
   background: var(--rule);
 }
 
-/* The lit part of the track — the review's progress, drawn on the rule that
-   was already there rather than as a bar added beside it. Dim on --rule is
-   the same one-step lift the forecast's hours use, which is as loud as a
-   1px line needs to be to read as filled.
-
-   The transition is what makes it a fill rather than a jump, and it is
-   deliberately slower than the rest of the screen: an item finishing is not
-   the event here, and a hairline snapping forward in the corner while you
-   are reading a verdict is a second thing moving. */
-.footline .track i {
-  display: block;
-  height: 100%;
-  background: var(--dim);
-  transition: width 400ms ease-out;
-}
-
-/* ============================================================
-   紙 Paper — the lesson surface.
-
-   Lessons are reading material, so this is typeset rather than
-   laid out: a book spread with a running head and a folio,
-   mincho throughout, seal red where ink uses vermilion.
-   ============================================================ */
-
-/* The page is a place — decided from a prototype of four directions against
-   the fold. It is pinned to the window: running head, character, sentences'
-   ground, and folio never move, and the prose alone flows inside `.flows`
-   below. A kanji carrying two full mnemonics wants ~1,390px of a window
-   that has ~880, and no rearrangement closes that — two prose columns
-   measured 192px past the fold, leading 1.7 still 434 — so what moves is
-   the reading matter, never the page. */
-.surface-paper {
-  height: 100dvh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 26px clamp(20px, 5vw, 56px) 22px;
-  gap: clamp(20px, 4vh, 40px);
-  font-family: var(--jp-serif);
-  background: var(--ground);
-  color: var(--text);
-}
-
-.runninghead,
-.folio {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.runninghead .sp,
-.folio .sp {
-  flex: 1;
-}
-
-.spread {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
-  /* One explicit row the height of the spread, so the pages' 100% has a
-     definite figure to resolve against in every engine. */
-  grid-template-rows: minmax(0, 1fr);
-  gap: clamp(28px, 5vw, 72px);
-  align-items: start;
-}
-
-.verso {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  /* The gutter of the spread, and the only rule between the two pages. */
-  border-right: 1px solid var(--rule);
-  padding-right: clamp(20px, 4vw, 56px);
-  height: 100%;
-  min-height: 0;
-  /* Both pages start at the top, the way a spread does. Centring the verso
-     floats the character halfway down whenever the recto is short — which a
-     radical with one mnemonic and no sentences always is. */
-  justify-content: flex-start;
-  padding-top: 6px;
-}
-
-.face {
-  font-size: var(--face);
-  line-height: 1.1;
-  font-weight: 400;
-  color: var(--text-strong);
-  text-align: center;
-}
-
-.face img {
-  display: block;
-  height: 0.72em;
-  width: auto;
-  filter: var(--strokes);
-}
-
-/* Ruby at display size, without moving it.
-   A transform was tried here and is the wrong tool: it shifts the ruby by a
-   fixed amount whatever the reading is, so a reading longer than the word it
-   sits over lands on top of the glyph. しつぼう over 失望 is that case.
-   Setting the base's line-height closes the gap for every ratio instead. */
-.face ruby {
-  line-height: 1;
-  ruby-position: over;
-  ruby-align: center;
-}
-
-.face rt {
-  font-size: 0.2em;
-  font-family: var(--jp-sans);
-  line-height: 1.5;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-}
-
-.verso .stat {
-  margin: 0;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.recto {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  /* The cap is written in ch so it follows the scale — but ch resolves
-     against this element's own font-size, and without one of its own the
-     recto measured it at the inherited 16px, a size nothing on this page is
-     set in. Every child names its own step, so the only thing 16px was
-     deciding was this cap: 433px, on a page whose prose wants 42ch of
-     --body ≈ 590. The gloss wrapped, the mnemonics ran nine characters
-     narrow, and the fold arrived 138px early beside an empty right margin.
-     The third measurement the scale raise was silently holding up —
-     .judgement's reserved height and the token field were the two it
-     caught. */
-  font-size: var(--body);
-  max-width: 46ch;
-  height: 100%;
-  min-height: 0;
-}
-
-/* A flowing region and its fold. The scroller is inside a positioned
-   wrapper because an absolutely positioned fold inside the scroller itself
-   would ride away with the content — the classic reason the rule hangs off
-   the wrapper. The fold takes no column height: a page that fits must
-   render exactly as if none of this existed. */
-.flows {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
-}
-
-.flow {
-  height: 100%;
-  overflow-y: auto;
-  scroll-behavior: smooth;
-  /* No scrollbar. The lit rule below is the affordance — a bar beside the
-     prose would be the boxed version of the same sentence. */
-  scrollbar-width: none;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.flow::-webkit-scrollbar {
-  display: none;
-}
-
-/* The fold, in the house grammar: a hairline that lights. Lit --accent with
-   `more ↓` while prose remains below the window; back to --rule once the end
-   is reached; not drawn at all when the page fits. It hangs just under the
-   region, into the gap above the folio, and takes no pointer. */
-.fold {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -6px;
-  transform: translateY(100%);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 5px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-  color: var(--dim);
-  pointer-events: none;
-}
-
-.fold .rule {
-  width: 100%;
-  height: 1px;
-  background: var(--rule);
-  transition: background 0.18s ease;
-}
-
-.fold .hint {
-  opacity: 0;
-  transition: opacity 0.18s ease;
-}
-
-.fold.fits {
-  visibility: hidden;
-}
-
-.fold.more .rule {
-  background: var(--accent);
-}
-
-.fold.more .hint {
-  opacity: 1;
-  color: var(--accent);
-}
-
-.gloss {
-  margin: 0;
-  font-size: var(--gloss);
-  font-weight: 400;
-  line-height: 1.2;
-  color: var(--text-strong);
-}
-
-.readings {
-  margin: 0;
-  font-size: var(--display);
-  color: var(--text);
-}
-
-.readings .label {
-  display: block;
-  margin-bottom: 4px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.mnemonic-block {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-/* Same mark as the on'yomi label above the readings — a subject carries two
-   mnemonics, and without these they are two untitled paragraphs. */
-.mnemonic-label {
-  margin: 0;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.mnemonic {
-  margin: 0;
-  max-width: 42ch;
-  font-size: var(--body);
-  line-height: 1.85;
-  color: var(--text-soft);
-}
-
-/* WaniKani's subject colours inside running prose. They are information and
-   keep their hue, but mixed toward the surface's own ink so that a paragraph
-   of body text stays a paragraph rather than a set of highlights. */
-.m-radical,
-.m-kanji,
-.m-vocabulary {
-  font-weight: 600;
-}
-
-.m-radical {
-  color: var(--subject-radical);
-}
-
-.m-kanji {
-  color: var(--subject-kanji);
-}
-
-.m-vocabulary {
-  color: var(--subject-vocabulary);
-}
-
-.m-reading,
-.m-ja {
-  color: var(--accent);
-}
-
-.m-meaning {
-  color: var(--text-strong);
-  font-weight: 600;
-}
-
-/* On the verso, under the character. Left-aligned against the column's
-   centred glyph, because prose that is centred stops being prose. */
-.sentences {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  text-align: left;
-  margin-top: 6px;
-}
-
-.sentences blockquote {
-  margin: 0;
-  padding-left: 16px;
-  border-left: 2px solid var(--accent);
-}
-
-.sentences p {
-  margin: 0;
-}
-
-.sentences .ja {
-  font-size: var(--input);
-  line-height: 1.9;
-  color: var(--text);
-}
-
-.sentences .en {
-  margin-top: 4px;
-  font-size: var(--small);
-  line-height: 1.7;
-  color: var(--text-soft);
-}
-
-/* The spread stacks rather than squeezing: verso above, recto below, and the
-   gutter rule turns into the rule between them. Stacked, the pin comes off —
-   two pages sharing one window height would both be slivers, so a narrow
-   window reads as the document it was before and the folds stand down. */
-@media (max-width: 640px) {
-  .surface-paper {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-  }
-
-  .spread {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: none;
-    gap: 26px;
-  }
-
-  .verso {
-    border-right: 0;
-    border-bottom: 1px solid var(--rule);
-    padding-right: 0;
-    padding-bottom: 22px;
-    height: auto;
-    min-height: 0;
-  }
-
-  .recto {
-    height: auto;
-  }
-
-  .flows {
-    flex: none;
-  }
-
-  .flow {
-    height: auto;
-    overflow-y: visible;
-  }
-
-  .fold {
-    display: none;
-  }
-}
-
-/* The rule lighting is the only motion in the app, and it is the one thing
-   carrying a verdict — so it stays visible here and simply stops moving. */
+/* The rule lighting is the only motion in the app, so it stays visible here
+   and simply stops moving. */
 @media (prefers-reduced-motion: reduce) {
   .field .rule::after,
-  .door .name,
-  .door .rule,
-  .footline .track i,
-  .fold .rule,
-  .fold .hint,
   button {
     transition: none;
-  }
-
-  .flow {
-    scroll-behavior: auto;
   }
 }
 

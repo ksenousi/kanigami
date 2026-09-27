@@ -3,13 +3,12 @@
 kanigami (蟹紙) — a third-party WaniKani dashboard. Static, online-only,
 read-only, running entirely in the browser on GitHub Pages.
 
-**Read [PLAN.md](PLAN.md) before doing anything.** It holds the phased build
-plan, the design spec for both surfaces, and the safety procedure for testing
-against a real WaniKani account. Every phase is built. **The app is now one
-screen, the 盤 board (`Dashboard.jsx`), and it only reads** — reviews and
-lessons are parked: commented out of `App.jsx`, with both write calls
-commented out of `wanikani.js`. Their components and libs are still in the
-tree and still tested. See "The dashboard" in PLAN.md.
+**Read [PLAN.md](PLAN.md) before doing anything.** It holds the design spec
+and the history of every decision. **The app is one screen, the 盤 board
+(`Dashboard.jsx`), and it only reads.** It began as a full client with
+review and lesson screens; those were removed when the owner found they
+used the dashboard far more than the practice. They are in git history —
+the last commit holding them is `03a7aa7` — and PLAN.md describes them.
 
 ## Architecture
 
@@ -34,27 +33,25 @@ tree and still tested. See "The dashboard" in PLAN.md.
 |---|---|
 | Dev server (:5173) | `npm run dev` |
 | Build | `npm run build` |
-| Tests | `npm test` |
+| Tests | `npm test` (`npx vitest run --dir src` skips old worktrees) |
 | Lint | `npm run lint` |
 
 ## Gotchas
 
-- **Never compute SRS stages.** `POST /reviews` reports wrong-answer counts;
-  WaniKani decides the stage and the next review time and returns them. Read
-  them from the response.
-- **Never bulk-sync the subject database.** Fetch only the subjects the
-  current session needs. A full sync is the offline feature this app
-  deliberately does not have.
-- **The write path is parked.** `submitReview` and `startAssignment` are
-  commented out in `wanikani.js`, and the session wiring that handed them to
-  `createSubmitter` is commented out in `App.jsx`. Do not uncomment either
-  as a side effect of something else — bringing practice back is a
-  decision, and it comes with Safety in PLAN.md, a token with write scopes,
-  and the dry-run gate below. There is no undo for either write.
-- **Dry run is development-only and does not ship — when practice is
-  live.** The `dryRun` state is parked with the rest of the session code in
-  `App.jsx`. `createSubmitter`'s own default stays dry run: that is the
-  safety, and `App.jsx` is the single caller allowed to override it.
+- **Read stages, never decide them.** Every stage, next-review time, and
+  passed or burned date on the board is WaniKani's, read off an assignment.
+  The one forward look — the earliest level-up under the level's kanji — runs
+  WaniKani's own interval table from `/spaced_repetition_systems`, never a
+  copy in this code, and the screen says it assumes every answer is right.
+  Keep projections labelled as projections, and keep them out of anything
+  that reads as WaniKani's record.
+- **Never bulk-sync the subject database.** Fetch only the subjects on
+  screen — the level's kanji, the five slipping items. A full sync is the
+  offline feature this app deliberately does not have.
+- **Nothing writes.** `wanikani.js` makes GETs only and the token gate asks
+  for a token with no permissions, so WaniKani itself refuses any write.
+  Adding a write call is a decision about what this app is, not a feature;
+  if it ever happens, recover Safety from PLAN.md first.
 - **`base` and the repo name are coupled.** Renaming the repo without
   changing `vite.config.js` 404s every asset on Pages.
 - **A level's kanji assignments are not a level's kanji.** An assignment is
@@ -72,59 +69,20 @@ tree and still tested. See "The dashboard" in PLAN.md.
   them. Every assignment read in `wanikani.js` carries `hidden=false` — the
   level-kanji read without it let the numerator count a retired kanji that
   the `hidden=false` denominator refuses, which can call a level-up early.
-- **The lesson batch size is the user's, and the subscription cap is the
-  client's job.** `lessons_batch_size` arrives on `/user` and `batchSize` in
-  `queue.js` is the one place it is read — five is WaniKani's default, not a
-  constant of this app. And the API keeps returning assignments above
-  `subscription.max_level_granted` (a lapsed subscription leaves years of
-  them behind) while refusing every write against them, so the docs put
-  respecting the cap on the client: both session reads pass the cap and
-  `grantedLevels` filters server-side. Neither number is optional — dropping
-  either makes the session disagree with WaniKani about what it holds.
 - **WaniKani's dashboard lesson number is not the lesson count — do not
-  "fix" home to match it.** The pink card shows Today's Lessons: the
+  "fix" the board to match it.** The pink card shows Today's Lessons: the
   "maximum recommended daily lessons" app setting less the lessons already
   started that day. It is a countdown, and the setting behind it is the one
   input `preferences` does not carry. The real queue is what `/summary`'s
   lesson bucket and `/assignments?immediately_available_for_lessons` both
-  report, and home shows it on purpose — a report of the card's number
-  being "right" and home's being "wrong" is the card being misread. This
+  report, and the board shows it on purpose — a report of the card's number
+  being "right" and ours being "wrong" is the card being misread. This
   was settled deliberately: a mirrored daily pace was built, verified
   against a live dashboard to the lesson, and then removed, because the
   owner wants the true count and the mirror needed a hand-copied setting
   the API refuses to share. The record is in PLAN.md.
 - **Radicals may have no Unicode character.** Fall back to
   `character_images` (prefer SVG) and invert for the ink ground.
-- **The Japanese faces are a feature, not styling.** `src/lib/faces.js` holds
-  four families; the review rotates one per question and the lesson shows all
-  four together. A kanji met in one face teaches that picture rather than the
-  character. **Never test whether a webfont arrived with
-  `document.fonts.check`** — it answers "could this text be rendered with
-  this list", the list ends in a fallback, and it returns `true` for a font
-  that does not exist. Getting this wrong reports four faces while drawing
-  one. Use what `document.fonts.load()` *resolves to* — a non-empty array of
-  matched faces — which is what `useFaces.js` does. **Do not go back to
-  matching `FontFace.family` against the family name.** That was the previous
-  fix and it never worked in Safari: WebKit returns `family` CSS-serialized,
-  so it is `"Noto Sans JP"` with the quotes in the string where Chrome
-  returns a bare `Noto Sans JP`. Measured in Safari 26 — 494 faces in
-  `document.fonts`, none equal to any name in `FACES`, so `available()` fell
-  to its one-face floor and told a user with four working fonts that one had
-  arrived. Anything comparing family names has to survive both spellings;
-  the resolved faces sidestep it. **And probe more than once** — a screen can mount before the font
-  stylesheet is parsed, and until then `document.fonts` holds none of these
-  families, so `load()` matches nothing and resolves *successfully*. A single
-  probe reads that as four missing fonts, for good. It has to keep asking,
-  and stay quiet until it gives up: saying "blocked" at somebody whose fonts
-  are merely slow is the false alarm that teaches them to ignore the real
-  one.
-- **A review face belongs to its question — pick it once and hold it.**
-  `Review.jsx` keeps the rotation count and the chosen face in one piece of
-  state and turns both over when a new question goes up, never at render and
-  never on answering. Incrementing the count in `submit` restyled the
-  character still on screen under its verdict, and recomputing `faceFor` each
-  render let the list from `useFaces` re-index the rotation mid-question when
-  a webfont turned out to be blocked. Both read to the user as flickering.
 
 ## This repo is public
 
@@ -135,8 +93,9 @@ removes. Assume every commit is permanent and public.
 - **Never commit a real API token.** Not in a test, a fixture, a comment, a
   commit message, or a screenshot. The placeholder in the token field is
   all-zeros and the test UUIDs are obviously fake — keep it that way. A real
-  token in a public repo grants write access to somebody's SRS progress and
-  must be revoked on the WaniKani settings page immediately if one lands.
+  token in a public repo exposes somebody's account — and a token with write
+  scopes, their SRS progress — and must be revoked on the WaniKani settings
+  page immediately if one lands.
 - **Do not commit real API responses as fixtures.** Dumping a live
   `/subjects` or `/assignments` payload into a test file is the easy mistake
   here, and it commits two things at once: Tofugu's copyrighted mnemonics,
@@ -149,9 +108,8 @@ removes. Assume every commit is permanent and public.
   header and nowhere else.
 - **The app holds the token in `localStorage` on a public origin**, so any
   script running there can read it. That is why every runtime dependency has
-  to earn its place, and why the Phase 5 mnemonic parser must not use
-  `dangerouslySetInnerHTML` — WaniKani's mnemonics arrive as markup and that
-  parser is the one real XSS surface in the app.
+  to earn its place, and why nothing WaniKani sends is ever rendered as
+  markup — no `dangerouslySetInnerHTML`, anywhere.
 - **Commits use the GitHub noreply address**, already set in this repo's
   local git config. Don't override it with a personal email.
 - `.claude/settings.local.json` and `.claude/worktrees` are gitignored;
@@ -162,11 +120,11 @@ removes. Assume every commit is permanent and public.
 - Plain JavaScript, no TypeScript. ES modules everywhere.
 - No semicolons, single quotes, 2-space indent — match the surrounding file.
 - Components in `src/components/`, pure logic in `src/lib/`. Keep `src/lib/`
-  free of React so the session engine and grader stay cheap to test.
+  free of React so the counting stays cheap to test.
 - Lint is oxlint; keep it clean on changed files.
-- Two surfaces, tokens in `src/index.css`: 墨 ink for reviews, 紙 paper for
-  lessons. De-boxed — no borders or cards that only group things. A hairline
-  that lights is the house pattern, not an outlined box.
+- One surface, 墨 ink, tokens in `src/index.css`. De-boxed — no borders or
+  cards that only group things. A hairline that lights is the house pattern,
+  not an outlined box.
 - **Mobile is not a target.** This is a desktop app; a phone is not a case
   worth spending anything on. Don't add breakpoints, phone-sized type ramps,
   or touch affordances for their own sake, don't hold a design back because
