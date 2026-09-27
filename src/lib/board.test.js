@@ -106,11 +106,26 @@ describe('pace', () => {
   it('times each passed level and projects 60 from the median', () => {
     const p = pace([prog(1, 1, 5), prog(2, 5, 11), prog(3, 11, 13)], 3, NOW)
     expect(p.levels.map(l => Math.round(l.days))).toEqual([4, 6])
+    expect(p.levels.some(l => l.break)).toBe(false)
     expect(p.median).toBe(5)
     expect(p.current.days).toBeCloseTo(3.82, 1)
     // what is left of this level at the median, then 56 more levels
     const days = (p.eta - NOW) / 86400000
     expect(days).toBeCloseTo(5 - p.current.days + 56 * 5, 5)
+  })
+
+  it('marks a level over three times the median as a break and leaves it out', () => {
+    // three 2-day levels, then one that sat for 20 days
+    const days = [0, 2, 4, 6, 26]
+    const p = pace(
+      days.slice(1).map((end, i) => ({
+        data: { level: i + 1, unlocked_at: new Date(2025, 0, 1 + days[i]).toISOString(), passed_at: new Date(2025, 0, 1 + end).toISOString(), abandoned_at: null }
+      })),
+      5,
+      NOW
+    )
+    expect(p.levels.map(l => l.break)).toEqual([false, false, false, true])
+    expect(p.median).toBeCloseTo(2, 5)
   })
 
   it('drops abandoned records and keeps the later of a level reached twice', () => {

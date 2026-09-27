@@ -115,6 +115,11 @@ export function moved(assignments = [], now = new Date(), days = 7) {
   }
 }
 
+// A level that took more than this many times the median is a break, not
+// a pace. WaniKani keeps no history of vacations — `/user` only says
+// whether one is on now — so a break can only be recognised by its length.
+export const BREAK_FACTOR = 3
+
 // How long each level took, and where that pace ends up.
 //
 // A level runs from `unlocked_at` to `passed_at`, which is how WaniKani
@@ -122,9 +127,13 @@ export function moved(assignments = [], now = new Date(), days = 7) {
 // collection with `abandoned_at` set; they are dropped, and where a level
 // appears twice the later one is the one that counts.
 //
-// The projection to 60 is the median rather than the mean, so one level
-// that sat for a month does not move it: finish this level at the median
-// (or now, if it has already run longer), then one median per level after.
+// **Breaks are left out.** A level that sat for months says when you
+// stopped, not how fast you go, so any level over BREAK_FACTOR × the median
+// of all of them is marked `break` and kept out of the median the
+// projection runs on. The median is taken again without them.
+//
+// The projection to 60: finish this level at the median (or now, if it has
+// already run longer), then one median per level after.
 export function pace(progressions = [], level, now = new Date()) {
   const byLevel = new Map()
   for (const p of progressions) {
@@ -136,15 +145,18 @@ export function pace(progressions = [], level, now = new Date()) {
 
   const days = (from, to) => (Date.parse(to) - Date.parse(from)) / DAY_MS
 
-  const levels = [...byLevel.values()]
+  const timed = [...byLevel.values()]
     .filter(d => d.passed_at && d.level < level)
     .sort((a, b) => a.level - b.level)
     .map(d => ({ level: d.level, days: days(d.unlocked_at, d.passed_at) }))
 
+  const overall = middle(timed.map(l => l.days))
+  const levels = timed.map(l => ({ ...l, break: overall !== null && l.days > BREAK_FACTOR * overall }))
+
   const here = byLevel.get(level)
   const current = here ? { level, days: days(here.unlocked_at, now.toISOString()) } : null
 
-  const median = middle(levels.map(l => l.days))
+  const median = middle(levels.filter(l => !l.break).map(l => l.days))
 
   let eta = null
   if (median !== null && level < 60) {

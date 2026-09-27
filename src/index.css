@@ -1017,6 +1017,14 @@ button.quiet:hover:not(:disabled) {
   opacity: 1;
 }
 
+/* A break: a dotted hairline the full height, so the level keeps its place
+   without its length setting the scale. */
+.board .bars span.break {
+  align-self: stretch;
+  background: repeating-linear-gradient(var(--dim) 0 2px, transparent 2px 5px) center / 2px 100% no-repeat;
+  opacity: 1;
+}
+
 /* The forecast footline is the last thing on the page, however tall the
    columns run. */
 .board .footline {

@@ -386,13 +386,17 @@ function Slipping({ slipping }) {
 }
 
 // Every passed level as a bar as tall as it took, this one in the accent.
-// The caption says the same in words, so the bars are decoration to a
+// A break is drawn as a dotted hairline instead — its place kept so the
+// levels stay in order, its length kept out of the scale so it cannot
+// flatten every other bar — and named beneath, so leaving it out is never
+// silent. The caption says the rest in words; the bars are decoration to a
 // screen reader.
 function Pace({ pace: p, level }) {
   if (!p || (p.levels.length === 0 && !p.current)) return null
 
   const bars = [...p.levels, ...(p.current ? [{ ...p.current, current: true }] : [])]
-  const tallest = Math.max(...bars.map(b => b.days))
+  const breaks = p.levels.filter(l => l.break)
+  const tallest = Math.max(1, ...bars.filter(b => !b.break).map(b => b.days))
 
   return (
     <section>
@@ -401,9 +405,10 @@ function Pace({ pace: p, level }) {
         {bars.map(b => (
           <span
             key={b.level}
-            className={b.current ? 'current' : ''}
-            // A level only days old still has to show up as a bar.
-            style={{ height: `${Math.max(8, (b.days / tallest) * 100)}%` }}
+            className={b.current ? 'current' : b.break ? 'break' : ''}
+            // A level only days old still has to show up as a bar, and one
+            // running longer than any before it stops at the top.
+            style={b.break ? undefined : { height: `${Math.min(100, Math.max(8, (b.days / tallest) * 100))}%` }}
           />
         ))}
       </div>
@@ -415,6 +420,13 @@ function Pace({ pace: p, level }) {
           </span>
         ) : null}
       </p>
+      {breaks.length > 0 ? (
+        <p className="notes">
+          {breaks.length === 1 ? 'level' : 'levels'} {breaks.map(b => b.level).join(', ')} left out as{' '}
+          {breaks.length === 1 ? 'a break' : 'breaks'} ·{' '}
+          {breaks.map(b => `${Math.round(b.days)}d`).join(', ')}
+        </p>
+      ) : null}
     </section>
   )
 }

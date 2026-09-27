@@ -1195,7 +1195,13 @@ the most data per inch) — and **the original was kept over all four.**
   bad day on a new item is not a leech. Character, meaning in its subject
   colour, reading, percentage in `--accent`. Then every passed level as a
   bar as tall as it took, the current one in `--accent`, with the median and
-  `60 ≈ oct 2027` beneath.
+  `60 ≈ oct 2027` beneath. **Breaks are left out**: WaniKani keeps no
+  vacation history (`/user` says only whether one is on now), so a level
+  over `BREAK_FACTOR` (3) × the median of all levels is taken to be a break.
+  It keeps its place as a dotted hairline, stays out of the scale and the
+  median the projection runs on, and is named beneath —
+  `level 13 left out as a break · 94d` — so leaving it out is never silent.
+  Asked for after one long break flattened every other bar into the floor.
 - **Footline** — home's 24-hour forecast, unchanged.
 
 **The reads**, once on mount and never on a timer, like home's: `/summary`,
