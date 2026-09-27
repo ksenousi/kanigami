@@ -18,6 +18,7 @@ import {
   moved,
   nextUp,
   pace,
+  road,
   srsSystems,
   week
 } from '../lib/board.js'
@@ -147,6 +148,7 @@ export default function Dashboard({ token, user, onDisconnect }) {
               <Pace pace={board.pace} level={user.level} />
             </div>
           </div>
+          <Road pace={board.pace} level={user.level} now={board.now} />
         </>
       )}
 
@@ -396,7 +398,11 @@ function Pace({ pace: p, level }) {
 
   const bars = [...p.levels, ...(p.current ? [{ ...p.current, current: true }] : [])]
   const breaks = p.levels.filter(l => l.break)
-  const tallest = Math.max(1, ...bars.filter(b => !b.break).map(b => b.days))
+  // Scaled by the passed levels alone. A current level already longer than
+  // any of them — a break happening now — stops at the top instead of
+  // flattening every bar before it.
+  const passed = p.levels.filter(l => !l.break).map(l => l.days)
+  const tallest = Math.max(1, ...(passed.length ? passed : bars.map(b => b.days)))
 
   return (
     <section>
@@ -427,6 +433,50 @@ function Pace({ pace: p, level }) {
           {breaks.map(b => `${Math.round(b.days)}d`).join(', ')}
         </p>
       ) : null}
+    </section>
+  )
+}
+
+// The sixty levels in the six decades WaniKani names — 快 pleasant through
+// 現実 reality — as one notched hairline across the page, the walked levels
+// lit and this one in the accent. Under each decade, its name and when:
+// when you entered it (`from`, or `since` for this one), or a projection at
+// the median marked ≈.
+// The notches are decoration to a screen reader; the words say it all.
+function Road({ pace: p, level, now }) {
+  const decades = road(p, level, now)
+
+  return (
+    <section className="road">
+      <Head right={`level ${level} of ${TOP_LEVEL}`}>the road</Head>
+      <ol>
+        {decades.map(d => (
+          <li key={d.name} className={d.state}>
+            <span className="notches" aria-hidden="true">
+              {Array.from({ length: 10 }, (_, i) => {
+                const n = d.first + i
+                return <i key={n} className={n < level ? 'lit' : n === level ? 'here' : ''} />
+              })}
+            </span>
+            <span className="name">
+              <span className="kanji-name">{d.kanji}</span> {d.name}
+            </span>
+            <span className="when">
+              {d.state === 'current'
+                ? d.at
+                  ? `since ${monthYear(d.at)}`
+                  : 'now'
+                : d.state === 'done'
+                  ? d.at
+                    ? `from ${monthYear(d.at)}`
+                    : 'done'
+                  : d.at
+                    ? `≈ ${monthYear(d.at)}`
+                    : ''}
+            </span>
+          </li>
+        ))}
+      </ol>
     </section>
   )
 }

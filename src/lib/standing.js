@@ -104,3 +104,14 @@ export function kanjiPassed(assignments = [], total = assignments.length) {
 export function peak(hours) {
   return hours.reduce((highest, hour) => Math.max(highest, hour.count), 0)
 }
+
+// WaniKani names each decade of levels, and the board's road wears the
+// names: 快 is levels 1–10, 苦 11–20, and so on to 現実, which stops at 60.
+export const STAGES = [
+  { kanji: '快', name: 'pleasant' },
+  { kanji: '苦', name: 'painful' },
+  { kanji: '死', name: 'death' },
+  { kanji: '地獄', name: 'hell' },
+  { kanji: '天国', name: 'paradise' },
+  { kanji: '現実', name: 'reality' }
+]

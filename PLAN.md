@@ -1202,6 +1202,17 @@ the most data per inch) — and **the original was kept over all four.**
   median the projection runs on, and is named beneath —
   `level 13 left out as a break · 94d` — so leaving it out is never silent.
   Asked for after one long break flattened every other bar into the floor.
+  The scale is set by passed, non-break levels only; a current level
+  already longer than all of them (a break happening now) stops at the top
+  rather than flattening them the same way.
+- **The road** — full width under the columns: the sixty levels as notched
+  hairlines in the six decades WaniKani names (快 pleasant, 苦 painful,
+  死 death, 地獄 hell, 天国 paradise, 現実 reality — `STAGES` in
+  `standing.js`), walked levels lit, this one in `--accent`. Under each
+  decade its name and a date: `from jun 2026` for one done, `since jul 2026`
+  in `--accent` for this one (the unlock of its first level), `≈ feb 2027`
+  for one ahead, projected at the pace median exactly as the date for 60
+  is. Asked for after the cleanup took home's ruler out with home.
 - **Footline** — home's 24-hour forecast, unchanged.
 
 **The reads**, once on mount and never on a timer, like home's: `/summary`,

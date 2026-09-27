@@ -8,7 +8,8 @@ import {
   lessonsWaiting,
   nextDue,
   peak,
-  spread
+  spread,
+  STAGES
 } from './standing.js'
 
 const at = stage => ({ data: { srs_stage: stage } })
@@ -203,5 +204,11 @@ describe('learned', () => {
   it('is all zeros at the very beginning', () => {
     expect(learned([])).toEqual({ radical: 0, kanji: 0, vocabulary: 0, total: 0 })
     expect(learned()).toEqual({ radical: 0, kanji: 0, vocabulary: 0, total: 0 })
+  })
+})
+
+describe('STAGES', () => {
+  it('names the six decades WaniKani does, in order', () => {
+    expect(STAGES.map(s => s.name)).toEqual(['pleasant', 'painful', 'death', 'hell', 'paradise', 'reality'])
   })
 })

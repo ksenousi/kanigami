@@ -7,6 +7,7 @@
 // is `earliestLevelUp`, and that runs WaniKani's own interval table, read
 // from the API, rather than one of ours.
 
+import { STAGES } from './standing.js'
 import { subjectTypeName } from './subject.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -148,13 +149,15 @@ export function pace(progressions = [], level, now = new Date()) {
   const timed = [...byLevel.values()]
     .filter(d => d.passed_at && d.level < level)
     .sort((a, b) => a.level - b.level)
-    .map(d => ({ level: d.level, days: days(d.unlocked_at, d.passed_at) }))
+    .map(d => ({ level: d.level, days: days(d.unlocked_at, d.passed_at), unlockedAt: d.unlocked_at }))
 
   const overall = middle(timed.map(l => l.days))
   const levels = timed.map(l => ({ ...l, break: overall !== null && l.days > BREAK_FACTOR * overall }))
 
   const here = byLevel.get(level)
-  const current = here ? { level, days: days(here.unlocked_at, now.toISOString()) } : null
+  const current = here
+    ? { level, days: days(here.unlocked_at, now.toISOString()), unlockedAt: here.unlocked_at }
+    : null
 
   const median = middle(levels.filter(l => !l.break).map(l => l.days))
 
@@ -165,6 +168,32 @@ export function pace(progressions = [], level, now = new Date()) {
   }
 
   return { levels, current, median, eta }
+}
+
+// The six decades WaniKani names, each with where you stand in it: `done`,
+// `current`, or `ahead`. A decade you have reached carries the date you
+// entered it — the unlock of its first level, read off the progressions —
+// and one ahead carries a projection at the pace median, the same
+// arithmetic as the date for 60. Either can be null: a reset can leave a
+// first level with no record, and there is no projection before a level
+// has passed.
+export function road(p, level, now = new Date()) {
+  const unlocked = new Map([...(p?.levels ?? []), ...(p?.current ? [p.current] : [])].map(l => [l.level, l.unlockedAt]))
+  const median = p?.median ?? null
+  const leftHere = median === null ? null : Math.max(0, median - (p?.current?.days ?? 0))
+
+  return STAGES.map((stage, i) => {
+    const first = i * 10 + 1
+    const last = i * 10 + 10
+    const state = level > last ? 'done' : level >= first ? 'current' : 'ahead'
+    let at = null
+    if (state !== 'ahead') {
+      at = unlocked.get(first) ? new Date(unlocked.get(first)) : null
+    } else if (median !== null) {
+      at = new Date(now.getTime() + (leftHere + (first - level - 1) * median) * DAY_MS)
+    }
+    return { ...stage, first, last, state, at }
+  })
 }
 
 function middle(values) {

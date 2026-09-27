@@ -8,6 +8,7 @@ import {
   moved,
   nextUp,
   pace,
+  road,
   srsSystems,
   week
 } from './board.js'
@@ -247,5 +248,41 @@ describe('earliestLevelUp', () => {
 
   it('has nothing to project once the threshold is met', () => {
     expect(earliestLevelUp([], systems, 0, NOW)).toBeNull()
+  })
+})
+
+describe('road', () => {
+  const at = d => new Date(2026, 0, d).toISOString()
+  // levels 1–10 passed at 2 days each from 1 jan; level 11 unlocked on the 21st
+  const p = {
+    levels: Array.from({ length: 10 }, (_, i) => ({ level: i + 1, days: 2, unlockedAt: at(1 + i * 2), break: false })),
+    current: { level: 11, days: 3, unlockedAt: at(21) },
+    median: 2
+  }
+
+  it('names the six decades in order, with where you stand in each', () => {
+    const r = road(p, 11, NOW)
+    expect(r.map(d => d.kanji)).toEqual(['快', '苦', '死', '地獄', '天国', '現実'])
+    expect(r.map(d => d.state)).toEqual(['done', 'current', 'ahead', 'ahead', 'ahead', 'ahead'])
+    expect([r[3].first, r[3].last]).toEqual([31, 40])
+  })
+
+  it('dates a reached decade by its first unlock', () => {
+    const r = road(p, 11, NOW)
+    expect(r[0].at.toISOString()).toBe(at(1))
+    expect(r[1].at.toISOString()).toBe(at(21))
+  })
+
+  it('projects a decade ahead at the median, from what is left of this level', () => {
+    const r = road(p, 11, NOW)
+    // this level is already past the median, so nothing is left of it; then
+    // levels 12–20 at two days each before 21 unlocks
+    expect((r[2].at - NOW) / 86400000).toBeCloseTo(9 * 2, 5)
+  })
+
+  it('has no dates it cannot know', () => {
+    const r = road({ levels: [], current: null, median: null }, 1, NOW)
+    expect(r[0].at).toBeNull()
+    expect(r[1].at).toBeNull()
   })
 })
