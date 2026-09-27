@@ -998,31 +998,67 @@ button.quiet:hover:not(:disabled) {
   color: var(--subject-vocabulary);
 }
 
-/* Pace: every passed level as a bar as tall as it took. */
+/* Days per level. Each level is a full-height column so there is something
+   to point at — a level of a few days is otherwise a sliver — with its bar
+   drawn inside. */
 .board .bars {
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 4px;
   height: 56px;
+  cursor: default;
 }
 
-.board .bars span {
+.board .bars > span {
   flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.board .bars i {
+  display: block;
+  width: 100%;
   background: var(--text-soft);
   opacity: 0.7;
 }
 
-.board .bars span.current {
+.board .bars .current i {
   background: var(--accent);
   opacity: 1;
 }
 
+/* Under the pointer. Neutral, like the forecast's, so it does not claim
+   the accent. */
+.board .bars .reading i {
+  opacity: 1;
+  background: var(--text-strong);
+}
+
 /* A break: a dotted hairline the full height, so the level keeps its place
    without its length setting the scale. */
-.board .bars span.break {
-  align-self: stretch;
+.board .bars .break {
   background: repeating-linear-gradient(var(--dim) 0 2px, transparent 2px 5px) center / 2px 100% no-repeat;
-  opacity: 1;
+}
+
+.board .bars .break.reading {
+  background-image: repeating-linear-gradient(var(--text-strong) 0 2px, transparent 2px 5px);
+}
+
+/* The level numbers, one slot per bar so each sits under its own. */
+.board .levels {
+  display: flex;
+  gap: 4px;
+  margin-top: -12px;
+  font-family: var(--mono);
+  font-size: var(--label);
+  color: var(--dim);
+}
+
+.board .levels span {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* The road: sixty notches in six decades, a wider gap between decades

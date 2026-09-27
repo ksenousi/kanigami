@@ -387,13 +387,21 @@ function Slipping({ slipping }) {
   )
 }
 
-// Every passed level as a bar as tall as it took, this one in the accent.
-// A break is drawn as a dotted hairline instead — its place kept so the
-// levels stay in order, its length kept out of the scale so it cannot
+// Days per level: every passed level as a bar as tall as it took, this one
+// in the accent. A break is a dotted hairline instead — its place kept so
+// the levels stay in order, its length kept out of the scale so it cannot
 // flatten every other bar — and named beneath, so leaving it out is never
-// silent. The caption says the rest in words; the bars are decoration to a
-// screen reader.
+// silent.
+//
+// A row of bars says nothing about which is which, so the levels are
+// numbered beneath — the first, every fifth, and this one, which is as
+// many as fit — and **pointing at a bar re-points the caption** to that
+// level in words, the way the forecast footline does: no tooltip, the line
+// of type that is already there says something more specific. The arrows
+// walk it from the keyboard, and the caption is the live region, so a
+// screen reader hears what a pointer would show.
 function Pace({ pace: p, level }) {
+  const [reading, setReading] = useState(null)
   if (!p || (p.levels.length === 0 && !p.current)) return null
 
   const bars = [...p.levels, ...(p.current ? [{ ...p.current, current: true }] : [])]
@@ -403,28 +411,70 @@ function Pace({ pace: p, level }) {
   // flattening every bar before it.
   const passed = p.levels.filter(l => !l.break).map(l => l.days)
   const tallest = Math.max(1, ...(passed.length ? passed : bars.map(b => b.days)))
+  const shown = reading === null ? null : bars[reading]
+  const numbered = b => b.level === 1 || b.level % 5 === 0 || b.current || b === shown
+
+  function key(event) {
+    const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
+    if (step) {
+      event.preventDefault()
+      setReading(at => (at === null ? bars.length - 1 : Math.min(bars.length - 1, Math.max(0, at + step))))
+    }
+    if (event.key === 'Escape') setReading(null)
+  }
 
   return (
     <section>
-      <Head right={p.median !== null ? `median ${p.median.toFixed(1)} days` : null}>pace</Head>
-      <div className="bars" aria-hidden="true">
-        {bars.map(b => (
+      <Head right={p.median !== null ? `median ${p.median.toFixed(1)}` : null}>days per level</Head>
+      <div
+        className="bars"
+        role="group"
+        aria-label="Days spent on each level"
+        tabIndex={0}
+        onKeyDown={key}
+        onPointerLeave={() => setReading(null)}
+        onBlur={() => setReading(null)}
+      >
+        {bars.map((b, i) => (
           <span
             key={b.level}
-            className={b.current ? 'current' : b.break ? 'break' : ''}
-            // A level only days old still has to show up as a bar, and one
-            // running longer than any before it stops at the top.
-            style={b.break ? undefined : { height: `${Math.min(100, Math.max(8, (b.days / tallest) * 100))}%` }}
-          />
+            className={[b.current ? 'current' : b.break ? 'break' : '', reading === i ? 'reading' : '']
+              .join(' ')
+              .trim()}
+            onPointerEnter={() => setReading(i)}
+            onPointerDown={() => setReading(i)}
+          >
+            {/* A level only days old still has to show up as a bar, and one
+                running longer than any before it stops at the top. */}
+            {b.break ? null : (
+              <i style={{ height: `${Math.min(100, Math.max(8, (b.days / tallest) * 100))}%` }} />
+            )}
+          </span>
         ))}
       </div>
-      <p className="notes spread-out">
-        {p.eta ? <span className="soft">60 ≈ {monthYear(p.eta)}</span> : <span />}
-        {p.current ? (
-          <span className="hot">
-            {level} · day {Math.floor(p.current.days) + 1}
+      <div className="levels" aria-hidden="true">
+        {bars.map(b => (
+          <span key={b.level} className={b.current ? 'hot' : b === shown ? 'soft' : ''}>
+            {numbered(b) ? b.level : ''}
           </span>
-        ) : null}
+        ))}
+      </div>
+      <p className="notes spread-out" aria-live="polite">
+        {shown ? (
+          <span className="soft">
+            level {shown.level} · {shown.current ? `day ${Math.floor(shown.days) + 1} so far` : `${Math.round(shown.days)} days`}
+            {shown.break ? ' · break' : ''}
+          </span>
+        ) : (
+          <>
+            {p.eta ? <span className="soft">60 ≈ {monthYear(p.eta)}</span> : <span />}
+            {p.current ? (
+              <span className="hot">
+                {level} · day {Math.floor(p.current.days) + 1}
+              </span>
+            ) : null}
+          </>
+        )}
       </p>
       {breaks.length > 0 ? (
         <p className="notes">

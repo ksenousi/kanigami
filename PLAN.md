@@ -1202,6 +1202,13 @@ the most data per inch) — and **the original was kept over all four.**
   median the projection runs on, and is named beneath —
   `level 13 left out as a break · 94d` — so leaving it out is never silent.
   Asked for after one long break flattened every other bar into the floor.
+  **The chart says what it is.** Headed `days per level` with `median 17.0`
+  beside it; the levels numbered beneath (1, every fifth, and this one —
+  as many as fit a third of the page); and pointing at a bar re-points the
+  caption to it in words — `level 12 · 12 days`, `level 10 · 120 days ·
+  break`, `level 15 · day 4 so far` — the forecast footline's pattern, with
+  the arrows walking it and the caption as the live region. Asked for after
+  a row of unlabelled bars read as nothing.
   The scale is set by passed, non-break levels only; a current level
   already longer than all of them (a break happening now) stops at the top
   rather than flattening them the same way.
