@@ -919,6 +919,10 @@ button.quiet:hover:not(:disabled) {
   justify-content: flex-start;
 }
 
+.board .srs-apprentice {
+  color: var(--accent);
+}
+
 .board .srs-guru {
   color: var(--srs-guru);
 }

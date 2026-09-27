@@ -98,14 +98,20 @@ export function leeches(statistics = [], assignments = [], count = 5) {
     .slice(0, count)
 }
 
-// What moved up this week: items that reached guru for the first time
-// (`passed_at`) and items that burned. Both are dates WaniKani stamped.
+// What moved this week, by the only three dates an assignment carries:
+// lessons started into apprentice (`started_at`), first arrivals at guru
+// (`passed_at`), and burns (`burned_at`). Master and enlightened are not
+// here because WaniKani stamps no date for reaching them, and the review
+// history that could reconstruct one is disabled on their side — a count
+// for either would be invented.
 export function moved(assignments = [], now = new Date(), days = 7) {
   const since = now.getTime() - days * DAY_MS
   const within = at => at && Date.parse(at) > since
+  const count = field => assignments.filter(a => within(a?.data?.[field])).length
   return {
-    guru: assignments.filter(a => within(a?.data?.passed_at)).length,
-    burned: assignments.filter(a => within(a?.data?.burned_at)).length
+    apprentice: count('started_at'),
+    guru: count('passed_at'),
+    burned: count('burned_at')
   }
 }
 

@@ -341,7 +341,10 @@ function Srs({ spread: bands, moved: gained }) {
       <Head right={`${bands.total.toLocaleString()} started`}>srs spread</Head>
       <Spread spread={bands} />
       <p className="notes row">
+        {/* Only the moves WaniKani dates — see `moved` for why master and
+            enlightened cannot be here. */}
         <span className="soft">this week</span>
+        <span className="srs-apprentice">+{gained.apprentice} apprentice</span>
         <span className="srs-guru">+{gained.guru} guru</span>
         <span className="srs-burned">+{gained.burned} burned</span>
       </p>

@@ -84,16 +84,17 @@ describe('leeches', () => {
 })
 
 describe('moved', () => {
-  it('counts first passes and burns inside the window only', () => {
+  it('counts lessons started, first passes and burns inside the window only', () => {
     const m = moved(
       [
-        assignment({ passed_at: local(12, 9) }),
+        assignment({ started_at: local(13, 20) }),
+        assignment({ started_at: local(1, 20), passed_at: local(12, 9) }),
         assignment({ passed_at: local(2, 9) }),
         assignment({ burned_at: local(14, 7) })
       ],
       NOW
     )
-    expect(m).toEqual({ guru: 1, burned: 1 })
+    expect(m).toEqual({ apprentice: 1, guru: 1, burned: 1 })
   })
 })
 

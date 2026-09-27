@@ -1183,7 +1183,12 @@ the most data per inch) — and **the original was kept over all four.**
 - **Column two: the week.** Seven local days, each a hairline lit to its
   share of the busiest, today in `--accent`. **Today holds the backlog** —
   anything already due is due today. Beneath: the SRS spread, and
-  `this week +46 guru +38 burned`.
+  `this week +27 apprentice +46 guru +38 burned` — lessons started, first
+  arrivals at guru, burns. Those are the only three moves an assignment
+  dates (`started_at`, `passed_at`, `burned_at`). **Master and enlightened
+  cannot be added**: WaniKani stamps no date for reaching either, and the
+  `/reviews` history that could reconstruct one is disabled on their side.
+  Asked for once already; do not invent a count for them.
 - **Column three: what keeps slipping, and pace.** The five lowest
   `percentage_correct` items still in rotation — burned items are finished
   and left out, and an item needs `MIN_MISSES` (3) misses to count, so one
