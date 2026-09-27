@@ -1735,3 +1735,345 @@ button.quiet:hover:not(:disabled) {
     scroll-behavior: auto;
   }
 }
+
+/* ---- 盤 The board ---- */
+
+/* The whole app now: a headline row of figures, three columns, and the
+   forecast footline. Desktop-first like everything else here — the columns
+   are three because the page is wide, and nothing tries to be clever when
+   it is not. De-boxed: each section is a hairline heading and what sits
+   under it, never a card. */
+.board .masthead .eyebrow {
+  margin-left: 18px;
+}
+
+.board .figures {
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: clamp(40px, 5vw, 80px);
+}
+
+/* The weekly total and accuracy are standing, not a call to act, so they
+   sit a register back from the three counts in front of them. */
+.board .figure.soft b {
+  color: var(--text-soft);
+}
+
+.board .figure b small {
+  font-size: var(--display);
+}
+
+.board .columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(40px, 5vw, 72px);
+  align-items: start;
+}
+
+.board .column {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  min-width: 0;
+}
+
+.board section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.board .head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.board .head h2 {
+  margin: 0;
+  flex: 1;
+  font: inherit;
+  color: var(--text-soft);
+}
+
+.board .notes {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.board .notes.row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+}
+
+.board .notes.spread-out {
+  flex-direction: row;
+  justify-content: space-between;
+  white-space: nowrap;
+}
+
+.board .soft {
+  color: var(--text-soft);
+}
+
+.board .hot {
+  color: var(--accent);
+}
+
+/* The level's kanji. Brightness is the first reading — passed strongest,
+   in flight at the body text, waiting and locked back at --dim — and the
+   mark beneath is the second, for anyone who does not read brightness. */
+.board .kanji {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 20px 6px;
+}
+
+.board .kanji li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.board .kanji .character {
+  font-family: var(--jp-serif);
+  font-size: var(--display-lg);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--text);
+}
+
+.board .kanji .passed .character {
+  color: var(--text-strong);
+}
+
+.board .kanji .lesson .character,
+.board .kanji .locked .character {
+  color: var(--dim);
+}
+
+.board .kanji .underline {
+  display: block;
+  width: 30px;
+  height: 2px;
+}
+
+.board .kanji .passed .underline {
+  background: var(--srs-guru);
+}
+
+.board .pips {
+  display: flex;
+  gap: 2px;
+}
+
+.board .pips i {
+  display: block;
+  width: 7px;
+  height: 2px;
+  background: var(--rule);
+}
+
+.board .pips i.lit {
+  background: var(--accent);
+}
+
+/* The week: a day, a hairline lit to its share of the busiest, a count. */
+.board .days {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.board .days li {
+  display: grid;
+  grid-template-columns: 8ch minmax(0, 1fr) 5ch;
+  gap: 14px;
+  align-items: center;
+}
+
+.board .days .track {
+  display: block;
+  height: 2px;
+  background: var(--rule);
+}
+
+.board .days .fill {
+  display: block;
+  height: 100%;
+  background: var(--text-soft);
+}
+
+.board .days .count {
+  text-align: right;
+  color: var(--text-soft);
+}
+
+.board .days .today {
+  color: var(--text-soft);
+}
+
+.board .days .today .fill {
+  background: var(--accent);
+}
+
+.board .days .today .count {
+  color: var(--accent);
+}
+
+/* In a column, the spread and the taught line take the column's width
+   rather than home's centred 620px, and read left to right. Three kinds
+   side by side do not fit a third of the page — `1,242 vocabulary` ran
+   into the next column — so each kind is a row, the same shape as a day in
+   the week: the count, a hairline lit to its share, the total. */
+.board .spreadline,
+.board .fills {
+  width: 100%;
+}
+
+.board .fills {
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 14px;
+}
+
+/* The three rows share one grid, so the tracks line up whatever the
+   longest count is. */
+.board .fills .kind {
+  display: contents;
+}
+
+.board .fills .of {
+  text-align: right;
+}
+
+.board .counts {
+  justify-content: flex-start;
+}
+
+.board .srs-guru {
+  color: var(--srs-guru);
+}
+
+.board .srs-burned {
+  color: var(--srs-burned);
+}
+
+/* What keeps slipping: the character, what it is in its subject colour,
+   and the percentage in the accent — the one number here asking for
+   something. */
+.board .slipping {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.board .slipping li {
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr) 5ch;
+  gap: 14px;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.board .slipping .character {
+  font-family: var(--jp-serif);
+  font-size: var(--display);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-strong);
+}
+
+.board .slipping .character img {
+  height: 0.9em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+.board .slipping .what {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  min-width: 0;
+}
+
+.board .slipping .reading {
+  font-family: var(--jp-sans);
+  letter-spacing: 0;
+}
+
+.board .slipping .count {
+  text-align: right;
+  color: var(--accent);
+}
+
+.board .wk-radical {
+  color: var(--subject-radical);
+}
+
+.board .wk-kanji {
+  color: var(--subject-kanji);
+}
+
+.board .wk-vocabulary {
+  color: var(--subject-vocabulary);
+}
+
+/* Pace: every passed level as a bar as tall as it took. */
+.board .bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 56px;
+}
+
+.board .bars span {
+  flex: 1;
+  background: var(--text-soft);
+  opacity: 0.7;
+}
+
+.board .bars span.current {
+  background: var(--accent);
+  opacity: 1;
+}
+
+/* The forecast footline is the last thing on the page, however tall the
+   columns run. */
+.board .footline {
+  margin-top: auto;
+}

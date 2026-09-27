@@ -1,24 +1,27 @@
 # CLAUDE.md
 
-kanigami (蟹紙) — a third-party WaniKani client. Static, online-only, running
-entirely in the browser on GitHub Pages.
+kanigami (蟹紙) — a third-party WaniKani dashboard. Static, online-only,
+read-only, running entirely in the browser on GitHub Pages.
 
 **Read [PLAN.md](PLAN.md) before doing anything.** It holds the phased build
 plan, the design spec for both surfaces, and the safety procedure for testing
-against a real WaniKani account. Every phase is built, and both write paths
-are now accepted live against a throwaway account: `startAssignment` in
-Phase 5, `submitReview` in Phase 4. Anything that touches either still needs
-a real account and the Safety procedure to re-accept.
+against a real WaniKani account. Every phase is built. **The app is now one
+screen, the 盤 board (`Dashboard.jsx`), and it only reads** — reviews and
+lessons are parked: commented out of `App.jsx`, with both write calls
+commented out of `wanikani.js`. Their components and libs are still in the
+tree and still tested. See "The dashboard" in PLAN.md.
 
 ## Architecture
 
 - **Frontend** — React 19 + Vite SPA, no framework beyond that, no router.
-  Entry `src/main.jsx`, root `src/App.jsx`.
+  Entry `src/main.jsx`, root `src/App.jsx`, which renders the token gate and
+  then `Dashboard.jsx`. Nothing else is reachable.
 - **No backend.** WaniKani enables CORS, so the browser calls
   `api.wanikani.com` directly. There is no server, no database, and nowhere
   to put a secret.
 - **Auth** — the user's own WaniKani personal access token in `localStorage`
-  (`src/lib/token.js`). It is sent to nobody but WaniKani.
+  (`src/lib/token.js`). It is sent to nobody but WaniKani, and it needs no
+  permissions: the gate asks for a read-only token.
 - **API client** — `src/lib/wanikani.js`. All requests go through it; it
   throttles to WaniKani's 60/minute limit and follows pagination.
 - **Deploy** — push to `main` runs `.github/workflows/deploy.yml`, building
@@ -42,27 +45,25 @@ a real account and the Safety procedure to re-accept.
 - **Never bulk-sync the subject database.** Fetch only the subjects the
   current session needs. A full sync is the offline feature this app
   deliberately does not have.
-- **The write path is gated.** `submitReview` reaches the network from one
-  place only — `App.jsx`, handed to `createSubmitter` as `send` — and a
-  submitter is in dry run unless its caller says otherwise. `startAssignment`
-  is gated the same way and reaches the network only from `App.jsx`. See
-  Safety in PLAN.md; there is no undo for either.
-- **Dry run is development-only and does not ship.** `App.jsx` seeds it from
-  `import.meta.env.DEV`, and the switch in `Home.jsx` is gated on the same
-  literal so the block folds away at build time. A built app opens writing —
-  which is the point, since a deployed client that discards your answers is
-  broken, not careful. `createSubmitter`'s own default stays dry run: that is
-  the safety, and `App.jsx` is the single caller allowed to override it.
-  **Running `npm run dev` is what protects a real account, not the UI.**
+- **The write path is parked.** `submitReview` and `startAssignment` are
+  commented out in `wanikani.js`, and the session wiring that handed them to
+  `createSubmitter` is commented out in `App.jsx`. Do not uncomment either
+  as a side effect of something else — bringing practice back is a
+  decision, and it comes with Safety in PLAN.md, a token with write scopes,
+  and the dry-run gate below. There is no undo for either write.
+- **Dry run is development-only and does not ship — when practice is
+  live.** The `dryRun` state is parked with the rest of the session code in
+  `App.jsx`. `createSubmitter`'s own default stays dry run: that is the
+  safety, and `App.jsx` is the single caller allowed to override it.
 - **`base` and the repo name are coupled.** Renaming the repo without
   changing `vite.config.js` 404s every asset on Pages.
 - **A level's kanji assignments are not a level's kanji.** An assignment is
   created only once its subject is unlocked, so
   `/assignments?levels=N&subject_types=kanji` returns what you have reached
-  and grows all through the level. It is the numerator of home's level-up
-  line and never the denominator — WaniKani levels you up at 90% of the
-  level's kanji passed, and the level's kanji come from
-  `getLevelKanjiCount`, which reads `total_count` off `/subjects`. Counting
+  and grows all through the level. It is the numerator of the board's
+  kanji-to-level figure and never the denominator — WaniKani levels you up
+  at 90% of the level's kanji passed, and the level's kanji come from
+  `getLevelKanjiSubjects`, which reads them off `/subjects`. Counting
   the denominator out of the assignments says `4 kanji to level 11` on a
   level holding thirty-two.
 - **An `/assignments` read that does not say `hidden=false` counts retired

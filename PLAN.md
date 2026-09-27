@@ -2,6 +2,14 @@
 
 A handoff document. **Every phase is built and on `main`.**
 
+**kanigami is now a read-only dashboard.** The owner uses WaniKani's
+dashboard far more than practising here, so the app was cut down to one
+screen — 盤 the board — and the review and lesson screens were parked, not
+deleted. See **The dashboard** near the end. Everything below about reviews,
+lessons and the write path describes code that is still in the tree and
+still tested but is no longer reachable from the app. The two acceptances
+below are moot until practice comes back.
+
 One acceptance is outstanding, and it is not code. Phase 5's write path has
 now been run live; **Phase 4's has not**, because it cannot be until
 something is actually due for review — a freshly started item is hours away
@@ -445,6 +453,11 @@ Shipped, and why it is built the way it is:
 ---
 
 ## Safety — testing against a real account
+
+**Parked with the write path.** Nothing in the app writes now: both write
+calls are commented out in `wanikani.js`, and the token gate asks for no
+permissions. This section is what to follow if practice is ever brought
+back.
 
 There is no staging WaniKani. Every phase is tested against somebody's real
 SRS progress, so the write path is gated deliberately.
@@ -1112,6 +1125,95 @@ a mirrored setting the API cannot sync was a config this app is better
 without. If daily pacing is ever wanted back, the arithmetic is
 `min(waiting, max(0, maximum − started today))` and the implementation is
 one revert away in history; what it cannot ever be is fetched.
+
+---
+
+## The dashboard — 盤 the board ✅ done
+
+**Files:** `src/components/Dashboard.jsx`, `src/lib/board.js`, the 盤 block
+at the end of `src/index.css`. `Home.jsx` is gone; `App.jsx` renders the
+token gate and then this, and nothing else.
+
+**Why.** The owner opens WaniKani for its dashboard far more than to
+practise in this client. So the app became that dashboard, made deeper, and
+the practice screens were parked: commented out of `App.jsx`, with
+`submitReview` and `startAssignment` commented out of `wanikani.js`. Their
+components (`Review`, `Lesson`, `Wrap`) and libs (`session`, `grade`,
+`submit`, `queue`) stay in the tree with their tests, so bringing practice
+back is uncommenting two blocks and re-reading Safety. **The app needs a
+read-only token** — the gate now says "Permissions · none", and a token with
+no boxes checked makes WaniKani refuse any write whatever the client does.
+
+**Decided from a prototype.** Four directions went up on one canvas beside
+WaniKani's own dashboard, redrawn: **everything at once** (a headline row
+and three columns), **time leads** (a 168-hour timeline with the level's
+kanji pinned to when each could pass, and every level drawn as long as it
+took), **the level is the page** (the level's kanji huge, everything else a
+strip), and **the almanac** (the same facts written as prose on paper).
+Everything-at-once was picked. It was then branched four ways — bands (one
+row per question), a level hub (the grid large, the rest in a rail),
+instruments (a small chart under every figure) and terminal (mono tables,
+the most data per inch) — and **the original was kept over all four.**
+
+**The layout**, on the ink surface:
+
+- **Masthead** — wordmark, `level 15 · username`, Disconnect. No doors:
+  there is nothing to start.
+- **Figures** — one row, left-aligned, never wrapping: reviews due
+  (`--accent` when any, `--dim` when none), lessons waiting, kanji to the
+  next level, reviews this week, and meaning / reading accuracy. The last
+  two are standing rather than calls to act and sit in `--text-soft`.
+- **Column one: the level.** Every kanji of the current level, locked ones
+  included, eight across in the serif at `--display-lg`. Brightness is the
+  first reading — passed `--text-strong`, in flight `--text`, waiting in
+  lessons or locked `--dim` — and the mark beneath is the second: four pips
+  lit in `--accent` to the apprentice stage, or one `--srs-guru` rule once
+  passed. Each cell's `aria-label` says it in words. Under the grid:
+  `8 to level 16 · day 12`, and the soonest unpassed kanji with their time —
+  `薬 皿 up at 21:00, one step from passing` when every one of them sits at
+  apprentice IV. That is WaniKani's stage read back, not a prediction.
+  Beneath: **taught**, home's learned line reshaped into three rows on one
+  shared grid (`1,242 vocabulary` ran into the next column side by side).
+- **Column two: the week.** Seven local days, each a hairline lit to its
+  share of the busiest, today in `--accent`. **Today holds the backlog** —
+  anything already due is due today. Beneath: the SRS spread, and
+  `this week +46 guru +38 burned`.
+- **Column three: what keeps slipping, and pace.** The five lowest
+  `percentage_correct` items still in rotation — burned items are finished
+  and left out, and an item needs `MIN_MISSES` (3) misses to count, so one
+  bad day on a new item is not a leech. Character, meaning in its subject
+  colour, reading, percentage in `--accent`. Then every passed level as a
+  bar as tall as it took, the current one in `--accent`, with the median and
+  `60 ≈ oct 2027` beneath.
+- **Footline** — home's 24-hour forecast, unchanged.
+
+**The reads**, once on mount and never on a timer, like home's: `/summary`,
+`/assignments?started=true`, the level's kanji assignments, the level's kanji
+**subjects** (all of them, not just `total_count` — the grid draws locked
+ones, and it is one page of exactly what is on screen, so no-bulk-sync
+stands), `/review_statistics?hidden=false`, `/level_progressions`, and the
+cached totals. Then `/subjects?ids=` for the five slipping items only. The
+first four fail together; statistics, progressions and totals are
+commentary and degrade to null, taking only their own section down.
+
+**Counted, never decided.** `board.js` reads WaniKani's `available_at`,
+`passed_at`, `burned_at` and `srs_stage` and sorts them; it computes no
+stage and no interval. The one projection is pace to 60: finish this level
+at the median of passed levels (or now, if it has run longer), then one
+median per level — median rather than mean so one stalled level does not
+move it. A level runs `unlocked_at` → `passed_at`, the way WaniKani times a
+level-up; records with `abandoned_at` (a reset) are dropped, and a level
+reached twice keeps its later record. Accuracy is summed over answers, not
+averaged over subjects, and is null — never 100% — for a side nobody has
+answered.
+
+Left out on purpose: **the earliest level-up time** that time-leads drew.
+Getting it means running WaniKani's interval table forward from each
+kanji's stage, which is computing stages by another name. If it is ever
+wanted, it needs a decision against Ground rule 1, not a quiet addition.
+
+**Shipped:** 14 vitest cases on `board.js`, and the screen driven at
+1440×900 against a stubbed API, checking that every request was a GET.
 
 ---
 

@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { getUser } from '../lib/wanikani.js'
 import { looksLikeToken, writeToken } from '../lib/token.js'
 
-// First run. One field, one hairline, no chrome — the ink surface from the
-// review screen, standing in for it before there is anything to review.
+// First run. One field, one hairline, no chrome — the ink surface the
+// dashboard lives on, before there is anything to read.
 export default function TokenGate({ onConnected }) {
   const [value, setValue] = useState('')
   const [checking, setChecking] = useState(false)
@@ -36,9 +36,9 @@ export default function TokenGate({ onConnected }) {
       </header>
 
       <div className="centred">
-        <div className="glyph">墨</div>
+        <div className="glyph">盤</div>
         <p className="lede">
-          A quiet WaniKani client. Paste a personal access token to begin — it stays in this
+          A quiet WaniKani dashboard. Paste a read-only personal access token to begin — it stays in this
           browser and is sent to nobody but WaniKani.{' '}
           <a href="https://www.wanikani.com/settings/personal_access_tokens" target="_blank" rel="noreferrer">
             Make one here
@@ -79,29 +79,16 @@ export default function TokenGate({ onConnected }) {
           {checking ? 'Checking' : 'Connect'}
         </button>
 
+        {/* It used to ask for reviews:create and assignments:start, back
+            when kanigami submitted reviews. It is a dashboard now and writes
+            nothing — the write calls are commented out in wanikani.js — so
+            the honest ask is for no permissions at all. */}
         <div className="perms">
-          <p className="eyebrow">Permissions · two, and only to write</p>
-          <ul className="scopes">
-            <li>
-              <b>reviews:create</b> to submit reviews
-            </li>
-            <li>
-              <b>assignments:start</b> to start lessons
-            </li>
-          </ul>
-          <p className="scopes off">
-            study_materials:create · study_materials:update · user:update
-          </p>
-          {/* This paragraph used to say kanigami wrote nothing until you
-              turned its dry run off, and that the two scopes were optional.
-              Both were true when the dry run shipped and neither is now: the
-              deployed app always submits, so leaving those boxes unchecked
-              buys a 403 on every answer rather than safety. */}
+          <p className="eyebrow">Permissions · none</p>
           <p className="why">
-            Reading needs no permission at all. Check both of the above — kanigami submits each
-            review as you finish it, and without them WaniKani refuses the write and your session
-            goes unrecorded. Leave the other three unchecked: WaniKani will then refuse those
-            writes itself, which is a stronger promise than anything this code can make.
+            kanigami only reads. Leave every permission box unchecked when you make the token: one
+            with none can read everything this dashboard shows, and WaniKani will refuse any write
+            made with it — a stronger promise than anything this code can make.
           </p>
         </div>
       </div>

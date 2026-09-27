@@ -138,33 +138,46 @@ export function getStartedAssignments(token) {
 // The kanji of one level that the user has actually reached. WaniKani levels
 // you up at 90% of the level's kanji passed, so this carries the numerator —
 // and `levels` is a server-side filter, which is why it is cheap rather than
-// a scan. `hidden=false` because the denominator in `getLevelKanjiCount`
+// a scan. `hidden=false` because the denominator in `getLevelKanjiSubjects`
 // already leaves retired kanji out; a numerator that counts them can pass
 // more kanji than the level holds.
 export function getLevelKanji(token, level) {
   return collection(token, `/assignments?levels=${level}&subject_types=kanji&hidden=false`)
 }
 
-// How many kanji the level *has*, which is a different question and the
+// The kanji the level *has*, which is a different question and the
 // denominator of that 90%. An assignment does not exist until its kanji is
 // unlocked — the radicals in it have to be passed first — so at the start of
 // a level most of the level's kanji have none, and a denominator counted out
 // of `getLevelKanji` above starts small and grows as you unlock. That reads
 // as `4 kanji to level 11` on a level with thirty-two of them.
 //
-// Only the count is wanted, so this reads `total_count` off the response and
-// follows no pagination; a level's kanji are a few dozen and fit one page
-// whatever the page size. `hidden=false` leaves out subjects WaniKani has
-// retired, which do not count toward levelling up.
-export function getLevelKanjiCount(token, level) {
-  return request(token, `/subjects?types=kanji&levels=${level}&hidden=false`).then(
-    page => page.total_count
-  )
+// The dashboard draws every one of them, locked ones included, so this reads
+// the subjects rather than just `total_count` — a few dozen, one page, and
+// exactly the subjects on screen, so the no-bulk-sync rule stands.
+// `hidden=false` leaves out subjects WaniKani has retired, which do not
+// count toward levelling up.
+export function getLevelKanjiSubjects(token, level) {
+  return collection(token, `/subjects?types=kanji&levels=${level}&hidden=false`)
+}
+
+// Lifetime right and wrong answers per subject — the dashboard's accuracy
+// and what keeps slipping. Paginated like the started assignments and about
+// as large, so it is read once on mount and never on a timer. Retired
+// subjects stay out, as they do everywhere.
+export function getReviewStatistics(token) {
+  return collection(token, '/review_statistics?hidden=false')
+}
+
+// One record per level reached, with when it unlocked and when it passed —
+// how long each level took. Sixty at most, one page.
+export function getLevelProgressions(token) {
+  return collection(token, '/level_progressions')
 }
 
 // How much of WaniKani there is, by kind — the denominators of home's
 // learned line. `total_count` off one filtered page per kind, the same
-// trick as getLevelKanjiCount; `hidden=false`, or the retired inflate a
+// trick getLevelKanjiSubjects once used; `hidden=false`, or the retired inflate a
 // total nobody can reach. Kana vocabulary counts as vocabulary, the same
 // as it does everywhere else. Callers cache what this returns — see
 // totals.js — because each of the three reads hauls a full first page of
@@ -206,22 +219,28 @@ export async function getStudyMaterials(token, subjectIds) {
   return pages.flat()
 }
 
-export function submitReview(token, { assignmentId, incorrectMeaning, incorrectReading }) {
-  return request(token, '/reviews', {
-    method: 'POST',
-    body: JSON.stringify({
-      review: {
-        assignment_id: assignmentId,
-        incorrect_meaning_answers: incorrectMeaning,
-        incorrect_reading_answers: incorrectReading
-      }
-    })
-  }).then(r => r.data)
-}
-
-export function startAssignment(token, assignmentId) {
-  return request(token, `/assignments/${assignmentId}/start`, {
-    method: 'PUT',
-    body: JSON.stringify({ assignment: {} })
-  }).then(r => r.data)
-}
+// The write path, parked. kanigami is a read-only dashboard now and asks for
+// a token with no write permissions, so nothing may reach these endpoints.
+// Commented out rather than deleted: the review and lesson screens are still
+// in the tree, and bringing them back starts by uncommenting these and the
+// session block in App.jsx. See "The dashboard" in PLAN.md.
+//
+// export function submitReview(token, { assignmentId, incorrectMeaning, incorrectReading }) {
+//   return request(token, '/reviews', {
+//     method: 'POST',
+//     body: JSON.stringify({
+//       review: {
+//         assignment_id: assignmentId,
+//         incorrect_meaning_answers: incorrectMeaning,
+//         incorrect_reading_answers: incorrectReading
+//       }
+//     })
+//   }).then(r => r.data)
+// }
+//
+// export function startAssignment(token, assignmentId) {
+//   return request(token, `/assignments/${assignmentId}/start`, {
+//     method: 'PUT',
+//     body: JSON.stringify({ assignment: {} })
+//   }).then(r => r.data)
+// }
