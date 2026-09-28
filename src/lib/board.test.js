@@ -158,7 +158,7 @@ describe('levelKanji and nextUp', () => {
     assignment({ subject_id: 4, srs_stage: 0, started_at: null })
   ]
 
-  it('orders by lesson position and says where each stands', () => {
+  it('orders by progress, furthest first, and says where each stands', () => {
     const k = levelKanji(subjects, assignments)
     expect(k.map(x => `${x.characters}:${x.state}`)).toEqual([
       '山:passed',
@@ -168,6 +168,19 @@ describe('levelKanji and nextUp', () => {
       '林:locked'
     ])
     expect(k[0].meaning).toBe('m1')
+  })
+
+  it('puts a higher stage first whatever the lesson order, and keeps lesson order within a stage', () => {
+    const k = levelKanji(
+      [subject(1, 'A', 0), subject(2, 'B', 1), subject(3, 'C', 2), subject(4, 'D', 3), subject(5, 'E', 4)],
+      [
+        assignment({ subject_id: 1, srs_stage: 1, started_at: local(12, 0) }),
+        assignment({ subject_id: 2, srs_stage: 3, started_at: local(8, 0) }),
+        assignment({ subject_id: 3, srs_stage: 6, started_at: local(1, 0), passed_at: local(10, 0) }),
+        assignment({ subject_id: 5, srs_stage: 3, started_at: local(8, 0) })
+      ]
+    )
+    expect(k.map(x => x.characters).join('')).toBe('CBEAD')
   })
 
   it('groups what comes up soonest and says whether each is one step from passing', () => {

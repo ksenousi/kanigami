@@ -1167,7 +1167,10 @@ the most data per inch) — and **the original was kept over all four.**
   next level, reviews this week, and meaning / reading accuracy. The last
   two are standing rather than calls to act and sit in `--text-soft`.
 - **Column one: the level.** Every kanji of the current level, locked ones
-  included, eight across in the serif at `--display-lg`. Brightness is the
+  included, eight across in the serif at `--display-lg`, **ordered by
+  progress** — passed by stage, then apprentice IV down to I, then waiting
+  in lessons, then locked; lesson order within a stage — so the grid reads
+  as how far through the level you are. Brightness is the
   first reading — passed `--text-strong`, in flight `--text`, waiting in
   lessons or locked `--dim` — and the mark beneath is the second: four pips
   lit in `--accent` to the apprentice stage, or one `--srs-guru` rule once
