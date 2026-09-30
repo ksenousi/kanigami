@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   getLevelKanji,
+  getLevelRadicals,
   getLevelKanjiSubjects,
   getLevelProgressions,
   getReviewStatistics,
@@ -136,7 +137,7 @@ export default function Dashboard({ token, user, onDisconnect }) {
           <Figures board={board} level={user.level} />
           <div className="columns">
             <div className="column">
-              <Level board={board} level={user.level} />
+              <Level board={board} level={user.level} token={token} />
               <Taught learned={board.learned} totals={board.totals} />
             </div>
             <div className="column">
@@ -244,54 +245,156 @@ function percent(fraction) {
 // hairline beneath says it again for anyone not reading brightness —
 // apprentice as four pips lit to its stage, passed as one guru-coloured
 // rule. Each cell's label carries all of it in words.
-function Level({ board, level }) {
+//
+// **Pointing at a character re-points the notes** to it — what it is, its
+// stage, and when WaniKani next asks for it — the way the pace caption and
+// the forecast footline do: no tooltip, the line of type already there says
+// something more specific. The arrows walk the grid from the keyboard. The
+// usual notes keep their room underneath, so the section never changes
+// height under the cursor.
+//
+// The level's radicals fold away beneath, read only when first opened.
+function Level({ board, level, token }) {
   const { passed, needed, remaining } = board.passed
   const next = board.next
   const onLevel = board.pace?.current?.days
+  const [reading, setReading] = useState(null)
+  const [open, setOpen] = useState(false)
+  const [radicals, setRadicals] = useState(null)
+
+  function toggle() {
+    setOpen(!open)
+    if (!open && (radicals === null || radicals === 'failed')) {
+      setRadicals('reading')
+      getLevelRadicals(token, level)
+        .then(([subjects, assignments]) => setRadicals(levelKanji(subjects, assignments)))
+        .catch(() => setRadicals('failed'))
+    }
+  }
+
+  const radicalsPassed = Array.isArray(radicals) ? radicals.filter(r => r.state === 'passed').length : null
 
   return (
     <section>
       <Head right={`${passed} of ${needed} passed`}>level {level} kanji</Head>
-      <ul className="kanji">
-        {board.kanji.map(k => (
-          <li key={k.id} className={k.state} aria-label={`${k.characters}, ${k.meaning}: ${describe(k)}`}>
-            <span className="character" aria-hidden="true">
-              {k.characters}
+      <Grid items={board.kanji} label={`Level ${level} kanji`} onRead={setReading} />
+      <p className="notes readout" aria-live="polite">
+        <span className={reading ? 'usual hidden' : 'usual'}>
+          {remaining > 0 && level < TOP_LEVEL ? (
+            <span className="soft">
+              {remaining} to level {level + 1}
+              {onLevel !== undefined ? ` · day ${Math.floor(onLevel) + 1}` : ''}
             </span>
-            {k.state === 'apprentice' ? (
-              <span className="pips" aria-hidden="true">
-                {[1, 2, 3, 4].map(n => (
-                  <i key={n} className={n <= k.stage ? 'lit' : ''} />
-                ))}
-              </span>
-            ) : (
-              <span className="underline" aria-hidden="true" />
-            )}
-          </li>
-        ))}
-      </ul>
-      <p className="notes">
-        {remaining > 0 && level < TOP_LEVEL ? (
-          <span className="soft">
-            {remaining} to level {level + 1}
-            {onLevel !== undefined ? ` · day ${Math.floor(onLevel) + 1}` : ''}
+          ) : null}
+          {next ? (
+            <span>
+              {/* A handful reads as characters; a batch of a dozen from one
+                  lesson session is a wall of them, and the count says more. */}
+              {next.kanji.length <= NAMED
+                ? next.kanji.map(k => k.characters).join(' ')
+                : `${next.kanji.length} kanji`}{' '}
+              {next.at ? `up at ${clock(next.at)}` : 'due now'}
+              {next.oneStep ? ', one step from passing' : ''}
+            </span>
+          ) : null}
+          <LevelUpLine levelUp={board.levelUp} level={level} />
+        </span>
+        {reading ? (
+          <span className="usual">
+            <span className="soft">
+              {reading.characters ?? ''} {reading.meaning} · {describe(reading)}
+            </span>
+            <span className="soft">{nextReview(reading, new Date())}</span>
           </span>
         ) : null}
-        {next ? (
-          <span>
-            {/* A handful reads as characters; a batch of a dozen from one
-                lesson session is a wall of them, and the count says more. */}
-            {next.kanji.length <= NAMED
-              ? next.kanji.map(k => k.characters).join(' ')
-              : `${next.kanji.length} kanji`}{' '}
-            {next.at ? `up at ${clock(next.at)}` : 'due now'}
-            {next.oneStep ? ', one step from passing' : ''}
-          </span>
-        ) : null}
-        <LevelUpLine levelUp={board.levelUp} level={level} />
       </p>
+      <button className="quiet fold" type="button" aria-expanded={open} onClick={toggle}>
+        <span>
+          {open ? '▾' : '▸'} level {level} radicals
+        </span>
+        {open && radicalsPassed !== null ? <span>{radicalsPassed} of {radicals.length} passed</span> : null}
+      </button>
+      {open ? (
+        radicals === 'reading' ? (
+          <p className="notes" role="status">reading radicals</p>
+        ) : radicals === 'failed' ? (
+          <p className="notes hot" role="alert">the radicals did not load · fold and open to try again</p>
+        ) : radicals.length === 0 ? (
+          <p className="notes">no radicals at this level</p>
+        ) : (
+          <Grid items={radicals} label={`Level ${level} radicals`} onRead={setReading} />
+        )
+      ) : null}
     </section>
   )
+}
+
+// One grid of the level's subjects, kanji or radicals. `onRead` hears the
+// item under the pointer or the keyboard, and null when both leave.
+const ACROSS = 8
+
+function Grid({ items, label, onRead }) {
+  const [at, setAt] = useState(null)
+
+  function read(i) {
+    setAt(i)
+    onRead(i === null ? null : items[i])
+  }
+
+  function key(event) {
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -ACROSS, ArrowDown: ACROSS }[event.key]
+    if (step) {
+      event.preventDefault()
+      read(at === null ? 0 : Math.min(items.length - 1, Math.max(0, at + step)))
+    }
+    if (event.key === 'Escape') read(null)
+  }
+
+  return (
+    <ul
+      className="kanji"
+      role="group"
+      aria-label={label}
+      tabIndex={0}
+      onKeyDown={key}
+      onPointerLeave={() => read(null)}
+      onBlur={() => read(null)}
+    >
+      {items.map((k, i) => (
+        <li
+          key={k.id}
+          className={[k.state, at === i ? 'reading' : ''].join(' ').trim()}
+          aria-label={`${k.characters ?? ''} ${k.meaning}: ${describe(k)}, ${nextReview(k, new Date())}`}
+          onPointerEnter={() => read(i)}
+          onPointerDown={() => read(i)}
+        >
+          <span className="character" aria-hidden="true">
+            {k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')}
+          </span>
+          {k.state === 'apprentice' ? (
+            <span className="pips" aria-hidden="true">
+              {[1, 2, 3, 4].map(n => (
+                <i key={n} className={n <= k.stage ? 'lit' : ''} />
+              ))}
+            </span>
+          ) : (
+            <span className="underline" aria-hidden="true" />
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// When WaniKani next asks for it, read off the assignment — never worked out.
+function nextReview(k, now) {
+  if (k.state === 'locked') return 'not unlocked yet'
+  if (k.state === 'lesson') return 'lesson first'
+  if (k.stage === 9) return 'never again'
+  if (!k.availableAt) return 'no review scheduled'
+  const at = new Date(k.availableAt)
+  if (at <= now) return 'review due now'
+  return `next review ${when(at)}`
 }
 
 // A projection, and it says so in the same breath: the soonest this level

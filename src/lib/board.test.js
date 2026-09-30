@@ -183,6 +183,21 @@ describe('levelKanji and nextUp', () => {
     expect(k.map(x => x.characters).join('')).toBe('CBEAD')
   })
 
+  it('carries WaniKani\'s image for a radical with no character', () => {
+    const radical = {
+      id: 9,
+      data: {
+        characters: null,
+        lesson_position: 0,
+        meanings: [{ meaning: 'stick', primary: true }],
+        character_images: [{ url: 'https://example.test/a.svg', content_type: 'image/svg+xml' }]
+      }
+    }
+    const [r] = levelKanji([radical], [])
+    expect(r.image).toBe('https://example.test/a.svg')
+    expect(r.state).toBe('locked')
+  })
+
   it('groups what comes up soonest and says whether each is one step from passing', () => {
     const up = nextUp(levelKanji(subjects, assignments), NOW)
     expect(up.kanji.map(x => x.characters)).toEqual(['川', '血'])

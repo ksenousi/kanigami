@@ -1258,6 +1258,22 @@ a locked one is not projected at all; and the line says `if every answer
 is right` every time it appears. The level-up is the moment the
 `remaining`-th soonest kanji would pass.
 
+**Pointing at a character says when it comes back.** Hovering a kanji or
+radical re-points the level's notes to it — `曜 weekday · guru I`, then
+`next review Thu 2 Oct 14:00` off its `available_at`, `review due now`,
+`lesson first`, or `not unlocked yet` — the way the pace caption and the
+forecast footline re-point: no tooltip. The usual notes keep their cell
+underneath (`visibility: hidden`), so the section does not change height
+under the cursor. The grid takes focus and the arrows walk it, and each
+cell's label carries the same words.
+
+**The level's radicals fold away beneath the kanji.** Asked for as the same
+view for radicals: `▸ level N radicals` opens the same grid, fed through
+`levelKanji`, with a passed count. Read only on first opening —
+`/subjects?types=radical&levels=N` and its assignments, one page each — so
+the mount reads are unchanged. A radical with no codepoint draws its
+WaniKani image, inverted like the slipping column's.
+
 **Shipped:** 21 vitest cases on `board.js`, and the screen driven at
 1440×900 against a stubbed API, checking that every request was a GET.
 

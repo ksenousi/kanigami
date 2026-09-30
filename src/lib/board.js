@@ -8,7 +8,7 @@
 // from the API, rather than one of ours.
 
 import { STAGES } from './standing.js'
-import { subjectTypeName } from './subject.js'
+import { glyphFor, subjectTypeName } from './subject.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const BURNED = 9
@@ -227,6 +227,8 @@ export function levelKanji(subjects = [], assignments = []) {
       const base = {
         id: subject.id,
         characters: subject.data.characters,
+        // A radical may have no codepoint; the grid draws WaniKani's image.
+        image: glyphFor(subject.data).image,
         meaning,
         system: subject.data.spaced_repetition_system_id
       }

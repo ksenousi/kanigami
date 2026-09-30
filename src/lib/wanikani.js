@@ -130,6 +130,16 @@ export function getLevelKanjiSubjects(token, level) {
   return collection(token, `/subjects?types=kanji&levels=${level}&hidden=false`)
 }
 
+// The level's radicals and what you have reached of them — the same pair of
+// reads as the kanji above, for the grid the board folds away until asked.
+// One page each, and only when it is opened.
+export function getLevelRadicals(token, level) {
+  return Promise.all([
+    collection(token, `/subjects?types=radical&levels=${level}&hidden=false`),
+    collection(token, `/assignments?levels=${level}&subject_types=radical&hidden=false`)
+  ])
+}
+
 // Lifetime right and wrong answers per subject — the dashboard's accuracy
 // and what keeps slipping. Paginated like the started assignments and about
 // as large, so it is read once on mount and never on a timer. Retired

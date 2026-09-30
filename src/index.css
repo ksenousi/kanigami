@@ -812,6 +812,65 @@ button.quiet:hover:not(:disabled) {
   color: var(--dim);
 }
 
+/* Under the pointer. Neutral, like the pace bars', so it does not claim the
+   accent; a locked kanji lifts out of --dim just as far as a passed one. */
+.board .kanji li.reading .character {
+  color: var(--text-strong);
+}
+
+.board .kanji .character img {
+  height: 0.9em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+.board .kanji .lesson .character img,
+.board .kanji .locked .character img {
+  opacity: 0.45;
+}
+
+/* The notes and a pointed-at item's readout share one cell, so the section
+   keeps the height of whichever is taller and nothing moves under the
+   cursor. */
+.board .notes.readout {
+  display: grid;
+}
+
+.board .readout > .usual {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.board .readout > .hidden {
+  visibility: hidden;
+}
+
+/* The radicals' fold reads as a section head — the same hairline, lit on
+   hover like any other door. */
+.board button.fold {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 8px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--label);
+  letter-spacing: 0.15em;
+  text-align: left;
+  color: var(--text-soft);
+}
+
+.board button.fold span {
+  white-space: nowrap;
+}
+
+.board button.fold span + span {
+  color: var(--dim);
+}
+
 .board .kanji .underline {
   display: block;
   width: 30px;
