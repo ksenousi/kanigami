@@ -485,6 +485,21 @@ body {
   color: var(--text-soft);
 }
 
+/* The day boundary: from midnight on, a faint tint behind the hours and a
+   dashed rule up through the chart where the next day begins — the rule the
+   day's name above hangs from, carried down to the baseline. */
+.forecast .hour.next-day .stack {
+  background: color-mix(in srgb, var(--rule) 45%, transparent);
+}
+
+.forecast .hour.midnight .stack {
+  border-left: 1px dashed var(--dim);
+}
+
+.forecast .hour.reading.next-day .stack {
+  background: color-mix(in srgb, var(--text-soft) 11%, transparent);
+}
+
 /* Every hour named: bright when reviews arrive in it, --dim when empty, the
    current hour in the accent. A new day's first hour carries the rule the
    day's name hangs from. */

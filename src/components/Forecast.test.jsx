@@ -41,6 +41,17 @@ describe('Forecast', () => {
     expect(days[1]).toMatch(/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat)$/)
   })
 
+  it('sets the next day’s hours apart from midnight on', async () => {
+    const host = await render(<Forecast summary={summary} />)
+    const all = [...hours(host)]
+    const first = all.findIndex(h => h.classList.contains('next-day'))
+    expect(first).toBeGreaterThan(0)
+    expect(all[first].classList.contains('midnight')).toBe(true)
+    expect(all[first].querySelector('.at').textContent).toBe('00')
+    expect(all.slice(first).every(h => h.classList.contains('next-day'))).toBe(true)
+    expect(all.slice(0, first).some(h => h.classList.contains('next-day'))).toBe(false)
+  })
+
   it('prints each count on its bar, and stops a backlog bigger than the day at the top', async () => {
     const host = await render(<Forecast summary={summary} />)
     const counts = [...host.querySelectorAll('.n')].map(n => n.textContent)

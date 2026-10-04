@@ -1576,6 +1576,9 @@ All of it was acted on, on the owner's say-so, without a prototype:
   - The line beneath reads `38 due now · 106 more by this time tomorrow` or
     `Nothing due now · next at 11:00 · 55 by this time tomorrow`; pointing
     at or tapping a bar makes it `11:00–12:00 · 12 reviews · 薬 to pass`.
+  - **The day boundary** (asked for after): from midnight on, the hours sit
+    on a faint `--rule` tint, and a dashed `--dim` line runs up through the
+    chart at midnight, carrying down the rule the day's name hangs from.
   - Gone: the warm "soon" colour, the narrow backlog tick, the lifted marks
     and the separate key line. Rejected: sittings (loses the shape of the
     day), the day band, the running total, and the other four time marks.

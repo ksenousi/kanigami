@@ -12,7 +12,9 @@ import usePointing from './usePointing.js'
 // - **One column per bucket** of the summary — the current hour and the 24
 //   after it — each with its two-digit hour beneath the baseline: bright when
 //   reviews arrive then, `--dim` when the hour is empty, the current hour in
-//   the accent. Above, today and tomorrow are named where each begins.
+//   the accent. Above, today and tomorrow are named where each begins, and
+//   the next day's hours sit on a faint tint behind a dashed line at
+//   midnight, so the day boundary reads before any label does.
 // - **Each bar carries its count**, and the kanji the level-up waits on sit
 //   above the bar of the hour they come up in — strong ink when one right
 //   answer passes them, softer otherwise.
@@ -64,6 +66,8 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
                 'hour',
                 hour.count ? 'busy' : '',
                 index === 0 ? 'now' : '',
+                midnight > 0 && index >= midnight ? 'next-day' : '',
+                index === midnight ? 'midnight' : '',
                 kanji ? 'marked' : '',
                 reading === index ? 'reading' : ''
               ]
