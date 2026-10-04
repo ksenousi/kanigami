@@ -709,6 +709,13 @@ button.quiet {
    the only controls a finger has to find up here. */
 .board .masthead button {
   min-height: 44px;
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.board .masthead .eyebrow {
+  text-transform: none;
+  letter-spacing: 0.04em;
 }
 
 .board .masthead button + button {
@@ -717,13 +724,15 @@ button.quiet {
 
 .board .notes button {
   font-size: var(--label);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.03em;
+  text-transform: none;
   padding-block: 0;
 }
 
 /* The resting notes say pointing at something reads it, in the verb the
    device has. `hover: none` is a finger. */
 .board .hint {
+  font-size: var(--label);
   color: var(--dim);
 }
 
@@ -811,15 +820,25 @@ button.quiet {
   color: var(--text-soft);
 }
 
+/* ---- 二 Two voices ----
+   Capitals name things; everything else is read. Picked from a prototype of
+   five type treatments (see "Two voices" in PLAN.md): every line under the
+   figures used to be 17px mono capitals at 0.15em — heads, notes, counts,
+   readouts, the road — one voice for everything, and the level-up sentence
+   wrapped into three lines of capitals.
+
+   Now the section heads and the figure labels keep the mono capitals,
+   because they name a thing. The notes and readouts — sentences — are
+   sentence-case sans a step up at --small. Counts stay mono, for their
+   digits, but in lowercase with the tracking nearly gone. */
 .board .notes {
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-family: var(--sans);
+  font-size: var(--small);
+  line-height: 1.45;
   color: var(--dim);
 }
 
@@ -928,7 +947,8 @@ button.quiet {
   padding: 0 0 10px;
   border-bottom: 1px solid var(--rule);
   font-size: var(--label);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.03em;
+  text-transform: none;
   text-align: left;
   color: var(--text-soft);
 }
@@ -980,6 +1000,8 @@ button.quiet {
   grid-template-columns: minmax(0, 1fr) max-content;
   align-items: baseline;
   gap: 8px 14px;
+  letter-spacing: 0.03em;
+  text-transform: none;
 }
 
 /* The words on one line — the count, then the share and the total — and
@@ -1006,6 +1028,8 @@ button.quiet {
 
 .board .counts {
   justify-content: flex-start;
+  letter-spacing: 0.03em;
+  text-transform: none;
 }
 
 .board .srs-apprentice {
@@ -1042,9 +1066,15 @@ button.quiet {
   display: contents;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--dim);
+}
+
+/* The meaning is a word to read, so it is set like the notes. */
+.board .slipping .meaning {
+  font-family: var(--sans);
+  font-size: var(--small);
+  letter-spacing: 0;
 }
 
 .board .slipping .character {
@@ -1176,9 +1206,14 @@ button.quiet {
   gap: 8px;
   font-family: var(--mono);
   font-size: var(--label);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--dim);
+}
+
+/* The decade's name is read; its date stays mono beneath it. */
+.board .road .name {
+  font-family: var(--sans);
+  font-size: var(--small);
 }
 
 .board .road .notches {
@@ -1222,6 +1257,8 @@ button.quiet {
    columns run. */
 .board .footline {
   margin-top: auto;
+  letter-spacing: 0.03em;
+  text-transform: none;
 }
 
 /* An iPad, either way up, or a narrow window. Below about 1,280px three

@@ -1339,6 +1339,35 @@ question for the next prototype:
 - On an upright iPad the romaji `kanigami` tag goes, and the masthead
   wraps between its pieces rather than inside them.
 
+**二 Two voices — the type, decided from a prototype.** Every line under
+the figures was 17px mono capitals tracked at 0.15em: heads, notes, counts,
+readouts, decade names. One voice for everything, so nothing outranked
+anything, and `level 16 earliest … if every answer is right` wrapped into
+three lines of capitals. Five treatments of the same board went up side by
+side, layout and data unchanged, at 1440 and at an upright iPad's 820:
+
+- **Picked: Two voices. Capitals name things; everything else is read.**
+  Section heads and figure labels keep the mono capitals (`--label`,
+  0.15em). Notes and readouts — sentences — are sentence-case sans at
+  `--small`, line-height 1.45: `Day 13 on this level`, `Level 16 earliest
+  Thu 8 Oct 04:00, if every answer is right`, `Next review Mon 5 Oct 20:00`.
+  The hints stay sans at `--label` in `--dim`. Counts (the spread, taught,
+  slipping percentages, the road's dates, the footline, the masthead) stay
+  mono for their digits but lowercase at 0.03em. Meanings in `keeps
+  slipping` and the decade names on the road are words, so sans at
+  `--small`. The strings are written in sentence case in the JSX, not
+  capitalised by CSS.
+- **Rejected: 明 Mincho** — the serif sets heads and prose too, a printed
+  page. Warm, but heads and notes in one family leaves hierarchy to size
+  alone.
+- **Rejected: 数 Numbers lead** — every number inline set in the figures'
+  serif a step up, words dropped to quiet sans. Fastest to scan; turns the
+  prose into captions.
+- **Rejected for now: 字 Kanji heads** — Two voices plus each head led by
+  its kanji at `--display` (級 段階 既習 苦手 歩調 道のり). Most character;
+  it sits on top of Two voices, so it can be added later without undoing
+  anything.
+
 ---
 
 ## Reference

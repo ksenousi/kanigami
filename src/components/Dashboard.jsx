@@ -398,10 +398,10 @@ function Level({ board, level, token }) {
       <p className="notes readout" aria-live="polite">
         <span className={reading ? 'usual hidden' : 'usual'}>
           {onLevel !== undefined ? (
-            <span className="soft">day {Math.floor(onLevel) + 1} on this level</span>
+            <span className="soft">Day {Math.floor(onLevel) + 1} on this level</span>
           ) : null}
           {next ? (
-            <span>
+            <span className="soft">
               {/* A handful reads as characters; a batch of a dozen from one
                   lesson session is a wall of them, and the count says more. */}
               {next.kanji.length <= NAMED
@@ -412,7 +412,7 @@ function Level({ board, level, token }) {
             </span>
           ) : null}
           <LevelUpLine levelUp={board.levelUp} level={level} />
-          <Hint pointer="point at" touch="tap">
+          <Hint pointer="Point at" touch="Tap">
             a kanji for its next review
           </Hint>
         </span>
@@ -433,16 +433,16 @@ function Level({ board, level, token }) {
       </button>
       {open ? (
         radicals === 'reading' ? (
-          <p className="notes" role="status">reading radicals</p>
+          <p className="notes" role="status">Reading radicals</p>
         ) : radicals === 'failed' ? (
           <p className="notes row hot" role="alert">
-            <span>the radicals did not load</span>
+            <span>The radicals did not load</span>
             <button className="quiet" type="button" onClick={readRadicals}>
               Try again
             </button>
           </p>
         ) : radicals.length === 0 ? (
-          <p className="notes">no radicals at this level</p>
+          <p className="notes">No radicals at this level</p>
         ) : (
           <Grid items={radicals} label={`Level ${level} radicals`} onRead={setReading} />
         )
@@ -498,23 +498,23 @@ function Grid({ items, label, onRead }) {
 
 // When WaniKani next asks for it, read off the assignment — never worked out.
 function nextReview(k, now) {
-  if (k.state === 'locked') return 'not unlocked yet'
-  if (k.state === 'lesson') return 'lesson first'
-  if (k.stage === 9) return 'never again'
-  if (!k.availableAt) return 'no review scheduled'
+  if (k.state === 'locked') return 'Not unlocked yet'
+  if (k.state === 'lesson') return 'Lesson first'
+  if (k.stage === 9) return 'Never again'
+  if (!k.availableAt) return 'No review scheduled'
   const at = new Date(k.availableAt)
-  if (at <= now) return 'review due now'
-  return `next review ${when(at)}`
+  if (at <= now) return 'Review due now'
+  return `Next review ${when(at)}`
 }
 
 // A projection, and it says so in the same breath: the soonest this level
 // could end is only true if nothing is missed from here.
 function LevelUpLine({ levelUp, level }) {
   if (!levelUp || level >= TOP_LEVEL) return null
-  if (levelUp.waitsOnLocked) return <span>level {level + 1} waits on locked kanji</span>
+  if (levelUp.waitsOnLocked) return <span>Level {level + 1} waits on locked kanji</span>
   return (
     <span>
-      level {level + 1} earliest {when(levelUp.at)} · if every answer is right
+      Level {level + 1} earliest {when(levelUp.at)}, if every answer is right
     </span>
   )
 }
@@ -549,7 +549,7 @@ function Srs({ spread: bands, moved: gained }) {
         {/* `+27 apprentice` read as the apprentice count going up by that;
             it is lessons started, and the guru and burned counts are first
             arrivals. Past, so it says past. */}
-        <span className="soft">past 7 days</span>
+        <span className="soft">Past 7 days</span>
         <span className="srs-apprentice">{gained.apprentice} started</span>
         <span className="srs-guru">{gained.guru} to guru</span>
         <span className="srs-burned">{gained.burned} burned</span>
@@ -565,7 +565,7 @@ function Slipping({ slipping }) {
     <section>
       <Head right="lowest accuracy">keeps slipping</Head>
       {slipping.length === 0 ? (
-        <p className="notes">nothing missed often enough to count</p>
+        <p className="notes">Nothing missed often enough to count</p>
       ) : (
         <ul className="slipping">
           {slipping.map(l => {
@@ -578,7 +578,7 @@ function Slipping({ slipping }) {
                   {text ?? (image ? <img src={image} alt="" /> : '〓')}
                 </span>
                 <span className="what">
-                  <span className={`wk-${l.type}`}>{meaning}</span>
+                  <span className={`meaning wk-${l.type}`}>{meaning}</span>
                   {reading ? <span className="reading">{reading}</span> : null}
                 </span>
                 <span className="count">{l.percentage}%</span>
@@ -675,26 +675,26 @@ function Pace({ pace: p }) {
       <p className="notes spread-out" aria-live="polite">
         {shown ? (
           <span className="soft">
-            level {shown.level} · {shown.current ? `day ${Math.floor(shown.days) + 1} so far` : `${Math.round(shown.days)} days`}
+            Level {shown.level} · {shown.current ? `day ${Math.floor(shown.days) + 1} so far` : `${Math.round(shown.days)} days`}
             {shown.break ? ' · break' : ''}
           </span>
         ) : (
           // The day on this level is the level's notes' to say.
-          p.eta ? <span className="soft">level 60 ≈ {monthYear(p.eta)}</span> : <span />
+          p.eta ? <span className="soft">Level 60 ≈ {monthYear(p.eta)}</span> : <span />
         )}
       </p>
       {/* Its own line, and there whether or not a bar is read, so the
           section never changes height under the cursor. */}
       <p className="notes">
-        <Hint pointer="point at" touch="tap">
+        <Hint pointer="Point at" touch="Tap">
           a bar for its level
         </Hint>
       </p>
       {breaks.length > 0 ? (
         <p className="notes">
-          {breaks.length === 1 ? 'level' : 'levels'} {breaks.map(b => b.level).join(', ')} left out as{' '}
+          {breaks.length === 1 ? 'Level' : 'Levels'} {breaks.map(b => b.level).join(', ')} left out as{' '}
           {breaks.length === 1 ? 'a break' : 'breaks'} ·{' '}
-          {breaks.map(b => `${Math.round(b.days)}d`).join(', ')}
+          {breaks.map(b => `${Math.round(b.days)} days`).join(', ')}
         </p>
       ) : null}
     </section>

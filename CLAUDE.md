@@ -132,6 +132,10 @@ removes. Assume every commit is permanent and public.
   Below 1,280px the board drops to the tablet layout. A phone is not a case
   worth spending anything on — no phone breakpoints or type ramps, nothing
   held back because it is tight at 375px, and no phone-only findings.
+- **Capitals name things; everything else is read** (二 Two voices, in
+  PLAN.md). Mono capitals are for section heads and figure labels only.
+  Sentences are sentence-case sans, written that way in the JSX; counts are
+  lowercase mono. Don't add a new line of tracked capitals.
 - **Type sizes come from the scale, never from a number.** `--label`,
   `--small`, `--body`, `--input`, `--control` in `src/index.css`. `--label` is
   the floor and nothing goes under it — the mono labels sat at 9.5–10px with
