@@ -577,9 +577,19 @@ button {
   transition: border-color 0.15s, color 0.15s;
 }
 
-button:hover:not(:disabled) {
-  border-bottom-color: var(--accent);
-  color: var(--accent);
+/* Hover only where there is a pointer that hovers. A tap on an iPad sets
+   :hover and leaves it set until the next tap somewhere else, so a door
+   tapped once stays lit as if it were still under a cursor. */
+@media (hover: hover) {
+  button:hover:not(:disabled) {
+    border-bottom-color: var(--accent);
+    color: var(--accent);
+  }
+
+  button.quiet:hover:not(:disabled) {
+    border-bottom-color: var(--accent);
+    color: var(--accent);
+  }
 }
 
 button:disabled {
@@ -591,14 +601,6 @@ button.quiet {
   border-bottom-color: transparent;
   color: var(--dim);
   padding: 8px 0 7px;
-}
-
-button.quiet:hover:not(:disabled) {
-  border-bottom-color: var(--accent);
-}
-
-button.quiet:hover:not(:disabled) {
-  color: var(--accent);
 }
 
 :focus-visible {
@@ -690,8 +692,11 @@ button.quiet:hover:not(:disabled) {
 
 .board .figures {
   justify-content: flex-start;
-  flex-wrap: nowrap;
-  gap: clamp(40px, 5vw, 80px);
+  /* Five labels in mono capitals need about 1,250px with their gaps, so
+     anything narrower than a wide desktop wraps — the two standing figures
+     go to a second line, and the three counts that ask something lead. */
+  flex-wrap: wrap;
+  gap: 24px clamp(40px, 5vw, 80px);
 }
 
 /* The weekly total and accuracy are standing, not a call to act, so they
@@ -897,62 +902,11 @@ button.quiet:hover:not(:disabled) {
   background: var(--accent);
 }
 
-/* The week: a day, a hairline lit to its share of the busiest, a count. */
-.board .days {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.board .days li {
-  display: grid;
-  grid-template-columns: 8ch minmax(0, 1fr) 5ch;
-  gap: 14px;
-  align-items: center;
-}
-
-.board .days .track {
-  display: block;
-  height: 2px;
-  background: var(--rule);
-}
-
-.board .days .fill {
-  display: block;
-  height: 100%;
-  background: var(--text-soft);
-}
-
-.board .days .count {
-  text-align: right;
-  color: var(--text-soft);
-}
-
-.board .days .today {
-  color: var(--text-soft);
-}
-
-.board .days .today .fill {
-  background: var(--accent);
-}
-
-.board .days .today .count {
-  color: var(--accent);
-}
-
 /* In a column, the spread and the taught line take the column's width
    rather than home's centred 620px, and read left to right. Three kinds
    side by side do not fit a third of the page — `1,242 vocabulary` ran
-   into the next column — so each kind is a row, the same shape as a day in
-   the week: the count, a hairline lit to its share, the total. */
+   into the next column — so each kind is a row: the count, a hairline lit
+   to its share, the total. */
 .board .spreadline,
 .board .fills {
   width: 100%;
@@ -972,6 +926,10 @@ button.quiet:hover:not(:disabled) {
 
 .board .fills .of {
   text-align: right;
+}
+
+.board .fills .alone {
+  grid-column: 1 / -1;
 }
 
 .board .counts {
@@ -1184,4 +1142,20 @@ button.quiet:hover:not(:disabled) {
    columns run. */
 .board .footline {
   margin-top: auto;
+}
+
+/* An iPad, either way up, or a narrow window. Below about 1,280px three
+   columns of a third leave each of the level's eight kanji a cell narrower
+   than the character, and they run into one another, so the level takes
+   the full width and the other two sit side by side beneath it. This is the
+   tablet, the one size below desktop the board is meant for — not the start
+   of a ramp toward a phone. */
+@media (max-width: 1279px) {
+  .board .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .board .column:first-child {
+    grid-column: 1 / -1;
+  }
 }

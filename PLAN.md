@@ -1181,17 +1181,20 @@ the most data per inch) — and **the original was kept over all four.**
   `level 16 earliest thu 1 oct 04:00 · if every answer is right`, or
   `level 16 waits on locked kanji` when not enough are unlocked to reach
   the threshold.
-  Beneath: **taught**, home's learned line reshaped into three rows on one
-  shared grid (`1,242 vocabulary` ran into the next column side by side).
-- **Column two: the week.** Seven local days, each a hairline lit to its
-  share of the busiest, today in `--accent`. **Today holds the backlog** —
-  anything already due is due today. Beneath: the SRS spread, and
+  **Taught** — home's learned line reshaped into three rows on one shared
+  grid (`1,242 vocabulary` ran into the next column side by side) — now sits
+  in column two.
+- **Column two: the spread.** The SRS spread, and
   `this week +27 apprentice +46 guru +38 burned` — lessons started, first
   arrivals at guru, burns. Those are the only three moves an assignment
   dates (`started_at`, `passed_at`, `burned_at`). **Master and enlightened
   cannot be added**: WaniKani stamps no date for reaching either, and the
   `/reviews` history that could reconstruct one is disabled on their side.
-  Asked for once already; do not invent a count for them.
+  Asked for once already; do not invent a count for them. Beneath: **taught**,
+  moved here from column one when the week left.
+  **The week was removed** on the owner's say-so: seven days of hairlines,
+  each lit to its share of the busiest, today holding the backlog in
+  `--accent`. The `reviews this week` figure still sums those days.
 - **Column three: what keeps slipping, and pace.** The five lowest
   `percentage_correct` items still in rotation — burned items are finished
   and left out, and an item needs `MIN_MISSES` (3) misses to count, so one
@@ -1276,6 +1279,20 @@ WaniKani image, inverted like the slipping column's.
 
 **Shipped:** 21 vitest cases on `board.js`, and the screen driven at
 1440×900 against a stubbed API, checking that every request was a GET.
+
+**The iPad, by touch.** Asked for: the board has to work on an iPad with no
+mouse. Hover alone read nothing there — a tap fires enter, down, up and
+leave in a row, so a readout flashed for a frame and went. `usePointing`
+(`src/components/`) now drives all three readouts — the kanji and radical
+grids, the pace bars, the forecast's hours: a mouse reads on hover as
+before; **a tap reads and holds**, and lets go on a second tap of the same
+item or a tap anywhere outside. Only the group holding something lets go,
+because the kanji and the radicals share one readout. Button `:hover` sits
+under `@media (hover: hover)`, since iOS leaves a tapped door lit. **Below
+1,280px** the level takes the full width and the other two columns sit
+beneath it — three thirds left each kanji a cell narrower than the
+character — and the figures row wraps at every width, because its five
+labels need about 1,250px. Checked at 820, 1180 and 1440 against a stub.
 
 ---
 

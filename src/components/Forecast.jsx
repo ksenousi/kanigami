@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { forecast, nextDue, peak } from '../lib/standing.js'
+import usePointing from './usePointing.js'
 
 // The footline track, carrying the next 24 hours.
 //
@@ -31,7 +31,7 @@ const TALLEST = 20
 const WARM = 4 // hours after this one that stay near the accent
 
 export default function Forecast({ summary }) {
-  const [reading, setReading] = useState(null)
+  const { at: reading, point, groupProps, itemProps } = usePointing()
   // Unclipped: WaniKani sends now plus 24 hours, and the +24h at the far end
   // of the track is only true if the twenty-fourth is actually drawn.
   const hours = forecast(summary)
@@ -50,19 +50,15 @@ export default function Forecast({ summary }) {
         className="track hours"
         role="group"
         aria-label="Reviews due over the next 24 hours"
-        tabIndex={0}
-        onPointerLeave={() => setReading(null)}
-        onBlur={() => setReading(null)}
-        onKeyDown={walk(hours.length, setReading)}
+        onKeyDown={walk(hours.length, reading, point)}
+        {...groupProps}
       >
         {hours.map((hour, index) => (
           <span
             key={hour.at}
             className={`hour${warmth(hour, index)}${reading === index ? ' reading' : ''}`}
-            // Pointer rather than mouse, so a tap on a touch screen reads the
-            // same hour a hover would.
-            onPointerEnter={() => setReading(index)}
-            onPointerDown={() => setReading(index)}
+            // A mouse reads on hover; a tap reads and holds — see usePointing.
+            {...itemProps(index)}
           >
             <i style={{ height: `${height(hour, index, tallest)}px` }} />
           </span>
@@ -77,25 +73,25 @@ export default function Forecast({ summary }) {
 // Left and right walk an hour, Home and End go to the ends, Escape gives the
 // label back to its resting state. Returns a handler rather than closing over
 // the component's scope, so the walk is nothing but arithmetic.
-function walk(count, setReading) {
+function walk(count, now, point) {
   return function key(event) {
     const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
     if (step) {
       event.preventDefault()
       // The first press lands on the current hour whichever way it went,
       // rather than stepping off a resting label and skipping hour zero.
-      setReading(now => (now === null ? 0 : Math.min(count - 1, Math.max(0, now + step))))
+      point(now === null ? 0 : Math.min(count - 1, Math.max(0, now + step)))
       return
     }
     if (event.key === 'Home') {
       event.preventDefault()
-      setReading(0)
+      point(0)
     }
     if (event.key === 'End') {
       event.preventDefault()
-      setReading(count - 1)
+      point(count - 1)
     }
-    if (event.key === 'Escape') setReading(null)
+    if (event.key === 'Escape') point(null)
   }
 }
 

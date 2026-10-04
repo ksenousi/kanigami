@@ -125,12 +125,13 @@ removes. Assume every commit is permanent and public.
 - One surface, 墨 ink, tokens in `src/index.css`. De-boxed — no borders or
   cards that only group things. A hairline that lights is the house pattern,
   not an outlined box.
-- **Mobile is not a target.** This is a desktop app; a phone is not a case
-  worth spending anything on. Don't add breakpoints, phone-sized type ramps,
-  or touch affordances for their own sake, don't hold a design back because
-  it is tight at 375px, and don't report a phone-only shortcoming as a
-  finding. If something happens to work small, fine — it is not a
-  requirement, and nothing is a regression for failing it.
+- **Desktop and iPad are the targets; a phone is not.** The iPad counts
+  either way up (820–1366px) and by touch alone, with no mouse: anything a
+  mouse reads by hover has to read by tap too (`usePointing`), and `:hover`
+  styles sit under `@media (hover: hover)` so a tap doesn't leave them lit.
+  Below 1,280px the board drops to the tablet layout. A phone is not a case
+  worth spending anything on — no phone breakpoints or type ramps, nothing
+  held back because it is tight at 375px, and no phone-only findings.
 - **Type sizes come from the scale, never from a number.** `--label`,
   `--small`, `--body`, `--input`, `--control` in `src/index.css`. `--label` is
   the floor and nothing goes under it — the mono labels sat at 9.5–10px with

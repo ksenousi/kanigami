@@ -28,14 +28,15 @@ import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
 import Forecast from './Forecast.jsx'
 import useOnline from './useOnline.js'
+import usePointing from './usePointing.js'
 
 // 盤 The board — the whole app. Decided from a prototype: of four
 // directions (everything at once, time leads, the level is the page, the
 // almanac) and four branches of the first, the original "everything at
 // once" was picked. See "The dashboard" in PLAN.md.
 //
-// A headline row of figures, then three columns: the level, the week, and
-// what is slipping. The footline is home's forecast, unchanged.
+// A headline row of figures, then three columns: the level, where the
+// reviews stand, and what is slipping. The footline is home's forecast, unchanged.
 //
 // It reads and never writes, so it wants a token with no permissions at
 // all. Every read happens once, on mount, never on a timer. The four the
@@ -138,11 +139,10 @@ export default function Dashboard({ token, user, onDisconnect }) {
           <div className="columns">
             <div className="column">
               <Level board={board} level={user.level} token={token} />
-              <Taught learned={board.learned} totals={board.totals} />
             </div>
             <div className="column">
-              <Week days={board.days} />
               <Srs spread={board.spread} moved={board.moved} />
+              <Taught learned={board.learned} totals={board.totals} />
             </div>
             <div className="column">
               <Slipping slipping={board.slipping} />
@@ -334,39 +334,25 @@ function Level({ board, level, token }) {
 const ACROSS = 8
 
 function Grid({ items, label, onRead }) {
-  const [at, setAt] = useState(null)
-
-  function read(i) {
-    setAt(i)
-    onRead(i === null ? null : items[i])
-  }
+  const { at, point, groupProps, itemProps } = usePointing(i => onRead(i === null ? null : items[i]))
 
   function key(event) {
     const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -ACROSS, ArrowDown: ACROSS }[event.key]
     if (step) {
       event.preventDefault()
-      read(at === null ? 0 : Math.min(items.length - 1, Math.max(0, at + step)))
+      point(at === null ? 0 : Math.min(items.length - 1, Math.max(0, at + step)))
     }
-    if (event.key === 'Escape') read(null)
+    if (event.key === 'Escape') point(null)
   }
 
   return (
-    <ul
-      className="kanji"
-      role="group"
-      aria-label={label}
-      tabIndex={0}
-      onKeyDown={key}
-      onPointerLeave={() => read(null)}
-      onBlur={() => read(null)}
-    >
+    <ul className="kanji" role="group" aria-label={label} onKeyDown={key} {...groupProps}>
       {items.map((k, i) => (
         <li
           key={k.id}
           className={[k.state, at === i ? 'reading' : ''].join(' ').trim()}
           aria-label={`${k.characters ?? ''} ${k.meaning}: ${describe(k)}, ${nextReview(k, new Date())}`}
-          onPointerEnter={() => read(i)}
-          onPointerDown={() => read(i)}
+          {...itemProps(i)}
         >
           <span className="character" aria-hidden="true">
             {k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')}
@@ -414,30 +400,6 @@ function describe(k) {
   if (k.state === 'lesson') return 'waiting in lessons'
   if (k.state === 'passed') return `passed, ${stageName(k.stage)}`
   return stageName(k.stage)
-}
-
-// Seven days as seven hairlines lit to their share of the busiest. Today
-// carries the backlog and the accent.
-function Week({ days }) {
-  const total = days.reduce((sum, d) => sum + d.count, 0)
-  const busiest = Math.max(1, ...days.map(d => d.count))
-
-  return (
-    <section>
-      <Head right={`${total.toLocaleString()} reviews`}>the next seven days</Head>
-      <ul className="days">
-        {days.map((d, i) => (
-          <li key={d.day.getTime()} className={i === 0 ? 'today' : ''}>
-            <span>{i === 0 ? 'today' : dayName(d.day)}</span>
-            <span className="track" aria-hidden="true">
-              <span className="fill" style={{ width: `${(d.count / busiest) * 100}%` }} />
-            </span>
-            <span className="count">{d.count}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
 }
 
 function Srs({ spread: bands, moved: gained }) {
@@ -504,7 +466,7 @@ function Slipping({ slipping }) {
 // walk it from the keyboard, and the caption is the live region, so a
 // screen reader hears what a pointer would show.
 function Pace({ pace: p, level }) {
-  const [reading, setReading] = useState(null)
+  const { at: reading, point, groupProps, itemProps } = usePointing()
   if (!p || (p.levels.length === 0 && !p.current)) return null
 
   const bars = [...p.levels, ...(p.current ? [{ ...p.current, current: true }] : [])]
@@ -525,9 +487,9 @@ function Pace({ pace: p, level }) {
     const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
     if (step) {
       event.preventDefault()
-      setReading(at => (at === null ? bars.length - 1 : Math.min(bars.length - 1, Math.max(0, at + step))))
+      point(reading === null ? bars.length - 1 : Math.min(bars.length - 1, Math.max(0, reading + step)))
     }
-    if (event.key === 'Escape') setReading(null)
+    if (event.key === 'Escape') point(null)
   }
 
   return (
@@ -537,10 +499,8 @@ function Pace({ pace: p, level }) {
         className="bars"
         role="group"
         aria-label="Days spent on each level"
-        tabIndex={0}
         onKeyDown={key}
-        onPointerLeave={() => setReading(null)}
-        onBlur={() => setReading(null)}
+        {...groupProps}
       >
         {bars.map((b, i) => (
           <span
@@ -548,8 +508,7 @@ function Pace({ pace: p, level }) {
             className={[b.current ? 'current' : b.break ? 'break' : '', reading === i ? 'reading' : '']
               .join(' ')
               .trim()}
-            onPointerEnter={() => setReading(i)}
-            onPointerDown={() => setReading(i)}
+            {...itemProps(i)}
           >
             {/* A level only days old still has to show up as a bar, and one
                 running longer than any before it stops at the top. */}
@@ -655,7 +614,9 @@ function Taught({ learned: counts, totals }) {
       <div className="fills">
         {kinds.map(([kind, count, total, word]) => (
           <div key={kind} className="kind">
-            <span className={`wk-${kind}`}>
+            {/* Without a total there is no track or denominator, so the count
+                takes the whole row rather than one cell of three. */}
+            <span className={total ? `wk-${kind}` : `wk-${kind} alone`}>
               {count.toLocaleString()} {word}
             </span>
             {total ? (
@@ -711,10 +672,6 @@ function when(at) {
   const sameDay = at.toDateString() === new Date().toDateString()
   if (sameDay) return `today ${clock(at)}`
   return `${at.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })} ${clock(at)}`
-}
-
-function dayName(day) {
-  return `${day.toLocaleDateString(undefined, { weekday: 'short' })} ${day.getDate()}`
 }
 
 function monthYear(at) {
