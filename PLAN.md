@@ -1524,6 +1524,13 @@ All of it was acted on, on the owner's say-so, without a prototype:
 - Counts in `past 7 days` and the milestones are mono, per Two voices; the
   radicals fold is a head in capitals and says `4 passed · 6 in all`; the
   romaji tag is `--dim`.
+- **Kanji or radicals is a switch in the level's head** (`level 15 ·
+  kanji radicals`, the chosen word in strong ink over the head's hairline),
+  replacing the `▸ level 15 radicals` fold, which the owner disliked: it
+  read as one more section head under the grid. The grid, the readout and
+  the hint follow the switch; the radicals are read on first asking, as
+  before. The head no longer has room for the count, so the notes lead with
+  it: `20 passed · 29 needed`, or `4 of 6 passed`.
 - **Apprentice keeps the accent in the spread** — it is the hot end of the
   spread's walk from hot to drained, items back within hours. But `146
   taught` in past 7 days borrowed that red for lessons done, which read as

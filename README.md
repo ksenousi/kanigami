@@ -20,7 +20,7 @@ token. There is no server and no database. The token is held in
   next 24 hours of reviews drawn beneath them.
 - **The level** — every kanji of your current level, locked ones included,
   ordered by progress, with when each comes back for review. The level's
-  radicals fold out beneath. A line projects the earliest level-up if every
+  radicals are one switch away in the section's heading. A line projects the earliest level-up if every
   answer from here is right, and says so.
 - **The SRS spread** and what moved in the past seven days.
 - **Taught** — radicals, kanji and vocabulary started, each as a share of

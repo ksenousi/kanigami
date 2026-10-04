@@ -13,7 +13,7 @@
 //   slow           the core reads take a second, each commentary read 2.5s
 //   offline        every request fails as if the network were gone
 //   revoked        WaniKani refuses the token (401)
-//   radicals-fail  the level's radicals do not load when folded open
+//   radicals-fail  the level's radicals do not load when switched to
 ;(() => {
   const scenario = new URLSearchParams(location.search).get('fake') || 'default'
   const TOKEN = '00000000-0000-0000-0000-000000000000'

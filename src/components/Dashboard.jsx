@@ -403,13 +403,18 @@ function percent(fraction) {
 // How far is the figure's job, so the notes do not say `8 to level 16`
 // again; they say how long, what is next, and the soonest it could end.
 //
-// The level's radicals fold away beneath, read only when first opened.
+// **The heading switches the grid between the level's kanji and its
+// radicals** — two words beside `level 16`, the chosen one lit — rather
+// than a fold of radicals under the kanji, which read as one more section
+// head. The radicals are read the first time they are asked for.
+const KINDS = ['kanji', 'radicals']
+
 function Level({ board, level, token }) {
   const { passed, needed } = board.passed
   const next = board.next
   const onLevel = board.pace?.current?.days
   const [reading, setReading] = useState(null)
-  const [open, setOpen] = useState(false)
+  const [showing, setShowing] = useState('kanji')
   const [radicals, setRadicals] = useState(null)
 
   function readRadicals() {
@@ -419,29 +424,67 @@ function Level({ board, level, token }) {
       .catch(() => setRadicals('failed'))
   }
 
-  function toggle() {
-    setOpen(!open)
-    if (!open && (radicals === null || radicals === 'failed')) readRadicals()
+  function show(kind) {
+    setShowing(kind)
+    setReading(null)
+    if (kind === 'radicals' && (radicals === null || radicals === 'failed')) readRadicals()
   }
 
+  const onRadicals = showing === 'radicals'
   const radicalsPassed = Array.isArray(radicals) ? radicals.filter(r => r.state === 'passed').length : null
+  // The count leads the notes rather than sitting in the head, which the
+  // switch fills. `20 of 29 passed` read as the level's size, and the grid
+  // shows more cells than that: 29 is the 90% WaniKani asks for, so it says
+  // needed. The radicals have no threshold; all of them unlock the kanji.
+  const count = onRadicals
+    ? radicalsPassed !== null
+      ? `${radicalsPassed} of ${radicals.length} passed`
+      : null
+    : `${passed} passed · ${needed} needed`
 
   // On a tablet the notes stand beside the grid rather than under it (see
   // `.level` in index.css), so the level is half as tall.
   return (
     <section className="level">
-      {/* `20 of 29 passed` read as the level's size, and the grid beside it
-          shows more cells than that: 29 is the 90% WaniKani asks for, so it
-          says needed. Short enough to share a third of the page with the
-          name without wrapping. */}
-      <Head right={`${passed} of ${needed} needed`}>level {level} kanji</Head>
-      <Grid items={board.kanji} label={`Level ${level} kanji`} onRead={setReading} />
+      <div className="head">
+        <h2>
+          level {level}
+          <span className="kinds" role="group" aria-label={`Show level ${level}'s`}>
+            {KINDS.map(kind => (
+              <button key={kind} type="button" aria-pressed={showing === kind} onClick={() => show(kind)}>
+                {kind}
+              </button>
+            ))}
+          </span>
+        </h2>
+      </div>
+      <div className="body">
+        {!onRadicals ? (
+          <Grid items={board.kanji} label={`Level ${level} kanji`} onRead={setReading} />
+        ) : radicals === null || radicals === 'reading' ? (
+          <p className="notes" role="status">
+            <span className="hint">Reading radicals…</span>
+          </p>
+        ) : radicals === 'failed' ? (
+          <p className="notes row hot" role="alert">
+            <span>The radicals did not load</span>
+            <button className="quiet" type="button" onClick={readRadicals}>
+              Try again
+            </button>
+          </p>
+        ) : radicals.length === 0 ? (
+          <p className="notes">No radicals at this level</p>
+        ) : (
+          <Grid items={radicals} label={`Level ${level} radicals`} onRead={setReading} />
+        )}
+      </div>
       <p className="notes readout" aria-live="polite">
         <span className={reading ? 'usual hidden' : 'usual'}>
+          {count ? <span className="soft">{count}</span> : null}
           {onLevel !== undefined ? (
             <span className="soft">Day {Math.floor(onLevel) + 1} on this level</span>
           ) : null}
-          {next ? (
+          {next && !onRadicals ? (
             <span className="soft">
               {/* A handful reads as characters; a batch of a dozen from one
                   lesson session is a wall of them, and the count says more. */}
@@ -454,7 +497,7 @@ function Level({ board, level, token }) {
           ) : null}
           <LevelUpLine levelUp={board.levelUp} level={level} />
           <Hint pointer="Point at" touch="Tap">
-            a kanji for its next review
+            {onRadicals ? 'a radical' : 'a kanji'} for its next review
           </Hint>
         </span>
         {reading ? (
@@ -466,34 +509,6 @@ function Level({ board, level, token }) {
           </span>
         ) : null}
       </p>
-      <button className="quiet fold" type="button" aria-expanded={open} onClick={toggle}>
-        <span>
-          {open ? '▾' : '▸'} level {level} radicals
-        </span>
-        {open && radicalsPassed !== null ? (
-          <span>
-            {radicalsPassed} passed · {radicals.length} in all
-          </span>
-        ) : null}
-      </button>
-      {open ? (
-        <div className="radicals">
-          {radicals === 'reading' ? (
-            <p className="notes" role="status">Reading radicals</p>
-          ) : radicals === 'failed' ? (
-            <p className="notes row hot" role="alert">
-              <span>The radicals did not load</span>
-              <button className="quiet" type="button" onClick={readRadicals}>
-                Try again
-              </button>
-            </p>
-          ) : radicals.length === 0 ? (
-            <p className="notes">No radicals at this level</p>
-          ) : (
-            <Grid items={radicals} label={`Level ${level} radicals`} onRead={setReading} />
-          )}
-        </div>
-      ) : null}
     </section>
   )
 }

@@ -950,31 +950,28 @@ button.quiet {
   visibility: hidden;
 }
 
-/* The radicals' fold reads as a section head — the same hairline, lit on
-   hover like any other door. Tall enough to land a finger on: as a bare
-   head it was 30px. */
-.board button.fold {
-  min-height: 44px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+/* Kanji or radicals: two words in the level's head, set like the head,
+   the chosen one in strong ink with the head's own hairline beneath it.
+   The padding reaches a finger's 44px; the negative margin keeps the head
+   the height of every other head, so the hairlines still line up. */
+.board .head .kinds {
+  display: inline-flex;
   gap: 14px;
-  margin-top: 8px;
-  padding: 0 0 10px;
-  border-bottom: 1px solid var(--rule);
-  font-size: var(--label);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  text-align: left;
-  color: var(--text-soft);
+  margin-left: 14px;
 }
 
-.board button.fold span {
-  white-space: nowrap;
-}
-
-.board button.fold span + span {
+.board .head .kinds button {
+  padding: 12px 0;
+  margin-block: -12px;
+  border-bottom: 1px solid transparent;
+  font-size: inherit;
+  letter-spacing: inherit;
   color: var(--dim);
+}
+
+.board .head .kinds button[aria-pressed='true'] {
+  color: var(--text-strong);
+  border-bottom-color: var(--text-strong);
 }
 
 .board .kanji .underline {
@@ -1700,23 +1697,16 @@ button.quiet {
     align-items: start;
   }
 
-  .board .level > .head,
-  .board .level > .radicals {
+  .board .level > .head {
     grid-column: 1 / -1;
   }
 
-  .board .level > .kanji {
+  .board .level > .body {
     grid-column: 1;
-    grid-row: 2 / span 2;
   }
 
-  .board .level > .readout,
-  .board .level > .fold {
+  .board .level > .readout {
     grid-column: 2;
-  }
-
-  .board .level > .fold {
-    margin-top: 0;
   }
 
   /* Two-up at half an iPad, the ladder drops its date under its label so

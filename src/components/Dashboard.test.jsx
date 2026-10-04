@@ -366,6 +366,22 @@ describe('the level’s kanji', () => {
     expect(host.querySelector('.kanji li.reading')).toBeNull()
   })
 
+  it('switches the grid to the level’s radicals from the head, reading them once', async () => {
+    api.getLevelRadicals.mockResolvedValue([
+      [{ id: 31, data: { characters: '工', meanings: [{ meaning: 'Construction', primary: true }], lesson_position: 0 } }],
+      [{ data: { subject_id: 31, srs_stage: 5, started_at: new Date().toISOString(), passed_at: new Date().toISOString() } }]
+    ])
+    const host = await board()
+    await click(button(host, 'radicals'))
+    await settle()
+    expect(host.querySelector('.level .kanji').textContent).toContain('工')
+    expect(host.querySelector('.level .readout').textContent).toContain('1 of 1 passed')
+    await click(button(host, 'kanji'))
+    expect(host.querySelector('.level .kanji').textContent).toContain('山')
+    await click(button(host, 'radicals'))
+    expect(api.getLevelRadicals).toHaveBeenCalledOnce()
+  })
+
   it('carries each cell’s words for a screen reader', async () => {
     const host = await board()
     expect(cell(host, 1).querySelector('.sr-only').textContent).toBe('川 River: locked, Not unlocked yet')
