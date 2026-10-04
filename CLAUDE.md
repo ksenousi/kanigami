@@ -46,9 +46,13 @@ the last commit holding them is `03a7aa7` — and PLAN.md describes them.
   copy in this code, and the screen says it assumes every answer is right.
   Keep projections labelled as projections, and keep them out of anything
   that reads as WaniKani's record.
-- **Never bulk-sync the subject database.** Fetch only the subjects on
-  screen — the level's kanji, the five slipping items. A full sync is the
-  offline feature this app deliberately does not have.
+- **Never bulk-sync the subject database — with one sanctioned exception.**
+  Fetch only the subjects on screen — the level's kanji, the five slipping
+  items. A full sync is the offline feature this app deliberately does not
+  have. The exception, on the owner's say-so: coverage reads every kanji
+  subject (`getAllKanjiSubjects`, ~2,100, ~4 MB) at most once a week and
+  keeps only id, level and character (`kanjiIndex`). It is the only one;
+  don't widen it to radicals or vocabulary, or keep more than those three.
 - **Nothing writes.** `wanikani.js` makes GETs only and the token gate asks
   for a token with no permissions, so WaniKani itself refuses any write.
   Adding a write call is a decision about what this app is, not a feature;

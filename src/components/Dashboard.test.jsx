@@ -18,7 +18,8 @@ vi.mock('../lib/wanikani.js', () => ({
   getLevelProgressions: vi.fn(),
   getSpacedRepetitionSystems: vi.fn(),
   getSubjects: vi.fn(),
-  getSubjectTotals: vi.fn()
+  getSubjectTotals: vi.fn(),
+  getAllKanjiSubjects: vi.fn()
 }))
 
 const TOKEN = '00000000-0000-0000-0000-000000000000'
@@ -51,6 +52,16 @@ function answer() {
   api.getSubjects.mockResolvedValue([])
   api.getSubjectTotals.mockResolvedValue({ radical: 10, kanji: 20, vocabulary: 30 })
   api.getLevelRadicals.mockResolvedValue([[], []])
+  api.getAllKanjiSubjects.mockResolvedValue([])
+}
+
+// Wait for something drawn by a later phase — coverage waits on a lazily
+// loaded module as well as its reads.
+async function until(host, selector) {
+  for (let i = 0; i < 50 && !host.querySelector(selector); i++) {
+    await act(async () => new Promise(resolve => setTimeout(resolve, 10)))
+  }
+  return host.querySelector(selector)
 }
 
 async function board(props = {}) {
@@ -236,6 +247,81 @@ describe('the pace dial', () => {
   it('stays away until a level has passed', async () => {
     const host = await board()
     expect(host.querySelector('#pace-dial')).toBeNull()
+  })
+})
+
+describe('the decades on the dial', () => {
+  it('marks where each of the six begins', async () => {
+    const now = Date.now()
+    api.getLevelProgressions.mockResolvedValue([
+      { data: { level: 1, unlocked_at: new Date(now - 20 * 86400000).toISOString(), passed_at: new Date(now - 10 * 86400000).toISOString(), abandoned_at: null } },
+      { data: { level: 2, unlocked_at: new Date(now - 10 * 86400000).toISOString(), passed_at: null, abandoned_at: null } }
+    ])
+    const host = await board({ user: { ...USER, level: 2 } })
+    const marks = host.querySelector('.dial .decades').textContent
+    for (const name of ['pleasant', 'painful', 'death', 'hell', 'paradise', 'reality']) expect(marks).toContain(name)
+    expect(host.querySelector('.notes.flags').textContent).toContain('Fastest · level 1, 10 days')
+  })
+})
+
+describe('milestones', () => {
+  it('shows the next round number with how many to go, and the ones reached', async () => {
+    const day = 86400000
+    api.getStartedAssignments.mockResolvedValue(
+      Array.from({ length: 120 }, (_, i) => ({
+        data: { subject_id: 500 + i, subject_type: 'kanji', srs_stage: 5, started_at: new Date(Date.now() - (120 - i) * day).toISOString() }
+      }))
+    )
+    api.getSubjectTotals.mockResolvedValue({ radical: 500, kanji: 2000, vocabulary: 6000 })
+    const host = await board()
+    const ladder = (await until(host, '.ladder')).textContent
+    expect(ladder).toContain('250 kanji')
+    expect(ladder).toContain('130 to go')
+    expect(ladder).toContain('100 kanji')
+  })
+})
+
+describe('coverage', () => {
+  const kanji = (id, level, characters) => ({ id, data: { level, characters } })
+
+  beforeEach(() => {
+    // 山 and 川 at level 5, 一 at level 20; only 山 taught. All three are N5.
+    api.getAllKanjiSubjects.mockResolvedValue([kanji(1, 5, '山'), kanji(2, 5, '川'), kanji(3, 20, '一')])
+    api.getStartedAssignments.mockResolvedValue([{ data: { subject_id: 1, subject_type: 'kanji', srs_stage: 3, started_at: new Date().toISOString() } }])
+  })
+
+  const n5 = host => host.querySelector('.cover .row .pct').textContent
+
+  it('counts what has been taught against the list', async () => {
+    const host = await board()
+    await until(host, '.cover')
+    expect(n5(host)).toMatch(/1 of 79/)
+  })
+
+  it('shows the gain through a later level when the slider moves', async () => {
+    const host = await board()
+    await until(host, '.cover')
+    const input = host.querySelector('#coverage-through')
+    const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
+    set.call(input, '20')
+    await act(async () => input.dispatchEvent(new Event('input', { bubbles: true })))
+    expect(n5(host)).toMatch(/\+2 3 of 79/)
+    expect(host.querySelector('.cover').closest('section').textContent).toContain('Through level 20')
+  })
+
+  it('switches to the Jōyō grades', async () => {
+    const host = await board()
+    await until(host, '.cover')
+    await click(button(host, 'Jōyō'))
+    expect(host.querySelector('.cover .row .name').textContent).toBe('grade 1')
+  })
+
+  it('stays away when the kanji could not be read', async () => {
+    api.getAllKanjiSubjects.mockRejectedValue(new Error('no'))
+    const host = await board()
+    await settle()
+    expect(host.querySelector('.cover')).toBeNull()
+    expect(host.querySelector('.figures')).toBeTruthy()
   })
 })
 

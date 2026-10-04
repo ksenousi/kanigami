@@ -181,6 +181,30 @@
   })
   const systems = [srs(1, [14400, 28800, 82800, 169200]), srs(2, [7200, 14400, 28800, 82800])]
 
+  // --- every kanji WaniKani teaches, for coverage ---
+  // A stand-in curriculum, not WaniKani's: the level's own kanji at its
+  // level, every kanji already started spread over the levels before it, and
+  // the rest of the Jōyō list — read from the app's own bundled list, which
+  // the dev server serves — dealt out over the levels after, 2,087 in all.
+  let allKanji = null
+  async function everyKanji() {
+    if (allKanji) return allKanji
+    const { JOYO } = await import('/kanigami/src/lib/kanjiLists.js')
+    const own = new Set(KANJI.map(([c]) => c))
+    const pool = JOYO.flatMap(([, kanji]) => [...kanji]).filter(c => !own.has(c))
+    const earlier = started.filter(a => a.data.subject_type === 'kanji' && a.data.subject_id >= 20000)
+    const subjects = [...kanjiSubjects]
+    earlier.forEach((a, i) => {
+      subjects.push({ id: a.data.subject_id, object: 'kanji', data: { level: 1 + Math.floor((i * (LEVEL - 1)) / Math.max(1, earlier.length)) || 1, characters: pool[i] } })
+    })
+    const rest = pool.slice(earlier.length, earlier.length + 2087 - subjects.length)
+    rest.forEach((c, i) => {
+      subjects.push({ id: 80000 + i, object: 'kanji', data: { level: LEVEL + 1 + Math.floor((i * (60 - LEVEL)) / rest.length), characters: c } })
+    })
+    allKanji = { ...page(subjects), total_count: subjects.length }
+    return allKanji
+  }
+
   // --- routing ---
   const ROUTES = [
     [/\/user$/, () => ({ object: 'user', data: { username: 'tester', level: LEVEL } }), 'core'],
@@ -195,7 +219,9 @@
     [/\/spaced_repetition_systems/, () => page(systems), 'commentary'],
     [/\/subjects\?ids=/, () => page(slippingSubjects), 'commentary'],
     [/\/subjects\?types=radical&hidden/, () => ({ total_count: 499, data: [] }), 'commentary'],
-    [/\/subjects\?types=kanji&hidden/, () => ({ total_count: 2087, data: [] }), 'commentary'],
+    // The totals read and coverage's read are the same URL: one page with
+    // every kanji, and its total_count.
+    [/\/subjects\?types=kanji&hidden/, everyKanji, 'commentary'],
     [/\/subjects\?types=vocabulary,kana_vocabulary&hidden/, () => ({ total_count: 6750, data: [] }), 'commentary']
   ]
   const DELAY = scenario === 'slow' ? { core: 1000, commentary: 2500, radicals: 1000 } : {}
@@ -219,6 +245,6 @@
     const [, answer, kind] = route
     if (scenario === 'radicals-fail' && kind === 'radicals') throw new TypeError('Load failed')
     if (DELAY[kind]) await wait(DELAY[kind])
-    return new Response(JSON.stringify(answer()), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    return new Response(JSON.stringify(await answer()), { status: 200, headers: { 'Content-Type': 'application/json' } })
   }
 })()

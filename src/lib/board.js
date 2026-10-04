@@ -371,3 +371,62 @@ export function earliestLevelUp(kanji = [], systems = new Map(), remaining = 0, 
   if (passes.length < remaining) return { at: null, waitsOnLocked: true }
   return { at: new Date(passes[remaining - 1]), waitsOnLocked: false }
 }
+
+// Round numbers worth marking, for every count the board keeps.
+const STEPS = [100, 250, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
+const RATE_DAYS = 30
+
+// The count milestones: for radicals, kanji and vocabulary taught, all items
+// taught, and items burned — every round number already passed, dated, and
+// the next one for each, with how many to go.
+//
+// **Dated by WaniKani, never estimated, for the ones reached.** The 500th
+// kanji is reached on the `started_at` of the 500th kanji started; the first
+// burn on the earliest `burned_at`. The next one carries `at`, a projection:
+// the rate of the last RATE_DAYS days carried forward, null when nothing
+// moved in them. A step past everything WaniKani has (`totals`, when known)
+// is never offered as next.
+export function milestones(assignments = [], now = new Date(), totals = null) {
+  const dates = { radical: [], kanji: [], vocabulary: [], item: [], burned: [] }
+  for (const a of assignments) {
+    const d = a?.data
+    if (!d) continue
+    if (d.started_at) {
+      const type = subjectTypeName(d.subject_type)
+      if (type in dates && type !== 'item') dates[type].push(Date.parse(d.started_at))
+      dates.item.push(Date.parse(d.started_at))
+    }
+    if (d.burned_at) dates.burned.push(Date.parse(d.burned_at))
+  }
+
+  const words = { radical: 'radicals', kanji: 'kanji', vocabulary: 'vocabulary', item: 'items', burned: 'burned' }
+  const ceiling = totals
+    ? { radical: totals.radical, kanji: totals.kanji, vocabulary: totals.vocabulary, item: totals.radical + totals.kanji + totals.vocabulary, burned: totals.radical + totals.kanji + totals.vocabulary }
+    : {}
+  const since = now.getTime() - RATE_DAYS * DAY_MS
+
+  const reached = []
+  const next = []
+  for (const [kind, list] of Object.entries(dates)) {
+    list.sort((a, b) => a - b)
+    const count = list.length
+    const label = step => `${step.toLocaleString('en')} ${words[kind]}`
+    if (kind === 'burned' && count > 0) reached.push({ kind, label: 'first burn', at: new Date(list[0]) })
+    for (const step of STEPS) {
+      if (step <= count) {
+        reached.push({ kind, step, label: label(step), at: new Date(list[step - 1]) })
+        continue
+      }
+      if (ceiling[kind] !== undefined && step > ceiling[kind]) break
+      const recent = list.filter(t => t > since).length
+      const togo = step - count
+      const at = recent > 0 ? new Date(now.getTime() + (togo / (recent / RATE_DAYS)) * DAY_MS) : null
+      next.push({ kind, step, label: label(step), togo, at })
+      break
+    }
+  }
+
+  next.sort((a, b) => (a.at === null) - (b.at === null) || a.at - b.at || a.togo - b.togo)
+  reached.sort((a, b) => b.at - a.at)
+  return { next, reached }
+}

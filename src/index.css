@@ -735,8 +735,13 @@ button.quiet {
   font-family: var(--sans);
   font-size: var(--label);
   letter-spacing: 0;
-  white-space: nowrap;
   color: var(--dim);
+}
+
+/* On the footline a hint is one item in a row and must not break; in a
+   column it is a sentence and must. */
+.board .footline .hint {
+  white-space: nowrap;
 }
 
 @media (hover: none) {
@@ -1025,6 +1030,19 @@ button.quiet {
   text-align: right;
 }
 
+/* Where the next count milestone falls on the line it counts along. */
+.board .fills .track {
+  position: relative;
+}
+
+.board .fills .tick {
+  position: absolute;
+  top: -4px;
+  width: 1px;
+  height: 10px;
+  background: var(--text-soft);
+}
+
 .board .fills .alone {
   grid-column: 1 / -1;
 }
@@ -1123,12 +1141,197 @@ button.quiet {
   color: var(--subject-vocabulary);
 }
 
+/* ---- milestones ----
+   A ladder, not a list of cards: the next round numbers, soonest first,
+   then a hairline and the ones reached. Three columns shared by every row,
+   so the counts and the dates line up whatever the label. */
+.board .ladder {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content max-content;
+  gap: 8px 18px;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .ladder li {
+  display: contents;
+}
+
+.board .ladder .what {
+  font-family: var(--sans);
+  font-size: var(--small);
+  color: var(--text-soft);
+}
+
+.board .ladder .togo,
+.board .ladder .when {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.board .ladder .togo {
+  color: var(--text-soft);
+}
+
+/* The nearest one is the only one asking anything of you. */
+.board .ladder .soonest .what {
+  color: var(--text-strong);
+}
+
+.board .ladder .soonest .togo {
+  color: var(--accent);
+}
+
+.board .ladder .reached .what {
+  color: var(--dim);
+}
+
+.board .ladder .divider span {
+  grid-column: 1 / -1;
+  display: block;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.board .ladder .divider {
+  display: block;
+  grid-column: 1 / -1;
+}
+
+/* ---- coverage ----
+   The measure switch is two words on the house hairline, the chosen one
+   lit. Each row: the group, a hairline lit to what is taught in the kanji
+   colour with the gain through a later level faint beyond it, and the
+   share. */
+.board .switch {
+  display: flex;
+  gap: 22px;
+}
+
+.board .switch button {
+  min-height: 44px;
+  padding: 8px 0 7px;
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  text-transform: none;
+  color: var(--dim);
+  border-bottom-color: transparent;
+}
+
+.board .switch button[aria-pressed='true'] {
+  color: var(--text-strong);
+  border-bottom-color: var(--accent);
+}
+
+.board .cover {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: 12px 14px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .cover .row {
+  display: contents;
+}
+
+.board .cover .name {
+  color: var(--text-soft);
+}
+
+.board .cover .track {
+  position: relative;
+  height: 2px;
+  background: var(--rule);
+}
+
+.board .cover .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--subject-kanji);
+}
+
+.board .cover .fill.gain {
+  background: color-mix(in srgb, var(--subject-kanji) 32%, var(--ground));
+}
+
+.board .cover .pct {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.board .cover .plus {
+  color: var(--subject-kanji);
+}
+
+.board .slider .ticks:has(.end) {
+  height: 28px;
+  color: var(--dim);
+}
+
 /* ---- 歩 the pace dial ----
    Days per level, full width: sixty slots, one per level, each a
    full-height column so there is something to point at or tap, with its
    bar drawn inside from the bottom up. Past levels in --text-soft, this one
    in the accent with its projected remainder above, the levels ahead faint
    at the dial's pace. */
+/* The six decades over the bars: a hairline where each begins, running
+   the chart's height, its name and date above the bars it covers. */
+.board .dial .chart {
+  position: relative;
+  padding-top: 58px;
+}
+
+.board .dial .decades {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.board .dial .decades > span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  padding-left: 8px;
+  border-left: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  white-space: nowrap;
+  color: var(--dim);
+}
+
+.board .dial .decades .kanji-name {
+  font-family: var(--jp-serif);
+}
+
+.board .dial .decades .done > span:first-child {
+  color: var(--text-soft);
+}
+
+.board .dial .decades .current {
+  border-left-color: var(--accent);
+}
+
+.board .dial .decades .current > span:first-child {
+  color: var(--text-strong);
+}
+
 .board .dial .bars {
   position: relative;
   display: flex;
@@ -1158,6 +1361,11 @@ button.quiet {
 
 .board .dial .bars .current i {
   background: var(--accent);
+}
+
+.board .dial .bars .fastest i {
+  background: var(--srs-guru);
+  opacity: 1;
 }
 
 /* Projected, everywhere it appears: the levels ahead and what is left of
@@ -1228,7 +1436,7 @@ button.quiet {
 /* The slider: the house hairline with a tick to take hold of. The whole
    44px strip is the target, so a finger finds it; the tick lights in the
    accent while it is held or focused, the way the field's rule does. */
-.board .dial input[type='range'] {
+.board input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
@@ -1239,17 +1447,17 @@ button.quiet {
   touch-action: pan-y;
 }
 
-.board .dial input[type='range']::-webkit-slider-runnable-track {
+.board input[type='range']::-webkit-slider-runnable-track {
   height: 2px;
   background: var(--rule);
 }
 
-.board .dial input[type='range']::-moz-range-track {
+.board input[type='range']::-moz-range-track {
   height: 2px;
   background: var(--rule);
 }
 
-.board .dial input[type='range']::-webkit-slider-thumb {
+.board input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 6px;
   height: 30px;
@@ -1259,7 +1467,7 @@ button.quiet {
   background: var(--text-strong);
 }
 
-.board .dial input[type='range']::-moz-range-thumb {
+.board input[type='range']::-moz-range-thumb {
   width: 6px;
   height: 30px;
   border: 0;
@@ -1267,23 +1475,23 @@ button.quiet {
   background: var(--text-strong);
 }
 
-.board .dial input[type='range']:focus {
+.board input[type='range']:focus {
   outline: none;
 }
 
-.board .dial input[type='range']:focus-visible::-webkit-slider-thumb,
-.board .dial input[type='range']:active::-webkit-slider-thumb {
+.board input[type='range']:focus-visible::-webkit-slider-thumb,
+.board input[type='range']:active::-webkit-slider-thumb {
   background: var(--accent);
 }
 
-.board .dial input[type='range']:focus-visible::-moz-range-thumb,
-.board .dial input[type='range']:active::-moz-range-thumb {
+.board input[type='range']:focus-visible::-moz-range-thumb,
+.board input[type='range']:active::-moz-range-thumb {
   background: var(--accent);
 }
 
 /* Fastest, median and last five, under the slider where each sits. A label
    too close to the one before drops a row rather than overprinting it. */
-.board .dial .ticks {
+.board .ticks {
   position: relative;
   height: 52px;
   margin-top: -4px;
@@ -1293,18 +1501,22 @@ button.quiet {
   color: var(--text-soft);
 }
 
-.board .dial .ticks span {
+.board .ticks span {
   position: absolute;
   top: 0;
   transform: translateX(-50%);
   white-space: nowrap;
 }
 
-.board .dial .ticks span.start {
+.board .ticks span.start {
   transform: none;
 }
 
-.board .dial .ticks span.low {
+.board .ticks span.end {
+  transform: translateX(-100%);
+}
+
+.board .ticks span.low {
   top: 26px;
 }
 
@@ -1337,6 +1549,28 @@ button.quiet {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--dim);
+}
+
+/* What the marked bars are: a swatch of each beside its words. */
+.board .notes.flags {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px 28px;
+}
+
+.board .swatch {
+  display: inline-block;
+  width: 12px;
+  height: 8px;
+  margin-right: 10px;
+}
+
+.board .swatch.fastest {
+  background: var(--srs-guru);
+}
+
+.board .swatch.break {
+  background: repeating-linear-gradient(90deg, var(--dim) 0 2px, transparent 2px 4px);
 }
 
 /* The projection's own label, a quiet mono line. */
@@ -1430,6 +1664,18 @@ button.quiet {
      it is the 30px that pushes Disconnect onto a line of its own. */
   .board .masthead .tag {
     display: none;
+  }
+
+  /* A sixth of an upright iPad is narrower than 天国 paradise, and the last
+     decade's name ran off the page. The road beneath names each in full, so
+     here the dial keeps the kanji and the date. */
+  .board .dial .decades .en {
+    display: none;
+  }
+
+  .board .dial .decades > span {
+    padding-left: 5px;
+    letter-spacing: 0;
   }
 
   .board .columns {

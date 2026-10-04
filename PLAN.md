@@ -1430,6 +1430,53 @@ beside the board as shipped, each with a working slider on hand-made data:
   WaniKani's rule and not in the API, so modelling misses would mean a copy
   of it in this code — the thing "read stages, never decide them" forbids.
 
+**Milestones — decided from a prototype.** Asked for: milestone
+indicators, and then a slider to see coverage change with progress. All
+four kinds built:
+
+- **Decades on the dial.** A hairline through the bars where each of the
+  six decades begins, with its kanji, name and date above the bars — the
+  real unlock for one reached, ≈ at the dial's pace for one ahead, moving
+  with the dial. The current decade's line is `--accent`. On an upright
+  iPad the English names drop (the road beneath has them) and the labels
+  tighten, because a sixth of 738px is narrower than `天国 paradise`.
+- **Level-ups as dates.** Every reached level's readout adds `· began 23 Feb
+  2026` from its `unlocked_at`. The fastest non-break level is drawn in
+  `--srs-guru` and named under the dial, beside the break, each with a
+  swatch.
+- **Count milestones** (`milestones()` in board.js, column two under
+  taught). For radicals, kanji and vocabulary taught, all items taught,
+  and burns: the next round number each (100, 250, 500, 1,000, 1,500 …),
+  with how many to go and ≈ when at the last 30 days' rate, soonest first,
+  the nearest in `--accent`; then the five most recent reached, dated by
+  the `started_at` of the item that reached them, or the `burned_at`; and
+  `first burn`. A step past everything WaniKani has is never offered. Each
+  taught hairline carries a tick where its next one falls.
+- **Coverage, with a level slider** (column three under slipping). JLPT
+  N5–N1 or the Jōyō grades, switched by two words; each row a hairline lit
+  in the kanji colour to what is taught, with the gain through a later level
+  faint beyond it, and `+92` beside the share. The slider runs from now to
+  60; its date — through level L is when L+1 begins — runs on the pace
+  dial's setting, so the two move together. The dial's state is lifted to
+  `Dashboard` for that.
+  - **Costs, agreed before building:** the lists ship as `kanjiLists.js`,
+    a lazily loaded 8 KB chunk; and the one exception to "never bulk-sync",
+    every kanji subject read weekly and kept as id, level and character
+    (`kanjiIndex.js`, falling back to a stale copy). It is its own phase,
+    so nothing else waits on it.
+  - **Sources.** JLPT: Jonathan Waller's lists (CC BY) — the JLPT has
+    published none since 2010. Jōyō: the 2010 list and its 2010 school-grade
+    allocation, government lists; Japan's 2020 revision moved some kanji
+    between grades, and the board labels the grades `as allocated in 2010`
+    rather than hand-patching them. Both extracted by script from
+    kanji-data (MIT), characters only.
+  - **Frequency left out** (top 500/1000/2000): the source known is
+    KANJIDIC, share-alike licensed. Add it if a permissive source turns up.
+
+The fake harness answers the kanji read with a stand-in curriculum dealt
+from the Jōyō list — not WaniKani's.
+
+
 
 ---
 

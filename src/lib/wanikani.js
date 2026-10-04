@@ -188,6 +188,15 @@ export function getSubjectTotals(token) {
   ]).then(([radical, kanji, vocabulary]) => ({ radical, kanji, vocabulary }))
 }
 
+// Every kanji WaniKani teaches, at every level — for coverage, which has to
+// know what each level ahead will teach. **The one read that bends "never
+// bulk-sync"**, on the owner's say-so: about 2,100 subjects in three pages,
+// some 4 MB of JSON, read at most once a week and kept as id, level and
+// character only (`kanjiIndex`). Nothing else from it is stored or shown.
+export function getAllKanjiSubjects(token) {
+  return collection(token, '/subjects?types=kanji&hidden=false')
+}
+
 // An id filter goes in the query string, and a full review queue is enough
 // ids to make that string unreasonable. Chunk it.
 function chunked(ids, size = 500) {

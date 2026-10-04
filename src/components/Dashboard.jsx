@@ -18,6 +18,7 @@ import {
   fastestLevel,
   leeches,
   levelKanji,
+  milestones,
   moved,
   nextUp,
   pace,
@@ -29,6 +30,8 @@ import {
 import { glyphFor } from '../lib/subject.js'
 import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
+import { kanjiIndex } from '../lib/kanjiIndex.js'
+import { coverage, taughtKanji, throughLevel } from '../lib/coverage.js'
 import Forecast from './Forecast.jsx'
 import Hint from './Hint.jsx'
 import useOnline from './useOnline.js'
@@ -61,6 +64,9 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
   const [failure, setFailure] = useState(null)
   const [attempt, setAttempt] = useState(0)
   const [busy, setBusy] = useState(true)
+  // The pace dial's setting, held here because coverage's dates run on it
+  // too. Null is the median.
+  const [chosenPace, setChosenPace] = useState(null)
   const readAt = useRef(0)
   const online = useOnline()
 
@@ -83,6 +89,10 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
       optional(subjectTotals(token)),
       optional(getSpacedRepetitionSystems(token))
     ])
+    // Coverage's two reads, apart from the rest: the kanji index is the
+    // largest read the app makes, and the lists are a chunk of their own, so
+    // nothing else on the board waits for either.
+    const extra = Promise.all([optional(kanjiIndex(token)), optional(import('../lib/kanjiLists.js'))])
 
     core
       .then(([summary, started, levelAssignments, levelSubjects]) => {
@@ -107,6 +117,14 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           passed
         }))
 
+        extra.then(([index, lists]) => {
+          if (!live) return
+          setBoard(held => ({
+            ...held,
+            coverage: index && lists ? { index, taught: taughtKanji(index, started), lists: { JLPT: lists.JLPT, JOYO: lists.JOYO } } : null
+          }))
+        })
+
         return commentary.then(async ([statistics, progressions, totals, systems]) => {
           const slipping = statistics ? leeches(statistics, started) : null
           // Only the handful on screen — never a subject sync.
@@ -118,6 +136,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           setBoard(held => ({
             ...held,
             totals,
+            milestones: milestones(started, now, totals),
             levelUp: srs ? earliestLevelUp(kanji, srs, passed.remaining, now) : null,
             // The level's own system — the accelerated one on levels 1–2.
             fastest: srs ? fastestLevel(srs.get(kanji.find(k => k.system)?.system)) : null,
@@ -230,10 +249,19 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             </div>
             <div className="column">
               <Srs spread={board.spread} moved={board.moved} />
-              <Taught learned={board.learned} totals={board.totals} />
+              <Taught learned={board.learned} totals={board.totals} next={board.milestones?.next} />
+              <Milestones milestones={board.milestones} />
             </div>
             <div className="column">
               <Slipping slipping={board.slipping} />
+              <Coverage
+                coverage={board.coverage}
+                level={user.level}
+                pace={board.pace}
+                now={board.now}
+                soonest={board.levelUp?.at ?? null}
+                perLevel={paceFor(board.pace, chosenPace)}
+              />
             </div>
           </div>
           <Ahead
@@ -242,6 +270,8 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             now={board.now}
             soonest={board.levelUp?.at ?? null}
             fastest={board.fastest ?? null}
+            perLevel={paceFor(board.pace, chosenPace)}
+            onPace={setChosenPace}
           />
         </>
       )}
@@ -605,10 +635,16 @@ const STEP = 0.5
 const toStep = days => Math.round(days / STEP) * STEP
 const dayCount = days => (days % 1 ? days.toFixed(1) : String(days))
 
-function Ahead({ pace: p, level, now, soonest, fastest }) {
-  const median = p?.median ?? null
-  const [chosen, setChosen] = useState(null)
-  const perLevel = chosen ?? (median !== null ? toStep(median) : null)
+// The dial's pace: what it was set to, or the median rounded to its step.
+function paceFor(p, chosen) {
+  if (chosen !== null) return chosen
+  return p?.median != null ? toStep(p.median) : null
+}
+
+function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
+  // One reading of the decades for both: the dial marks where each begins,
+  // the road says it in words.
+  const decades = road(p, level, now, perLevel, soonest)
 
   return (
     <>
@@ -619,9 +655,10 @@ function Ahead({ pace: p, level, now, soonest, fastest }) {
         soonest={soonest}
         fastest={fastest}
         perLevel={perLevel}
-        onPace={setChosen}
+        onPace={onPace}
+        decades={decades}
       />
-      <Road pace={p} level={level} now={now} perLevel={perLevel} soonest={soonest} />
+      <Road level={level} perLevel={perLevel} decades={decades} />
     </>
   )
 }
@@ -639,7 +676,13 @@ function Ahead({ pace: p, level, now, soonest, fastest }) {
 // way the forecast footline does. The arrows walk it, and the caption is the
 // live region. The slider is a native range, so it already takes a finger,
 // a drag, and the arrow keys.
-function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
+//
+// **The six decades are marked across the bars** — a hairline where each
+// begins, its name, and its date: the real unlock for one reached, ≈ at the
+// dial's pace for one ahead, moving as the dial does. Your fastest level
+// takes the guru colour and is named beneath, and every reached level's
+// readout says the day it began.
+function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, decades }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   if (!p || (p.levels.length === 0 && !p.current)) return null
 
@@ -648,15 +691,16 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
   const byLevel = new Map(p.levels.map(l => [l.level, l]))
   const slots = Array.from({ length: TOP_LEVEL }, (_, i) => {
     const n = i + 1
-    if (n === level) return { level: n, kind: 'current', days: p.current?.days ?? 0 }
+    if (n === level) return { level: n, kind: 'current', days: p.current?.days ?? 0, began: p.current?.unlockedAt }
     if (n < level) {
       const held = byLevel.get(n)
       if (!held) return { level: n, kind: 'missing' }
-      return { level: n, kind: held.break ? 'break' : 'passed', days: held.days }
+      return { level: n, kind: held.break ? 'break' : 'passed', days: held.days, began: held.unlockedAt }
     }
     return { level: n, kind: ahead ? 'ahead' : 'empty' }
   })
   const breaks = p.levels.filter(l => l.break)
+  const quickest = p.levels.filter(l => !l.break).reduce((best, l) => (!best || l.days < best.days ? l : best), null)
 
   // Scaled by the passed levels and the dial, never by a break, and never by
   // a current level already longer than all of them — that stops at the top.
@@ -704,9 +748,24 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
         days per level
       </Head>
 
+      <div className="chart">
+        <div className="decades" aria-hidden="true">
+          {decades.map(d => (
+            <span key={d.name} className={d.state} style={{ left: `${((d.first - 1) / TOP_LEVEL) * 100}%` }}>
+              <span>
+                <span className="kanji-name">{d.kanji}</span> <span className="en">{d.name}</span>
+              </span>
+              <span>{d.at ? `${d.state === 'ahead' ? '≈ ' : ''}${monthYear(d.at)}` : ''}</span>
+            </span>
+          ))}
+        </div>
       <div className="bars" role="group" aria-label="Days on each level, past and projected" onKeyDown={key} {...groupProps}>
         {slots.map((s, i) => (
-          <span key={s.level} className={[s.kind, reading === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
+          <span
+            key={s.level}
+            className={[s.kind, s.level === quickest?.level ? 'fastest' : '', reading === i ? 'reading' : ''].join(' ').trim()}
+            {...itemProps(i)}
+          >
             {s.kind === 'passed' ? <i style={{ height: `${Math.max(4, height(s.days))}%` }} /> : null}
             {s.kind === 'current' ? (
               <>
@@ -721,6 +780,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
         ))}
         {perLevel !== null ? <span className="pace-line" style={{ bottom: `${height(perLevel)}%` }} aria-hidden="true" /> : null}
         {p.median !== null ? <span className="median-line" style={{ bottom: `${height(p.median)}%` }} aria-hidden="true" /> : null}
+      </div>
       </div>
       <div className="levels" aria-hidden="true">
         {slots.map(s => (
@@ -796,11 +856,21 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
           </span>
         </p>
       ) : null}
-      {breaks.length > 0 ? (
-        <p className="notes">
-          {breaks.length === 1 ? 'Level' : 'Levels'} {breaks.map(b => b.level).join(', ')} left out as{' '}
-          {breaks.length === 1 ? 'a break' : 'breaks'} ·{' '}
-          {breaks.map(b => `${Math.round(b.days)} days`).join(', ')}
+      {quickest || breaks.length > 0 ? (
+        <p className="notes flags">
+          {quickest ? (
+            <span>
+              <i className="swatch fastest" aria-hidden="true" />
+              Fastest · level {quickest.level}, {Math.round(quickest.days)} days
+            </span>
+          ) : null}
+          {breaks.length > 0 ? (
+            <span>
+              <i className="swatch break" aria-hidden="true" />
+              {breaks.length === 1 ? 'Level' : 'Levels'} {breaks.map(b => b.level).join(', ')} left out as{' '}
+              {breaks.length === 1 ? 'a break' : 'breaks'} · {breaks.map(b => `${Math.round(b.days)} days`).join(', ')}
+            </span>
+          ) : null}
         </p>
       ) : null}
     </section>
@@ -809,9 +879,10 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
 
 // What a pointed-at slot says.
 function caption(s, ahead, perLevel) {
-  if (s.kind === 'passed') return `Level ${s.level} · ${Math.round(s.days)} days`
-  if (s.kind === 'break') return `Level ${s.level} · ${Math.round(s.days)} days · break`
-  if (s.kind === 'current') return `Level ${s.level} · day ${Math.floor(s.days) + 1} so far`
+  const began = s.began ? ` · began ${dayMonthYear(new Date(s.began))}` : ''
+  if (s.kind === 'passed') return `Level ${s.level} · ${Math.round(s.days)} days${began}`
+  if (s.kind === 'break') return `Level ${s.level} · ${Math.round(s.days)} days · break${began}`
+  if (s.kind === 'current') return `Level ${s.level} · day ${Math.floor(s.days) + 1} so far${began}`
   if (s.kind === 'missing') return `Level ${s.level} · no record`
   if (s.kind === 'ahead') return `Level ${s.level} ≈ ${monthYear(ahead.startOf(s.level))} at ${dayCount(perLevel)} days a level`
   return `Level ${s.level}`
@@ -823,9 +894,7 @@ function caption(s, ahead, perLevel) {
 // when you entered it (`from`, or `since` for this one), or a projection at
 // the dial's pace marked ≈, which moves as the dial does.
 // The notches are decoration to a screen reader; the words say it all.
-function Road({ pace: p, level, now, perLevel, soonest }) {
-  const decades = road(p, level, now, perLevel, soonest)
-
+function Road({ level, perLevel, decades }) {
   return (
     <section className="road">
       <Head right={`level ${level} of ${TOP_LEVEL}${perLevel !== null ? ` · ≈ at ${dayCount(perLevel)} days a level` : ''}`}>
@@ -868,8 +937,12 @@ function Road({ pace: p, level, now, perLevel, soonest }) {
 // hairline alone is a length to estimate. The totals are commentary (cached
 // a week, and an old copy kept if the refresh fails); without them, the
 // bare counts.
-function Taught({ learned: counts, totals }) {
+//
+// Each hairline carries a tick where its next count milestone falls, so the
+// milestones' ladder has a place on the line it counts along.
+function Taught({ learned: counts, totals, next = [] }) {
   if (counts.total === 0) return null
+  const nextOf = kind => next.find(m => m.kind === kind)
 
   const all = totals ? totals.radical + totals.kanji + totals.vocabulary : null
 
@@ -900,6 +973,9 @@ function Taught({ learned: counts, totals }) {
                     className={`fill wk-${kind}`}
                     style={{ width: `${Math.min(100, (count / total) * 100)}%` }}
                   />
+                  {nextOf(kind) ? (
+                    <span className="tick" style={{ left: `${Math.min(100, (nextOf(kind).step / total) * 100)}%` }} />
+                  ) : null}
                 </span>
               </>
             ) : null}
@@ -908,6 +984,149 @@ function Taught({ learned: counts, totals }) {
       </div>
     </section>
   )
+}
+
+// The count milestones: the next round number for each kind, soonest first,
+// with how many to go and when at the last 30 days' pace, then the ones
+// already reached, newest first, dated by WaniKani's own records. The
+// reached list is the latest few — a long account passes dozens.
+const REACHED_SHOWN = 5
+
+function Milestones({ milestones: m }) {
+  if (!m || (m.next.length === 0 && m.reached.length === 0)) return null
+  const reached = m.reached.slice(0, REACHED_SHOWN)
+
+  return (
+    <section>
+      <Head right="next and reached">milestones</Head>
+      <ul className="ladder">
+        {m.next.map((n, i) => (
+          <li key={n.kind} className={i === 0 ? 'soonest' : ''}>
+            <span className="what">{n.label}</span>
+            <span className="togo">{n.togo.toLocaleString()} to go</span>
+            <span className="when">{n.at ? `≈ ${shortDate(n.at)}` : ''}</span>
+          </li>
+        ))}
+        {reached.length > 0 ? (
+          <li className="divider" aria-hidden="true">
+            <span>reached</span>
+          </li>
+        ) : null}
+        {reached.map(r => (
+          <li key={r.label} className="reached">
+            <span className="what">{r.label}</span>
+            <span />
+            <span className="when">{dayMonthYear(r.at)}</span>
+          </li>
+        ))}
+      </ul>
+      {m.next.some(n => n.at) ? (
+        <p className="notes">
+          <span className="proj">≈ at your last 30 days’ pace · reached dates are WaniKani’s</span>
+        </p>
+      ) : null}
+    </section>
+  )
+}
+
+// Coverage: how much of the JLPT levels, or the Jōyō grades, you have been
+// taught — and, dragging "through level", how much once WaniKani has taught
+// you every kanji through a later level, the gain drawn faint beyond what is
+// taught now. That level's date comes from the pace dial, so moving the dial
+// moves it. Hidden until the kanji index and the lists have both loaded.
+const MEASURES = [
+  ['JLPT', 'JLPT', 'Unofficial lists — the JLPT stopped publishing them in 2010'],
+  ['JOYO', 'Jōyō', 'The 2,136 Jōyō kanji by school grade, as allocated in 2010']
+]
+
+function Coverage({ coverage: c, level, pace: p, now, soonest, perLevel }) {
+  const [measure, setMeasure] = useState('JLPT')
+  const [through, setThrough] = useState(null)
+  if (!c) return null
+
+  const at = through === null || through <= level ? null : through
+  const lists = c.lists[measure]
+  const nowRows = coverage(lists, c.taught)
+  const thenRows = at ? coverage(lists, throughLevel(c.index, c.taught, at)) : nowRows
+  // Through level L is when level L+1 begins; through 60, when 60 is done.
+  const ahead = at ? project(p, level, perLevel, now, soonest) : null
+  const when = ahead ? (at >= TOP_LEVEL ? ahead.done : ahead.startOf(at + 1)) : null
+
+  return (
+    <section>
+      <Head right={at ? `through level ${at}` : 'kanji taught'}>coverage</Head>
+      <div className="switch" role="group" aria-label="Measure coverage against">
+        {MEASURES.map(([key, label]) => (
+          <button key={key} type="button" aria-pressed={key === measure} onClick={() => setMeasure(key)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="cover">
+        {thenRows.map((row, i) => {
+          const before = nowRows[i].have
+          return (
+            <div key={row.name} className="row">
+              <span className="name">{row.name}</span>
+              <span className="track" aria-hidden="true">
+                <span className="fill gain" style={{ width: `${(row.have / row.total) * 100}%` }} />
+                <span className="fill" style={{ width: `${(before / row.total) * 100}%` }} />
+              </span>
+              <span className="pct">
+                <span className="soft">{share(row.have, row.total)}</span>
+                {at && row.have > before ? <span className="plus"> +{row.have - before}</span> : null} {row.have.toLocaleString()} of{' '}
+                {row.total.toLocaleString()}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <div className="slider">
+        <input
+          id="coverage-through"
+          type="range"
+          min={level}
+          max={TOP_LEVEL}
+          step={1}
+          value={at ?? level}
+          onChange={event => setThrough(Number(event.target.value))}
+          aria-label="Coverage through level"
+          aria-valuetext={at ? `through level ${at}` : 'now'}
+        />
+        <div className="ticks" aria-hidden="true">
+          <span className="start" style={{ left: 0 }}>
+            now
+          </span>
+          <span className="end" style={{ left: '100%' }}>
+            60
+          </span>
+        </div>
+      </div>
+      <p className="notes" aria-live="polite">
+        {at ? (
+          <>
+            <span className="soft">
+              Through level {at}
+              {when ? ` · ≈ ${monthYear(when)} at ${dayCount(perLevel)} days a level` : ''}
+            </span>
+            <span className="proj">Projection · once WaniKani has taught you every kanji through level {at}</span>
+          </>
+        ) : (
+          <>
+            <span className="hint">Drag to see how much you will know through a later level</span>
+            <span className="hint">{MEASURES.find(([key]) => key === measure)[2]}</span>
+          </>
+        )}
+      </p>
+    </section>
+  )
+}
+
+// A short date for a projection: the day if it is within a few months, the
+// month after that.
+function shortDate(at) {
+  const months = (at - Date.now()) / (30 * 24 * 60 * 60 * 1000)
+  return months < 3 ? at.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : monthYear(at)
 }
 
 // A share as a whole percentage — except that something taught is never 0%,
@@ -954,6 +1173,10 @@ function when(at) {
   const sameDay = at.toDateString() === new Date().toDateString()
   if (sameDay) return `today ${clock(at)}`
   return `${at.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })} ${clock(at)}`
+}
+
+function dayMonthYear(at) {
+  return at.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function monthYear(at) {

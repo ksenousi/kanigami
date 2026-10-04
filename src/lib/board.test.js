@@ -5,6 +5,7 @@ import {
   earliestLevelUp,
   leeches,
   levelKanji,
+  milestones,
   moved,
   nextUp,
   fastestLevel,
@@ -375,5 +376,60 @@ describe('road', () => {
     const r = road({ levels: [], current: null, median: null }, 1, NOW)
     expect(r[0].at).toBeNull()
     expect(r[1].at).toBeNull()
+  })
+})
+
+describe('milestones', () => {
+  const DAY = 86400000
+  const ago = days => new Date(NOW.getTime() - days * DAY).toISOString()
+  // n items of a type, one started each day, the newest `newest` days ago
+  const run = (n, type, newest = 0, extra = {}) =>
+    Array.from({ length: n }, (_, i) => ({ data: { subject_type: type, started_at: ago(newest + n - 1 - i), ...extra } }))
+
+  it('dates a reached step by the start of the item that reached it', () => {
+    const items = run(120, 'kanji')
+    const { reached } = milestones(items, NOW)
+    const hundred = reached.find(m => m.label === '100 kanji')
+    expect(hundred.at.toISOString()).toBe(items[99].data.started_at)
+  })
+
+  it('offers the next step with how many to go and when at the recent rate', () => {
+    // 120 kanji, one a day, so 30 in the last 30 days: a kanji a day
+    const { next } = milestones(run(120, 'kanji'), NOW)
+    const kanji = next.find(m => m.kind === 'kanji')
+    expect(kanji).toMatchObject({ label: '250 kanji', togo: 130 })
+    expect((kanji.at - NOW) / DAY).toBeCloseTo(130, 5)
+  })
+
+  it('has no date for a next step when nothing moved lately', () => {
+    const { next } = milestones(run(120, 'kanji', 200), NOW)
+    expect(next.find(m => m.kind === 'kanji').at).toBeNull()
+  })
+
+  it('never offers a step past everything WaniKani has', () => {
+    // 260 radicals taught; the next step, 500, is more than the 499 there are
+    const { next } = milestones(run(260, 'radical'), NOW, { radical: 499, kanji: 2000, vocabulary: 6000 })
+    expect(next.find(m => m.kind === 'radical')).toBeUndefined()
+    expect(milestones(run(260, 'radical'), NOW).next.find(m => m.kind === 'radical').label).toBe('500 radicals')
+  })
+
+  it('marks the first burn and counts burns by burned_at', () => {
+    const burned = run(3, 'vocabulary', 0, { burned_at: ago(10) })
+    burned[0].data.burned_at = ago(40)
+    const { reached } = milestones(burned, NOW)
+    expect(reached.find(m => m.label === 'first burn').at.toISOString()).toBe(ago(40))
+  })
+
+  it('counts vocabulary and kana vocabulary together, and every item once', () => {
+    const { next } = milestones([...run(60, 'vocabulary'), ...run(50, 'kana_vocabulary')], NOW)
+    expect(next.find(m => m.kind === 'vocabulary').togo).toBe(250 - 110)
+    expect(next.find(m => m.kind === 'item').togo).toBe(250 - 110)
+  })
+
+  it('lists the reached newest first and the next soonest first', () => {
+    const { next, reached } = milestones([...run(120, 'kanji'), ...run(260, 'vocabulary', 0)], NOW)
+    expect(reached.map(m => m.at.getTime())).toEqual(reached.map(m => m.at.getTime()).sort((a, b) => b - a))
+    const dated = next.filter(m => m.at)
+    expect(dated.map(m => m.at.getTime())).toEqual(dated.map(m => m.at.getTime()).sort((a, b) => a - b))
   })
 })
