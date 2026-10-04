@@ -22,5 +22,8 @@ function fakeWaniKani(mode) {
 // match the repo name or every asset URL 404s on Pages.
 export default defineConfig(({ mode }) => ({
   base: '/kanigami/',
-  plugins: [react(), fakeWaniKani(mode)]
+  plugins: [react(), fakeWaniKani(mode)],
+  // Tests live in src. Without this, Vitest also collects every test in the
+  // copies under .claude/worktrees — 59 files where there are 11.
+  test: { dir: 'src' }
 }))

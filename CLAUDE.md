@@ -34,7 +34,7 @@ the last commit holding them is `03a7aa7` — and PLAN.md describes them.
 | Dev server (:5173) | `npm run dev` |
 | Same, against a fake WaniKani — no token | `npm run dev:fake`, then `?fake=fresh` / `slow` / `offline` / `revoked` / `radicals-fail` |
 | Build | `npm run build` |
-| Tests | `npm test` (`npx vitest run --dir src` skips old worktrees) |
+| Tests | `npm test` (only `src`; worktree copies are left out by `vite.config.js`) |
 | Lint | `npm run lint` |
 
 ## Gotchas
