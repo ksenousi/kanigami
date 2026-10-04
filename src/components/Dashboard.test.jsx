@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as api from '../lib/wanikani.js'
 import Dashboard from './Dashboard.jsx'
@@ -169,6 +170,72 @@ describe('reading again', () => {
     await settle()
     expect(host.querySelector('.figures')).toBeNull()
     expect(host.textContent).toContain('That token was rejected.')
+  })
+})
+
+describe('the pace dial', () => {
+  const DAY = 24 * HOUR
+  // Levels 1–4 at 10 days each, level 5 unlocked 4 days ago. Fake dates.
+  function history() {
+    const now = Date.now()
+    const start = now - 44 * DAY
+    api.getLevelProgressions.mockResolvedValue([
+      ...[0, 1, 2, 3].map(i => ({
+        data: { level: i + 1, unlocked_at: new Date(start + i * 10 * DAY).toISOString(), passed_at: new Date(start + (i + 1) * 10 * DAY).toISOString(), abandoned_at: null }
+      })),
+      { data: { level: 5, unlocked_at: new Date(now - 4 * DAY).toISOString(), passed_at: null, abandoned_at: null } }
+    ])
+  }
+
+  async function slide(host, value) {
+    const input = host.querySelector('#pace-dial')
+    const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
+    set.call(input, String(value))
+    await act(async () => input.dispatchEvent(new Event('input', { bubbles: true })))
+  }
+
+  const readings = host => host.querySelector('.dial .readings').textContent
+  const road = host => [...host.querySelectorAll('.road .when')].map(w => w.textContent)
+
+  it('starts at the median, and says so', async () => {
+    history()
+    const host = await board()
+    expect(host.querySelector('#pace-dial').value).toBe('10')
+    expect(readings(host)).toContain('10days a level')
+    expect(host.querySelector('.dial .readout').textContent).toContain('Your median pace')
+  })
+
+  it('moves level 60 and the road with it, and says by how much', async () => {
+    history()
+    const host = await board()
+    const before = [readings(host), road(host)]
+    await slide(host, 7)
+    expect(readings(host)).toContain('7days a level')
+    expect(readings(host)).not.toBe(before[0])
+    expect(road(host)).not.toEqual(before[1])
+    expect(host.querySelector('.dial .readout').textContent).toMatch(/\d+ weeks sooner than at your median/)
+    expect(host.querySelector('.road .head').textContent).toContain('7 days a level')
+  })
+
+  it('draws a slot for every level, the ones ahead as projections', async () => {
+    history()
+    const host = await board()
+    const slots = host.querySelectorAll('.dial .bars > span:not(.pace-line):not(.median-line)')
+    expect(slots).toHaveLength(60)
+    expect(slots[4].classList.contains('current')).toBe(true)
+    expect(slots[5].classList.contains('ahead')).toBe(true)
+  })
+
+  it('reads a projected level when one is tapped', async () => {
+    history()
+    const host = await board()
+    await tap(host.querySelectorAll('.dial .bars > span')[29])
+    expect(host.querySelector('.dial .readout .usual:not(.hidden)').textContent).toMatch(/^Level 30 ≈ .+ at 10 days a level$/)
+  })
+
+  it('stays away until a level has passed', async () => {
+    const host = await board()
+    expect(host.querySelector('#pace-dial')).toBeNull()
   })
 })
 

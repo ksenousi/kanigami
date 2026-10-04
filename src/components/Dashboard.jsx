@@ -15,11 +15,13 @@ import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/sta
 import {
   accuracy,
   earliestLevelUp,
+  fastestLevel,
   leeches,
   levelKanji,
   moved,
   nextUp,
   pace,
+  project,
   road,
   srsSystems,
   week
@@ -38,7 +40,8 @@ import usePointing from './usePointing.js'
 // once" was picked. See "The dashboard" in PLAN.md.
 //
 // A headline row of figures, then three columns: the level, where the
-// reviews stand, and what is slipping. The footline is home's forecast.
+// reviews stand, and what is slipping. Then the pace dial and the road, full
+// width, and the footline: home's forecast.
 //
 // It reads and never writes, so it wants a token with no permissions at
 // all. The four reads the screen cannot stand without fail it together and
@@ -111,10 +114,13 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             ? await optional(getSubjects(token, slipping.map(l => l.subjectId)))
             : null
           if (!live) return
+          const srs = systems ? srsSystems(systems) : null
           setBoard(held => ({
             ...held,
             totals,
-            levelUp: systems ? earliestLevelUp(kanji, srsSystems(systems), passed.remaining, now) : null,
+            levelUp: srs ? earliestLevelUp(kanji, srs, passed.remaining, now) : null,
+            // The level's own system — the accelerated one on levels 1–2.
+            fastest: srs ? fastestLevel(srs.get(kanji.find(k => k.system)?.system)) : null,
             accuracy: statistics ? accuracy(statistics) : null,
             slipping: slipping && withSubjects(slipping, leechSubjects),
             pace: progressions ? pace(progressions, user.level, now) : null
@@ -228,10 +234,15 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             </div>
             <div className="column">
               <Slipping slipping={board.slipping} />
-              <Pace pace={board.pace} />
             </div>
           </div>
-          <Road pace={board.pace} level={user.level} now={board.now} />
+          <Ahead
+            pace={board.pace}
+            level={user.level}
+            now={board.now}
+            soonest={board.levelUp?.at ?? null}
+            fastest={board.fastest ?? null}
+          />
         </>
       )}
 
@@ -580,105 +591,211 @@ function Slipping({ slipping }) {
   )
 }
 
-// Days per level: every passed level as a bar as tall as it took, this one
-// in the accent. A break is a dotted hairline instead — its place kept so
-// the levels stay in order, its length kept out of the scale so it cannot
-// flatten every other bar — and named beneath, so leaving it out is never
-// silent.
+// 歩 The pace dial — decided from a prototype; see "The pace dial" in
+// PLAN.md. Days per level and the road, full width, with one slider between
+// them that sets the pace every projection on the two runs at. It starts at
+// the median and is never saved: the board opens on your own pace every
+// time, and the dial is for asking "and if I went faster?".
 //
-// A row of bars says nothing about which is which, so the levels are
-// numbered beneath — the first, every fifth, and this one, which is as
-// many as fit — and **pointing at a bar re-points the caption** to that
-// level in words, the way the forecast footline does: no tooltip, the line
-// of type that is already there says something more specific. The arrows
-// walk it from the keyboard, and the caption is the live region, so a
-// screen reader hears what a pointer would show.
-// Past DENSE levels the bars outgrow a column: thirty gaps of 4px is a
-// third of it gone before any bar is drawn, and a number every fifth level
-// runs together. So the gaps close to a pixel and only every tenth level is
-// numbered.
-const DENSE = 30
+// Everything it moves is a projection and says so. The past is read; the
+// future is `project` at the dial's pace, held back by the earliest
+// level-up, and the dial cannot go below the fastest level WaniKani's own
+// intervals allow.
+const STEP = 0.5
+const toStep = days => Math.round(days / STEP) * STEP
+const dayCount = days => (days % 1 ? days.toFixed(1) : String(days))
 
-function Pace({ pace: p }) {
+function Ahead({ pace: p, level, now, soonest, fastest }) {
+  const median = p?.median ?? null
+  const [chosen, setChosen] = useState(null)
+  const perLevel = chosen ?? (median !== null ? toStep(median) : null)
+
+  return (
+    <>
+      <PaceDial
+        pace={p}
+        level={level}
+        now={now}
+        soonest={soonest}
+        fastest={fastest}
+        perLevel={perLevel}
+        onPace={setChosen}
+      />
+      <Road pace={p} level={level} now={now} perLevel={perLevel} soonest={soonest} />
+    </>
+  )
+}
+
+// Every level from 1 to 60 has a slot: a passed level is a bar as tall as
+// it took, this one is the accent with its projected remainder above it,
+// every level ahead is a faint bar at the dial's pace, and a break is a
+// dotted hairline — its place kept, its length kept out of the scale and
+// named beneath, so leaving it out is never silent. A dashed line crosses
+// the bars at the dial's pace and a dotted one at the median, so where the
+// dial sits against your own history is a glance.
+//
+// **Pointing at a bar re-points the caption** to that level in words — the
+// days it took, the day this one is on, or when one ahead would start — the
+// way the forecast footline does. The arrows walk it, and the caption is the
+// live region. The slider is a native range, so it already takes a finger,
+// a drag, and the arrow keys.
+function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   if (!p || (p.levels.length === 0 && !p.current)) return null
 
-  const bars = [...p.levels, ...(p.current ? [{ ...p.current, current: true }] : [])]
+  const ahead = project(p, level, perLevel, now, soonest)
+  const atMedian = project(p, level, p.median, now, soonest)
+  const byLevel = new Map(p.levels.map(l => [l.level, l]))
+  const slots = Array.from({ length: TOP_LEVEL }, (_, i) => {
+    const n = i + 1
+    if (n === level) return { level: n, kind: 'current', days: p.current?.days ?? 0 }
+    if (n < level) {
+      const held = byLevel.get(n)
+      if (!held) return { level: n, kind: 'missing' }
+      return { level: n, kind: held.break ? 'break' : 'passed', days: held.days }
+    }
+    return { level: n, kind: ahead ? 'ahead' : 'empty' }
+  })
   const breaks = p.levels.filter(l => l.break)
-  // Scaled by the passed levels alone. A current level already longer than
-  // any of them — a break happening now — stops at the top instead of
-  // flattening every bar before it.
+
+  // Scaled by the passed levels and the dial, never by a break, and never by
+  // a current level already longer than all of them — that stops at the top.
   const passed = p.levels.filter(l => !l.break).map(l => l.days)
-  const tallest = Math.max(1, ...(passed.length ? passed : bars.map(b => b.days)))
-  const shown = reading === null ? null : bars[reading]
-  // A milestone right beside this level gives way to it — 15 and 16 in
-  // adjacent slots read as 1516.
-  const dense = bars.length > DENSE
-  const every = dense ? 10 : 5
-  const near = b => p.current && Math.abs(b.level - p.current.level) < (dense ? 3 : 2)
-  const numbered = b =>
-    b.current || b === shown || ((b.level === 1 || b.level % every === 0) && !near(b))
+  const tallest = Math.max(1, ...passed, perLevel ?? 0)
+  const height = days => Math.min(100, (days / tallest) * 100)
+
+  const shown = reading === null ? null : slots[reading]
+  // A number right beside this level's gives way to it — 14 and 15 in
+  // adjacent slots read as 1415.
+  const numbered = s =>
+    s.level === level || s === shown || ((s.level === 1 || s.level % 10 === 0) && Math.abs(s.level - level) >= 3)
 
   function key(event) {
     const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
     if (step) {
       event.preventDefault()
-      point(reading === null ? bars.length - 1 : Math.min(bars.length - 1, Math.max(0, reading + step)))
+      point(reading === null ? level - 1 : Math.min(TOP_LEVEL - 1, Math.max(0, reading + step)))
     }
     if (event.key === 'Escape') point(null)
   }
 
+  const min = fastest ? Math.ceil(fastest / STEP) * STEP : 1
+  const max = Math.max(40, toStep((p.median ?? 0) * 2))
+  const at = days => ((days - min) / (max - min)) * 100
+  const marks = [
+    fastest ? { label: 'fastest', at: 0 } : null,
+    p.median !== null ? { label: 'median', at: at(p.median) } : null,
+    p.recent !== null ? { label: 'last five', at: at(p.recent) } : null
+  ].filter(Boolean)
+  // Two labels closer than this share no row: the second drops beneath. A
+  // fifth of the track, because on an upright iPad that is about the width
+  // of `median` and `last five` side by side.
+  marks.forEach((m, i) => (m.low = i > 0 && Math.abs(m.at - marks[i - 1].at) < 20 && !marks[i - 1].low))
+
+  const weeks = ahead && atMedian ? Math.round((ahead.done - atMedian.done) / (7 * 24 * 60 * 60 * 1000)) : 0
+
   return (
-    <section>
-      <Head right={p.median !== null ? `median ${p.median.toFixed(1)}` : null}>days per level</Head>
-      <div
-        className={dense ? 'bars dense' : 'bars'}
-        role="group"
-        aria-label="Days spent on each level"
-        onKeyDown={key}
-        {...groupProps}
+    <section className="dial">
+      <Head
+        right={[p.median !== null ? `median ${p.median.toFixed(1)}` : null, p.recent !== null ? `last five ${p.recent.toFixed(1)}` : null]
+          .filter(Boolean)
+          .join(' · ')}
       >
-        {bars.map((b, i) => (
-          <span
-            key={b.level}
-            className={[b.current ? 'current' : b.break ? 'break' : '', reading === i ? 'reading' : '']
-              .join(' ')
-              .trim()}
-            {...itemProps(i)}
-          >
-            {/* A level only days old still has to show up as a bar, and one
-                running longer than any before it stops at the top. */}
-            {b.break ? null : (
-              <i style={{ height: `${Math.min(100, Math.max(8, (b.days / tallest) * 100))}%` }} />
-            )}
+        days per level
+      </Head>
+
+      <div className="bars" role="group" aria-label="Days on each level, past and projected" onKeyDown={key} {...groupProps}>
+        {slots.map((s, i) => (
+          <span key={s.level} className={[s.kind, reading === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
+            {s.kind === 'passed' ? <i style={{ height: `${Math.max(4, height(s.days))}%` }} /> : null}
+            {s.kind === 'current' ? (
+              <>
+                <i style={{ height: `${Math.max(4, height(s.days))}%` }} />
+                {perLevel !== null ? (
+                  <i className="ahead" style={{ height: `${Math.max(0, height(perLevel) - height(s.days))}%` }} />
+                ) : null}
+              </>
+            ) : null}
+            {s.kind === 'ahead' ? <i className="ahead" style={{ height: `${height(perLevel)}%` }} /> : null}
+          </span>
+        ))}
+        {perLevel !== null ? <span className="pace-line" style={{ bottom: `${height(perLevel)}%` }} aria-hidden="true" /> : null}
+        {p.median !== null ? <span className="median-line" style={{ bottom: `${height(p.median)}%` }} aria-hidden="true" /> : null}
+      </div>
+      <div className="levels" aria-hidden="true">
+        {slots.map(s => (
+          <span key={s.level} className={s.level === level ? 'hot' : s === shown ? 'soft' : ''}>
+            {numbered(s) ? s.level : ''}
           </span>
         ))}
       </div>
-      <div className={dense ? 'levels dense' : 'levels'} aria-hidden="true">
-        {bars.map(b => (
-          <span key={b.level} className={b.current ? 'hot' : b === shown ? 'soft' : ''}>
-            {numbered(b) ? b.level : ''}
-          </span>
-        ))}
-      </div>
-      <p className="notes spread-out" aria-live="polite">
+
+      {perLevel !== null ? (
+        <div className="slider">
+          <input
+            id="pace-dial"
+            type="range"
+            min={min}
+            max={max}
+            step={STEP}
+            value={Math.min(max, Math.max(min, perLevel))}
+            onChange={event => onPace(Number(event.target.value))}
+            aria-label="Days per level, for the projection"
+            aria-valuetext={`${dayCount(perLevel)} days a level`}
+          />
+          <div className="ticks" aria-hidden="true">
+            {marks.map(m => (
+              <span key={m.label} className={[m.at === 0 ? 'start' : '', m.low ? 'low' : ''].join(' ').trim()} style={{ left: `${m.at}%` }}>
+                {m.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {ahead ? (
+        <div className="readings" aria-live="polite">
+          <div>
+            <b>{dayCount(perLevel)}</b>
+            <span>days a level</span>
+          </div>
+          {/* Reaching 60 is the date people mean; at 60, finishing it. */}
+          <div>
+            <b>{monthYear(level < TOP_LEVEL ? ahead.startOf(TOP_LEVEL) : ahead.done)}</b>
+            <span>{level < TOP_LEVEL ? 'level 60 ≈' : 'level 60 done ≈'}</span>
+          </div>
+        </div>
+      ) : null}
+
+      <p className="notes readout" aria-live="polite">
+        <span className={shown ? 'usual hidden' : 'usual'}>
+          {ahead ? (
+            <span className="soft">
+              {perLevel === toStep(p.median)
+                ? 'Your median pace'
+                : weeks === 0
+                  ? 'About the same as your median pace'
+                  : `${Math.abs(weeks)} ${Math.abs(weeks) === 1 ? 'week' : 'weeks'} ${weeks < 0 ? 'sooner' : 'later'} than at your median`}
+            </span>
+          ) : null}
+          <Hint pointer="Point at" touch="Tap">
+            a bar for its level, or drag the line to change the pace
+          </Hint>
+        </span>
         {shown ? (
-          <span className="soft">
-            Level {shown.level} · {shown.current ? `day ${Math.floor(shown.days) + 1} so far` : `${Math.round(shown.days)} days`}
-            {shown.break ? ' · break' : ''}
+          <span className="usual">
+            <span className="soft">{caption(shown, ahead, perLevel)}</span>
           </span>
-        ) : (
-          // The day on this level is the level's notes' to say.
-          p.eta ? <span className="soft">Level 60 ≈ {monthYear(p.eta)}</span> : <span />
-        )}
+        ) : null}
       </p>
-      {/* Its own line, and there whether or not a bar is read, so the
-          section never changes height under the cursor. */}
-      <p className="notes">
-        <Hint pointer="Point at" touch="Tap">
-          a bar for its level
-        </Hint>
-      </p>
+
+      {ahead ? (
+        <p className="notes">
+          <span className="proj">
+            Projection · a level every {dayCount(perLevel)} days from here, this one no sooner than its earliest level-up
+          </span>
+        </p>
+      ) : null}
       {breaks.length > 0 ? (
         <p className="notes">
           {breaks.length === 1 ? 'Level' : 'Levels'} {breaks.map(b => b.level).join(', ')} left out as{' '}
@@ -690,18 +807,30 @@ function Pace({ pace: p }) {
   )
 }
 
+// What a pointed-at slot says.
+function caption(s, ahead, perLevel) {
+  if (s.kind === 'passed') return `Level ${s.level} · ${Math.round(s.days)} days`
+  if (s.kind === 'break') return `Level ${s.level} · ${Math.round(s.days)} days · break`
+  if (s.kind === 'current') return `Level ${s.level} · day ${Math.floor(s.days) + 1} so far`
+  if (s.kind === 'missing') return `Level ${s.level} · no record`
+  if (s.kind === 'ahead') return `Level ${s.level} ≈ ${monthYear(ahead.startOf(s.level))} at ${dayCount(perLevel)} days a level`
+  return `Level ${s.level}`
+}
+
 // The sixty levels in the six decades WaniKani names — 快 pleasant through
 // 現実 reality — as one notched hairline across the page, the walked levels
 // lit and this one in the accent. Under each decade, its name and when:
 // when you entered it (`from`, or `since` for this one), or a projection at
-// the median marked ≈.
+// the dial's pace marked ≈, which moves as the dial does.
 // The notches are decoration to a screen reader; the words say it all.
-function Road({ pace: p, level, now }) {
-  const decades = road(p, level, now)
+function Road({ pace: p, level, now, perLevel, soonest }) {
+  const decades = road(p, level, now, perLevel, soonest)
 
   return (
     <section className="road">
-      <Head right={`level ${level} of ${TOP_LEVEL}`}>the road</Head>
+      <Head right={`level ${level} of ${TOP_LEVEL}${perLevel !== null ? ` · ≈ at ${dayCount(perLevel)} days a level` : ''}`}>
+        the road
+      </Head>
       <ol>
         {decades.map(d => (
           <li key={d.name} className={d.state}>

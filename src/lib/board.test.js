@@ -7,7 +7,9 @@ import {
   levelKanji,
   moved,
   nextUp,
+  fastestLevel,
   pace,
+  project,
   road,
   srsSystems,
   week
@@ -104,15 +106,26 @@ describe('pace', () => {
     data: { level, unlocked_at: local(unlocked, 0), passed_at: passed ? local(passed, 0) : null, abandoned_at: null, ...extra }
   })
 
-  it('times each passed level and projects 60 from the median', () => {
+  it('times each passed level and takes the median', () => {
     const p = pace([prog(1, 1, 5), prog(2, 5, 11), prog(3, 11, 13)], 3, NOW)
     expect(p.levels.map(l => Math.round(l.days))).toEqual([4, 6])
     expect(p.levels.some(l => l.break)).toBe(false)
     expect(p.median).toBe(5)
     expect(p.current.days).toBeCloseTo(3.82, 1)
-    // what is left of this level at the median, then 56 more levels
-    const days = (p.eta - NOW) / 86400000
-    expect(days).toBeCloseTo(5 - p.current.days + 56 * 5, 5)
+  })
+
+  it('takes the recent pace from the last five levels that were not breaks', () => {
+    // levels of 10, 10, 10, then five of 2 days
+    const ends = [0, 10, 20, 30, 32, 34, 36, 38, 40]
+    const p = pace(
+      ends.slice(1).map((end, i) => ({
+        data: { level: i + 1, unlocked_at: new Date(2025, 0, 1 + ends[i]).toISOString(), passed_at: new Date(2025, 0, 1 + end).toISOString(), abandoned_at: null }
+      })),
+      9,
+      NOW
+    )
+    expect(p.median).toBeCloseTo(2, 5)
+    expect(p.recent).toBeCloseTo(2, 5)
   })
 
   it('marks a level over three times the median as a break and leaves it out', () => {
@@ -139,9 +152,45 @@ describe('pace', () => {
     expect(Math.round(p.levels[0].days)).toBe(6)
   })
 
-  it('projects nothing at 60 or before a level has passed', () => {
-    expect(pace([prog(1, 1, null)], 1, NOW).eta).toBeNull()
-    expect(pace([prog(59, 1, 5), prog(60, 5, null)], 60, NOW).eta).toBeNull()
+  it('has no pace before a level has passed', () => {
+    const p = pace([prog(1, 1, null)], 1, NOW)
+    expect(p.median).toBeNull()
+    expect(p.recent).toBeNull()
+  })
+})
+
+describe('project', () => {
+  const DAY = 86400000
+  const days = d => (d - NOW) / DAY
+  const p = { current: { level: 15, days: 13 } }
+
+  it('finishes this level at the pace, then one level per pace', () => {
+    const at = project(p, 15, 15, NOW)
+    expect(days(at.startOf(16))).toBeCloseTo(2, 5)
+    expect(days(at.startOf(60))).toBeCloseTo(2 + 44 * 15, 5)
+    expect(days(at.done)).toBeCloseTo(2 + 45 * 15, 5)
+  })
+
+  it('ends a level already longer than the pace now', () => {
+    expect(days(project(p, 15, 7, NOW).startOf(16))).toBeCloseTo(0, 5)
+  })
+
+  it('never ends this level before the earliest level-up', () => {
+    const soonest = new Date(NOW.getTime() + 3.5 * DAY)
+    const at = project(p, 15, 7, NOW, soonest)
+    expect(at.startOf(16).getTime()).toBe(soonest.getTime())
+    expect(days(at.startOf(17))).toBeCloseTo(3.5 + 7, 5)
+  })
+
+  it('has no start for a level already reached, and no projection without a pace', () => {
+    expect(project(p, 15, 15, NOW).startOf(15)).toBeNull()
+    expect(project(p, 15, null, NOW)).toBeNull()
+  })
+
+  it('at 60, says only when 60 is done', () => {
+    const at = project({ current: { level: 60, days: 4 } }, 60, 10, NOW)
+    expect(at.startOf(60)).toBeNull()
+    expect(days(at.done)).toBeCloseTo(6, 5)
   })
 })
 
@@ -277,6 +326,13 @@ describe('earliestLevelUp', () => {
   it('has nothing to project once the threshold is met', () => {
     expect(earliestLevelUp([], systems, 0, NOW)).toBeNull()
   })
+
+  it('reads the fastest level off the table: two runs to guru', () => {
+    // (4 + 8 + 23 + 47) hours, twice
+    expect(fastestLevel(systems.get(1)) * 24).toBeCloseTo(164, 5)
+    expect(fastestLevel(systems.get(2)) < fastestLevel(systems.get(1))).toBe(true)
+    expect(fastestLevel(undefined)).toBeNull()
+  })
 })
 
 describe('road', () => {
@@ -306,6 +362,13 @@ describe('road', () => {
     // this level is already past the median, so nothing is left of it; then
     // levels 12–20 at two days each before 21 unlocks
     expect((r[2].at - NOW) / 86400000).toBeCloseTo(9 * 2, 5)
+  })
+
+  it('projects at the pace it is given rather than the median', () => {
+    const r = road(p, 11, NOW, 5)
+    // level 11 is three days in, so two are left at five a level; then
+    // levels 12–20 at five each
+    expect((r[2].at - NOW) / 86400000).toBeCloseTo(2 + 9 * 5, 5)
   })
 
   it('has no dates it cannot know', () => {

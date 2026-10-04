@@ -1196,7 +1196,8 @@ the most data per inch) — and **the original was kept over all four.**
   each lit to its share of the busiest, today holding the backlog in
   `--accent`. The figure that summed those days is now called `due within
   7 days` — it counts next reviews ahead, and `this week` read as done.
-- **Column three: what keeps slipping, and pace.** The five lowest
+- **Column three: what keeps slipping, and pace.** (Pace has since moved
+  out to the full-width 歩 pace dial — see below.) The five lowest
   `percentage_correct` items still in rotation — burned items are finished
   and left out, and an item needs `MIN_MISSES` (3) misses to count, so one
   bad day on a new item is not a leech. Character, meaning in its subject
@@ -1387,6 +1388,48 @@ re-read keeps the board, and only a 401 takes it away; a token survives a
 network failure or a 5xx on open and is dropped only on a 401. The API is
 mocked with hand-written objects of a few fields each. The tap tests were
 checked to fail against the old leave-lets-go behaviour.
+
+**歩 The pace dial — decided from a prototype.** Asked for: enhance the
+forecast and the projections, maybe with a slider. Four directions went up
+beside the board as shipped, each with a working slider on hand-made data:
+
+- **Picked: 歩 Pace dial.** Days per level leaves column three for a
+  full-width section above the road. Sixty slots, one per level: passed
+  levels as bars as tall as they took, this one in `--accent` with its
+  projected remainder above it, every level ahead a faint bar
+  (`--text-soft` 13% into the ground) at the dial's pace, breaks dotted and
+  out of the scale as before. A dashed `--accent` line crosses the bars at
+  the dial's pace, a dotted one at the median. Beneath, a native range
+  slider — the house hairline with a 6×30px tick, the whole 44px strip the
+  target, `touch-action: pan-y` so a vertical swipe still scrolls the iPad —
+  marked `fastest`, `median` and `last five`, a label too close to the last
+  dropping a row. Under it the readings, `14 days a level` and `level 60 ≈
+  Jun 2028`, in the serif at `--display-lg`, then `Your median pace` or `N
+  weeks sooner/later than at your median`, and the projection's own label.
+  The road's ≈ dates move with the dial, and its head says the pace.
+  Pointing at a slot reads it: the days a level took, the day this one is
+  on, or `Level 30 ≈ Apr 2027 at 14 days a level`.
+  - **The dial starts at the median every time and is never saved.** The
+    board opens on your own pace; the dial is for asking "and if faster?".
+  - **It cannot beat WaniKani.** Its floor is `fastestLevel`: two runs
+    through the apprentice stages, radicals then kanji, read off the level's
+    own SRS system — about 6.8 days on the normal one. And `project` never
+    ends this level before the earliest level-up.
+  - `pace()` no longer returns `eta`; it returns `median` and `recent`, the
+    median of the last five non-break levels. `project(p, level, perLevel,
+    now, soonest)` gives `startOf(n)` and `done`, and `road` takes the pace.
+- **Rejected: 時 Scrub the week** — the footline grown to seven days with a
+  moment you drag along it, the level's kanji redrawn as they would stand
+  then. The prototype's recommendation; the owner preferred the dial.
+- **Rejected: 量 Lesson load** — a lessons-a-day slider stacking the reviews
+  those lessons would bring on the next fourteen days. A strong planning
+  tool; could sit beside the dial later.
+- **Rejected: 一 One dial** — one slider from now to 60 on a stretched
+  scale, its readout changing subject with distance.
+- **Not offered: an accuracy slider.** What a wrong answer costs is
+  WaniKani's rule and not in the API, so modelling misses would mean a copy
+  of it in this code — the thing "read stages, never decide them" forbids.
+
 
 ---
 

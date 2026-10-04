@@ -133,8 +133,11 @@ export const BREAK_FACTOR = 3
 // of all of them is marked `break` and kept out of the median the
 // projection runs on. The median is taken again without them.
 //
-// The projection to 60: finish this level at the median (or now, if it has
-// already run longer), then one median per level after.
+// `recent` is the median of the last RECENT of those — where the pace is
+// now, which a long history can hide. Both mark the pace dial. The
+// projection itself is `project`'s, at whatever pace the dial is set to.
+export const RECENT = 5
+
 export function pace(progressions = [], level, now = new Date()) {
   const byLevel = new Map()
   for (const p of progressions) {
@@ -159,28 +162,58 @@ export function pace(progressions = [], level, now = new Date()) {
     ? { level, days: days(here.unlocked_at, now.toISOString()), unlockedAt: here.unlocked_at }
     : null
 
-  const median = middle(levels.filter(l => !l.break).map(l => l.days))
+  const kept = levels.filter(l => !l.break).map(l => l.days)
+  const median = middle(kept)
+  const recent = middle(kept.slice(-RECENT))
 
-  let eta = null
-  if (median !== null && level < 60) {
-    const left = Math.max(0, median - (current?.days ?? 0)) + (60 - level - 1) * median
-    eta = new Date(now.getTime() + left * DAY_MS)
+  return { levels, current, median, recent }
+}
+
+// Where the levels from here fall at `perLevel` days a level — the pace
+// dial's projection, and the road's.
+//
+// This level ends once it has run `perLevel` days, or now if it already has,
+// and never before `soonest`, the earliest level-up: no pace beats WaniKani's
+// own intervals, so a fast dial waits on them. Then one level every
+// `perLevel` days. `startOf(n)` is when level n would unlock, null for one
+// already reached; `done` is when level 60 would be passed. Null with no
+// pace to run at.
+export function project(p, level, perLevel, now = new Date(), soonest = null) {
+  if (!(perLevel > 0)) return null
+  const left = Math.max(0, perLevel - (p?.current?.days ?? 0)) * DAY_MS
+  const next = Math.max(now.getTime() + left, soonest ? soonest.getTime() : 0)
+  const step = perLevel * DAY_MS
+  return {
+    startOf: n => (n <= level || n > 60 ? null : new Date(next + (n - level - 1) * step)),
+    done: new Date(level >= 60 ? next : next + (60 - level) * step)
   }
+}
 
-  return { levels, current, median, eta }
+// The fewest days a level can take: every radical passed at the soonest,
+// which unlocks the kanji, every kanji passed at the soonest after that —
+// two runs through the apprentice stages of `system`, lessons done the
+// moment they unlock. Read off WaniKani's table, so the accelerated levels
+// and any change WaniKani makes come with it. Null without the table.
+export function fastestLevel(system) {
+  if (!system) return null
+  let total = 0
+  for (let stage = 1; stage < system.passing; stage++) {
+    if (typeof system.waits[stage] !== 'number') return null
+    total += system.waits[stage]
+  }
+  return (2 * total) / DAY_MS
 }
 
 // The six decades WaniKani names, each with where you stand in it: `done`,
 // `current`, or `ahead`. A decade you have reached carries the date you
 // entered it — the unlock of its first level, read off the progressions —
-// and one ahead carries a projection at the pace median, the same
-// arithmetic as the date for 60. Either can be null: a reset can leave a
-// first level with no record, and there is no projection before a level
-// has passed.
-export function road(p, level, now = new Date()) {
+// and one ahead carries `project`'s date for its first level, at
+// `perLevel` (the median unless the dial says otherwise). Either can be
+// null: a reset can leave a first level with no record, and there is no
+// projection before a level has passed.
+export function road(p, level, now = new Date(), perLevel = p?.median, soonest = null) {
   const unlocked = new Map([...(p?.levels ?? []), ...(p?.current ? [p.current] : [])].map(l => [l.level, l.unlockedAt]))
-  const median = p?.median ?? null
-  const leftHere = median === null ? null : Math.max(0, median - (p?.current?.days ?? 0))
+  const ahead = project(p, level, perLevel, now, soonest)
 
   return STAGES.map((stage, i) => {
     const first = i * 10 + 1
@@ -189,8 +222,8 @@ export function road(p, level, now = new Date()) {
     let at = null
     if (state !== 'ahead') {
       at = unlocked.get(first) ? new Date(unlocked.get(first)) : null
-    } else if (median !== null) {
-      at = new Date(now.getTime() + (leftHere + (first - level - 1) * median) * DAY_MS)
+    } else if (ahead) {
+      at = ahead.startOf(first)
     }
     return { ...stage, first, last, state, at }
   })

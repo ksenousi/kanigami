@@ -1123,72 +1123,227 @@ button.quiet {
   color: var(--subject-vocabulary);
 }
 
-/* Days per level. Each level is a full-height column so there is something
-   to point at — a level of a few days is otherwise a sliver — with its bar
-   drawn inside. */
-.board .bars {
+/* ---- 歩 the pace dial ----
+   Days per level, full width: sixty slots, one per level, each a
+   full-height column so there is something to point at or tap, with its
+   bar drawn inside from the bottom up. Past levels in --text-soft, this one
+   in the accent with its projected remainder above, the levels ahead faint
+   at the dial's pace. */
+.board .dial .bars {
+  position: relative;
   display: flex;
   align-items: stretch;
-  gap: 4px;
-  height: 56px;
+  gap: 2px;
+  height: 140px;
   cursor: default;
 }
 
-.board .bars.dense,
-.board .levels.dense {
-  gap: 1px;
-}
-
-.board .bars > span {
+.board .dial .bars > span {
   flex: 1;
+  min-width: 0;
   display: flex;
-  align-items: flex-end;
+  flex-direction: column-reverse;
 }
 
-.board .bars i {
+.board .dial .bars i {
   display: block;
   width: 100%;
+  flex: none;
+}
+
+.board .dial .bars .passed i {
   background: var(--text-soft);
   opacity: 0.7;
 }
 
-.board .bars .current i {
+.board .dial .bars .current i {
   background: var(--accent);
-  opacity: 1;
+}
+
+/* Projected, everywhere it appears: the levels ahead and what is left of
+   this one. Faint enough to read as not-yet against the real bars — at a
+   quarter of the way to the text, forty-five of them read as a block that
+   outweighed the history beside it. */
+.board .dial .bars i.ahead,
+.board .dial .bars .current i.ahead {
+  background: color-mix(in srgb, var(--text-soft) 13%, var(--ground));
 }
 
 /* Under the pointer. Neutral, like the forecast's, so it does not claim
    the accent. */
-.board .bars .reading i {
+.board .dial .bars .reading i,
+.board .dial .bars .reading i.ahead {
   opacity: 1;
   background: var(--text-strong);
 }
 
 /* A break: a dotted hairline the full height, so the level keeps its place
    without its length setting the scale. */
-.board .bars .break {
+.board .dial .bars .break {
   background: repeating-linear-gradient(var(--dim) 0 2px, transparent 2px 5px) center / 2px 100% no-repeat;
 }
 
-.board .bars .break.reading {
+.board .dial .bars .break.reading {
   background-image: repeating-linear-gradient(var(--text-strong) 0 2px, transparent 2px 5px);
 }
 
+/* The dial's pace across the bars, dashed in the accent, and the median
+   dotted beneath or above it. Lines, not boxes; they take no pointer. */
+.board .dial .pace-line,
+.board .dial .median-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.board .dial .pace-line {
+  border-top: 1px dashed var(--accent);
+}
+
+.board .dial .median-line {
+  border-top: 1px dotted var(--text-soft);
+  opacity: 0.6;
+}
+
 /* The level numbers, one slot per bar so each sits under its own. */
-.board .levels {
+.board .dial .levels {
   display: flex;
-  gap: 4px;
-  margin-top: -12px;
+  gap: 2px;
+  margin-top: -10px;
   font-family: var(--mono);
   font-size: var(--label);
   color: var(--dim);
 }
 
-.board .levels span {
+.board .dial .levels span {
   flex: 1;
+  min-width: 0;
   text-align: center;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+/* The slider: the house hairline with a tick to take hold of. The whole
+   44px strip is the target, so a finger finds it; the tick lights in the
+   accent while it is held or focused, the way the field's rule does. */
+.board .dial input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.board .dial input[type='range']::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--rule);
+}
+
+.board .dial input[type='range']::-moz-range-track {
+  height: 2px;
+  background: var(--rule);
+}
+
+.board .dial input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 6px;
+  height: 30px;
+  margin-top: -14px;
+  border: 0;
+  border-radius: 1px;
+  background: var(--text-strong);
+}
+
+.board .dial input[type='range']::-moz-range-thumb {
+  width: 6px;
+  height: 30px;
+  border: 0;
+  border-radius: 1px;
+  background: var(--text-strong);
+}
+
+.board .dial input[type='range']:focus {
+  outline: none;
+}
+
+.board .dial input[type='range']:focus-visible::-webkit-slider-thumb,
+.board .dial input[type='range']:active::-webkit-slider-thumb {
+  background: var(--accent);
+}
+
+.board .dial input[type='range']:focus-visible::-moz-range-thumb,
+.board .dial input[type='range']:active::-moz-range-thumb {
+  background: var(--accent);
+}
+
+/* Fastest, median and last five, under the slider where each sits. A label
+   too close to the one before drops a row rather than overprinting it. */
+.board .dial .ticks {
+  position: relative;
+  height: 52px;
+  margin-top: -4px;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
+}
+
+.board .dial .ticks span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.board .dial .ticks span.start {
+  transform: none;
+}
+
+.board .dial .ticks span.low {
+  top: 26px;
+}
+
+/* What the dial says: the pace and the dates it gives, in the figures'
+   serif a step down from the headline figures, their labels naming them. */
+.board .dial .readings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 64px;
+}
+
+.board .dial .readings div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.board .dial .readings b {
+  font-family: var(--jp-serif);
+  font-size: var(--display-lg);
+  font-weight: 300;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+
+.board .dial .readings span {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* The projection's own label, a quiet mono line. */
+.board .proj {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
 }
 
 /* The road: sixty notches in six decades, a wider gap between decades
