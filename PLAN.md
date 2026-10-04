@@ -1476,6 +1476,55 @@ four kinds built:
 The fake harness answers the kanji read with a stand-in curriculum dealt
 from the Jōyō list — not WaniKani's.
 
+**The regrouping — after a design review of coherence and layout.** A
+review of the whole board at 1440, 1280, 1180 and 820 found the level
+column ending 540px above column two, projections spread over five places,
+the road repeating the dial's decade marks, and a run of inconsistencies.
+All of it was acted on, on the owner's say-so, without a prototype:
+
+- **The order is now: masthead · figures · the next 24 hours · [level]
+  [spread · taught] [keeps slipping] · ahead: the pace dial, then
+  milestones and coverage side by side.** At 1440 the columns measure
+  592 / 465 / 425 (they were 592 / 1132 / 992).
+- **The forecast moved up from the footline** to sit under the figures,
+  beside the reviews due it continues; at 1440 it was 1,400px below them.
+  This overturns "the footline is home's forecast, unchanged".
+- **The road is gone.** The dial's decade marks carry its words: `from Dec
+  2025`, `since Apr 2026` in `--accent`, `≈ Dec 2026`; `level 15 of 60`
+  moved into the dial's head. Below 1000px the marks drop the English name
+  and the from/since.
+- **The dial reads top to bottom:** bars and decades, the pointed-at line
+  and the legend right under the level numbers, then the slider, then the
+  readings (`≈ Jun 2028` over `level 60`, and the comparison to the median
+  beside them), then the projection line.
+- **Your fastest level** skips levels 1–2, which run WaniKani's accelerated
+  system, and says `Your fastest`; the slider's floor says `7 days,
+  WaniKani's fastest`. The median and last-five numbers moved onto their
+  marks (`median 14 · last five 18`, merged when close) and off the head.
+- **Both sliders share one pattern:** both ends labelled, marks on a row of
+  their own, all quiet.
+- **Milestones say they keep their own clock** (`≈ at your last 30 days'
+  pace, not the dial's`); the nearest is strong ink, not the accent.
+- **Sections hold their place while loading:** a section whose read has not
+  landed shows its head and `Reading…`, so nothing is pushed down later.
+- **One number, one name:** `taught` for lessons done — `146 taught`,
+  `1,500 taught`; the spread head lost its duplicate total, and heads keep
+  only numbers on the right (`lowest accuracy`, `next and reached` went).
+- **One date shape** whatever the browser's language (`src/lib/dates.js`):
+  `Wed 7 Oct 19:00`, `7 Oct`, `7 Oct 2026`, `Oct 2026`, 24-hour time.
+- **Heads never wrap their name;** the level head reads `20 of 29 needed`
+  so it shares a third of 1440 on one line.
+- **Coverage's share column** is as wide as its widest value anywhere on the
+  slider, so dragging no longer narrows the hairlines; the JLPT/Jōyō switch
+  marks the choice in strong ink, not the accent.
+- **On a tablet** the level's notes stand beside the grid (half the height),
+  and the milestones' dates drop under their labels.
+- Counts in `past 7 days` and the milestones are mono, per Two voices; the
+  radicals fold is a head in capitals and says `4 passed · 6 in all`; the
+  romaji tag is `--dim`.
+- **Left as recorded:** apprentice in the accent (so `146 taught` is
+  vermilion) — the review questioned it; it is the SRS spread's own colour.
+
 
 
 ---

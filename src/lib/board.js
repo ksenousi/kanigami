@@ -399,7 +399,8 @@ export function milestones(assignments = [], now = new Date(), totals = null) {
     if (d.burned_at) dates.burned.push(Date.parse(d.burned_at))
   }
 
-  const words = { radical: 'radicals', kanji: 'kanji', vocabulary: 'vocabulary', item: 'items', burned: 'burned' }
+  // `taught`, not `items`: one number, one name across the board.
+  const words = { radical: 'radicals', kanji: 'kanji', vocabulary: 'vocabulary', item: 'taught', burned: 'burned' }
   const ceiling = totals
     ? { radical: totals.radical, kanji: totals.kanji, vocabulary: totals.vocabulary, item: totals.radical + totals.kanji + totals.vocabulary, burned: totals.radical + totals.kanji + totals.vocabulary }
     : {}

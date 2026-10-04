@@ -1,5 +1,6 @@
 import { forecast, nextDue, peak } from '../lib/standing.js'
 import Hint from './Hint.jsx'
+import { clock } from '../lib/dates.js'
 import usePointing from './usePointing.js'
 
 // The footline track, carrying the next 24 hours.
@@ -121,9 +122,6 @@ function warmth(hour, index) {
   return index <= WARM ? ' soon' : ''
 }
 
-function clock(at) {
-  return new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-}
 
 // What the label says while an hour is under the cursor.
 function hourLabel(hour, index) {

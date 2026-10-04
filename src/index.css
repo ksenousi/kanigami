@@ -823,9 +823,17 @@ button.quiet {
 
 .board .head h2 {
   margin: 0;
-  flex: 1;
+  flex: 1 0 auto;
   font: inherit;
+  white-space: nowrap;
   color: var(--text-soft);
+}
+
+/* The head's one number gives way to the name rather than the other way
+   round — a wrapped name threw the hairlines out of line across columns. */
+.board .head > span {
+  min-width: 0;
+  text-align: right;
 }
 
 /* ---- 二 Two voices ----
@@ -955,8 +963,8 @@ button.quiet {
   padding: 0 0 10px;
   border-bottom: 1px solid var(--rule);
   font-size: var(--label);
-  letter-spacing: 0.03em;
-  text-transform: none;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
   text-align: left;
   color: var(--text-soft);
 }
@@ -1144,7 +1152,7 @@ button.quiet {
 /* ---- milestones ----
    A ladder, not a list of cards: the next round numbers, soonest first,
    then a hairline and the ones reached. Three columns shared by every row,
-   so the counts and the dates line up whatever the label. */
+   so the counts and the dates line up whatever the label. Counts, so mono. */
 .board .ladder {
   margin: 0;
   padding: 0;
@@ -1164,8 +1172,7 @@ button.quiet {
 }
 
 .board .ladder .what {
-  font-family: var(--sans);
-  font-size: var(--small);
+  white-space: nowrap;
   color: var(--text-soft);
 }
 
@@ -1175,36 +1182,37 @@ button.quiet {
   white-space: nowrap;
 }
 
+.board .ladder .reached .when {
+  grid-column: 3;
+}
+
 .board .ladder .togo {
   color: var(--text-soft);
 }
 
-/* The nearest one is the only one asking anything of you. */
-.board .ladder .soonest .what {
-  color: var(--text-strong);
-}
-
+/* The nearest one leads in strong ink — a target, not an alarm, so not the
+   accent. */
+.board .ladder .soonest .what,
 .board .ladder .soonest .togo {
-  color: var(--accent);
+  color: var(--text-strong);
 }
 
 .board .ladder .reached .what {
   color: var(--dim);
 }
 
-.board .ladder .divider span {
+.board .ladder .divider {
+  display: block;
   grid-column: 1 / -1;
+}
+
+.board .ladder .divider span {
   display: block;
   margin-top: 6px;
   padding-top: 8px;
   border-top: 1px solid var(--rule);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-}
-
-.board .ladder .divider {
-  display: block;
-  grid-column: 1 / -1;
 }
 
 /* ---- coverage ----
@@ -1229,12 +1237,12 @@ button.quiet {
 
 .board .switch button[aria-pressed='true'] {
   color: var(--text-strong);
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--text-strong);
 }
 
 .board .cover {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  grid-template-columns: max-content minmax(0, 1fr) var(--share-width, max-content);
   gap: 12px 14px;
   align-items: center;
   font-family: var(--mono);
@@ -1276,10 +1284,6 @@ button.quiet {
   color: var(--subject-kanji);
 }
 
-.board .slider .ticks:has(.end) {
-  height: 28px;
-  color: var(--dim);
-}
 
 /* ---- 歩 the pace dial ----
    Days per level, full width: sixty slots, one per level, each a
@@ -1326,6 +1330,10 @@ button.quiet {
 
 .board .dial .decades .current {
   border-left-color: var(--accent);
+}
+
+.board .dial .decades .current .when {
+  color: var(--accent);
 }
 
 .board .dial .decades .current > span:first-child {
@@ -1489,15 +1497,24 @@ button.quiet {
   background: var(--accent);
 }
 
-/* Fastest, median and last five, under the slider where each sits. A label
-   too close to the one before drops a row rather than overprinting it. */
+/* Under every slider, one pattern: its two ends labelled, any marks at
+   their place between, all quiet. A mark too close to an end or to the
+   mark before drops a row rather than overprinting it. */
 .board .ticks {
   position: relative;
-  height: 52px;
+  height: 28px;
   margin-top: -4px;
   font-family: var(--mono);
   font-size: var(--label);
   letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .ticks.has-low {
+  height: 54px;
+}
+
+.board .ticks .mark {
   color: var(--text-soft);
 }
 
@@ -1551,6 +1568,49 @@ button.quiet {
   color: var(--dim);
 }
 
+/* Against the median: a sentence, so set like the notes, sitting on the
+   readings' baseline. */
+.board .dial .readings .against {
+  justify-content: flex-end;
+}
+
+.board .dial .readings .against span {
+  font-family: var(--sans);
+  font-size: var(--small);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-soft);
+}
+
+/* Right under the level numbers: what a pointed-at bar says, and beside it
+   the legend for the marked bars — the answer next to the question, not
+   past the slider. */
+.board .dial .under {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 40px;
+  align-items: start;
+  margin-top: -6px;
+}
+
+.board .dial .under .flags {
+  justify-content: flex-end;
+}
+
+/* The words in the past 7 days are counts, so mono like the spread above
+   them; only the label is a phrase. */
+.board .moves > span + span {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+}
+
+/* The romaji tag repeats the wordmark; it does not need the colour that
+   means attention. */
+.board .masthead .tag {
+  color: var(--dim);
+}
+
 /* What the marked bars are: a swatch of each beside its words. */
 .board .notes.flags {
   flex-direction: row;
@@ -1580,77 +1640,32 @@ button.quiet {
   letter-spacing: 0.03em;
 }
 
-/* The road: sixty notches in six decades, a wider gap between decades
-   than between levels, each decade's name and date beneath. The current
-   decade steps forward a register; the rest stay quiet. */
-.board .road ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.board .road li {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.03em;
-  color: var(--dim);
-}
-
-/* The decade's name is read; its date stays mono beneath it. */
-.board .road .name {
-  font-family: var(--sans);
-  font-size: var(--small);
-}
-
-.board .road .notches {
-  display: flex;
-  gap: 3px;
-  height: 2px;
-  margin-bottom: 4px;
-}
-
-.board .road .notches i {
-  flex: 1;
-  background: var(--rule);
-}
-
-.board .road .notches i.lit {
-  background: var(--text-soft);
-}
-
-.board .road .notches i.here {
-  background: var(--accent);
-}
-
-.board .road .kanji-name {
-  font-family: var(--jp-serif);
-  letter-spacing: 0;
-}
-
-.board .road .current .name {
-  color: var(--text-strong);
-}
-
-.board .road .current .when {
-  color: var(--accent);
-}
-
-.board .road .done .name {
-  color: var(--text-soft);
-}
-
-/* The forecast footline is the last thing on the page, however tall the
-   columns run. */
+/* The footline. The forecast left it for a place under the figures; what
+   stays down here is the resting line while the board reads, last on the
+   page however tall the rest runs. */
 .board .footline {
-  margin-top: auto;
   letter-spacing: 0.03em;
   text-transform: none;
+}
+
+.board .footline:not(.forecast) {
+  margin-top: auto;
+}
+
+/* ---- ahead ----
+   Everything that looks forward, in one band below the three columns: the
+   pace dial full width, then the milestones and coverage side by side. */
+.board .forward {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.board .forward .pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(40px, 5vw, 72px);
+  align-items: start;
 }
 
 /* An iPad, either way up, or a narrow window. Below about 1,280px three
@@ -1666,23 +1681,80 @@ button.quiet {
     display: none;
   }
 
-  /* A sixth of an upright iPad is narrower than 天国 paradise, and the last
-     decade's name ran off the page. The road beneath names each in full, so
-     here the dial keeps the kanji and the date. */
-  .board .dial .decades .en {
-    display: none;
-  }
-
-  .board .dial .decades > span {
-    padding-left: 5px;
-    letter-spacing: 0;
-  }
-
   .board .columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .board .column:first-child {
     grid-column: 1 / -1;
+  }
+
+  /* The level full width: the grid on the left keeps its eight across at
+     a size a finger can hit, and the notes stand beside it rather than
+     under it, so the section is half as tall. The radicals, opened, run the
+     full width beneath. */
+  .board .level {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 20px 36px;
+    align-items: start;
+  }
+
+  .board .level > .head,
+  .board .level > .radicals {
+    grid-column: 1 / -1;
+  }
+
+  .board .level > .kanji {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+  }
+
+  .board .level > .readout,
+  .board .level > .fold {
+    grid-column: 2;
+  }
+
+  .board .level > .fold {
+    margin-top: 0;
+  }
+
+  /* Two-up at half an iPad, the ladder drops its date under its label so
+     the label never wraps. */
+  .board .ladder {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .board .ladder .next .when {
+    grid-column: 1;
+    margin-top: -8px;
+    text-align: left;
+  }
+
+  .board .ladder .reached .when {
+    grid-column: 2;
+  }
+
+  .board .dial .under {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .board .dial .under .flags {
+    justify-content: flex-start;
+  }
+}
+
+/* A sixth of an upright iPad is narrower than 天国 paradise, and the last
+   decade's name ran off the page; at a sixth of 1180px it still fits. The
+   decades keep their kanji and date down here. */
+@media (max-width: 999px) {
+  .board .dial .decades .en,
+  .board .dial .decades .pre {
+    display: none;
+  }
+
+  .board .dial .decades > span {
+    padding-left: 5px;
+    letter-spacing: 0;
   }
 }

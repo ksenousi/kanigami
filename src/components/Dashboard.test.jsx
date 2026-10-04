@@ -206,26 +206,26 @@ describe('the pace dial', () => {
   }
 
   const readings = host => host.querySelector('.dial .readings').textContent
-  const road = host => [...host.querySelectorAll('.road .when')].map(w => w.textContent)
+  const decadeDates = host => [...host.querySelectorAll('.dial .decades .when')].map(w => w.textContent)
 
   it('starts at the median, and says so', async () => {
     history()
     const host = await board()
     expect(host.querySelector('#pace-dial').value).toBe('10')
     expect(readings(host)).toContain('10days a level')
-    expect(host.querySelector('.dial .readout').textContent).toContain('Your median pace')
+    expect(host.querySelector('.dial .readings').textContent).toContain('Your median pace')
   })
 
   it('moves level 60 and the road with it, and says by how much', async () => {
     history()
     const host = await board()
-    const before = [readings(host), road(host)]
+    const before = [readings(host), decadeDates(host)]
     await slide(host, 7)
     expect(readings(host)).toContain('7days a level')
     expect(readings(host)).not.toBe(before[0])
-    expect(road(host)).not.toEqual(before[1])
-    expect(host.querySelector('.dial .readout').textContent).toMatch(/\d+ weeks sooner than at your median/)
-    expect(host.querySelector('.road .head').textContent).toContain('7 days a level')
+    expect(decadeDates(host)).not.toEqual(before[1])
+    expect(host.querySelector('.dial .readings').textContent).toMatch(/\d+ weeks sooner than at your median/)
+    expect(host.querySelector('.dial .head').textContent).toContain('7 days a level')
   })
 
   it('draws a slot for every level, the ones ahead as projections', async () => {
@@ -260,7 +260,26 @@ describe('the decades on the dial', () => {
     const host = await board({ user: { ...USER, level: 2 } })
     const marks = host.querySelector('.dial .decades').textContent
     for (const name of ['pleasant', 'painful', 'death', 'hell', 'paradise', 'reality']) expect(marks).toContain(name)
-    expect(host.querySelector('.notes.flags').textContent).toContain('Fastest · level 1, 10 days')
+    // Level 1 runs the accelerated system, so it is never called yours.
+    expect(host.querySelector('.notes.flags')).toBeNull()
+  })
+
+  it('names your fastest level from the ones after the accelerated two', async () => {
+    const day = 86400000
+    const now = Date.now()
+    const lengths = [3, 4, 9, 7, 12]
+    let t = now - 40 * day
+    api.getLevelProgressions.mockResolvedValue([
+      ...lengths.map((d, i) => {
+        const record = { data: { level: i + 1, unlocked_at: new Date(t).toISOString(), passed_at: new Date(t + d * day).toISOString(), abandoned_at: null } }
+        t += d * day
+        return record
+      }),
+      { data: { level: 6, unlocked_at: new Date(t).toISOString(), passed_at: null, abandoned_at: null } }
+    ])
+    const host = await board({ user: { ...USER, level: 6 } })
+    expect(host.querySelector('.notes.flags').textContent).toContain('Your fastest · level 4, 7 days')
+    expect(host.querySelectorAll('.dial .bars .fastest')).toHaveLength(1)
   })
 })
 
@@ -305,7 +324,7 @@ describe('coverage', () => {
     const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
     set.call(input, '20')
     await act(async () => input.dispatchEvent(new Event('input', { bubbles: true })))
-    expect(n5(host)).toMatch(/\+2 3 of 79/)
+    expect(n5(host)).toMatch(/^\+2 \d+% 3 of 79$/)
     expect(host.querySelector('.cover').closest('section').textContent).toContain('Through level 20')
   })
 
