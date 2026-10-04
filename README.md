@@ -56,9 +56,15 @@ npm run dev
 Then open http://localhost:5173/kanigami/ and paste a token from
 [your WaniKani settings](https://www.wanikani.com/settings/personal_access_tokens).
 
+No token to hand? `npm run dev:fake` serves the same app against a fake
+WaniKani ([`fake/wanikani.js`](fake/wanikani.js)), hand-written data and no
+account. Add `?fake=` to the URL for the other states: `fresh`, `slow`,
+`offline`, `revoked`, `radicals-fail`. The fake never reaches a build.
+
 | What | Command |
 |---|---|
 | Dev server | `npm run dev` |
+| Dev server on fake data, no token | `npm run dev:fake` |
 | Build | `npm run build` |
 | Tests | `npm test` |
 | Lint | `npm run lint` |
