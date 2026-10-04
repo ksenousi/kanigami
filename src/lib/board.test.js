@@ -220,7 +220,7 @@ describe('levelKanji and nextUp', () => {
     expect(k[0].meaning).toBe('m1')
   })
 
-  it('puts a higher stage first whatever the lesson order, and keeps lesson order within a stage', () => {
+  it('puts a higher stage first whatever the lesson order, and keeps lesson order where no review is set', () => {
     const k = levelKanji(
       [subject(1, 'A', 0), subject(2, 'B', 1), subject(3, 'C', 2), subject(4, 'D', 3), subject(5, 'E', 4)],
       [
@@ -231,6 +231,20 @@ describe('levelKanji and nextUp', () => {
       ]
     )
     expect(k.map(x => x.characters).join('')).toBe('CBEAD')
+  })
+
+  it('puts the one up next first within a stage', () => {
+    const k = levelKanji(
+      [subject(1, 'A', 0), subject(2, 'B', 1), subject(3, 'C', 2), subject(4, 'D', 3)],
+      [
+        assignment({ subject_id: 1, srs_stage: 3, started_at: local(8, 0), available_at: local(16, 9) }),
+        assignment({ subject_id: 2, srs_stage: 3, started_at: local(8, 0), available_at: local(15, 2) }),
+        assignment({ subject_id: 3, srs_stage: 5, started_at: local(1, 0), passed_at: local(9, 0), available_at: local(20, 0) }),
+        assignment({ subject_id: 4, srs_stage: 5, started_at: local(1, 0), passed_at: local(9, 0), available_at: local(17, 0) })
+      ]
+    )
+    // guru I first, the sooner of the two leading; then apprentice III, sooner first
+    expect(k.map(x => x.characters).join('')).toBe('DCBA')
   })
 
   it('carries WaniKani\'s image for a radical with no character', () => {

@@ -248,7 +248,9 @@ function middle(values) {
 // Ordered by progress, furthest first: passed kanji by stage, then
 // apprentice IV down to I, then waiting in lessons, then locked — so the
 // grid reads as how far through the level you are, and the ones still to
-// pass sit together at the end. Within a stage, WaniKani's lesson order.
+// pass sit together at the end. Within a stage, the one WaniKani asks for
+// next comes first, by `available_at`; kanji with no review coming (in
+// lessons, locked, burned) keep WaniKani's lesson order.
 export function levelKanji(subjects = [], assignments = []) {
   const bySubject = new Map(assignments.map(a => [a?.data?.subject_id, a.data]))
 
@@ -270,12 +272,17 @@ export function levelKanji(subjects = [], assignments = []) {
       if (!a.started_at) return { ...base, state: 'lesson', stage: 0, availableAt: null }
       return { ...base, state: 'apprentice', stage: a.srs_stage, availableAt: a.available_at }
     })
-    .sort((a, b) => progress(b) - progress(a))
+    .sort((a, b) => progress(b) - progress(a) || soonest(a) - soonest(b))
+}
+
+// When a kanji next comes up, as a number to sort by; one with no review
+// coming sorts after every one that has. Ties keep the lesson order.
+function soonest(k) {
+  return k.availableAt ? Date.parse(k.availableAt) : Infinity
 }
 
 // How far a kanji has come, as one number to sort by. Locked is below a
-// lesson waiting, which is below apprentice I. Array sort is stable, so
-// ties keep the lesson order they arrived in.
+// lesson waiting, which is below apprentice I.
 function progress(k) {
   if (k.state === 'locked') return -1
   if (k.state === 'lesson') return 0

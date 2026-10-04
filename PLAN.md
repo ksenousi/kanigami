@@ -1169,7 +1169,9 @@ the most data per inch) — and **the original was kept over all four.**
 - **Column one: the level.** Every kanji of the current level, locked ones
   included, eight across in the serif at `--display-lg`, **ordered by
   progress** — passed by stage, then apprentice IV down to I, then waiting
-  in lessons, then locked; lesson order within a stage — so the grid reads
+  in lessons, then locked; within a stage, the one up for review next
+  first, and lesson order for those with no review coming (asked for after
+  lesson order alone left the next-up kanji anywhere in its stage) — so the grid reads
   as how far through the level you are. Brightness is the
   first reading — passed `--text-strong`, in flight `--text`, waiting in
   lessons or locked `--dim` — and the mark beneath is the second: four pips
