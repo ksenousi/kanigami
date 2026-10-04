@@ -732,7 +732,10 @@ button.quiet {
 /* The resting notes say pointing at something reads it, in the verb the
    device has. `hover: none` is a finger. */
 .board .hint {
+  font-family: var(--sans);
   font-size: var(--label);
+  letter-spacing: 0;
+  white-space: nowrap;
   color: var(--dim);
 }
 

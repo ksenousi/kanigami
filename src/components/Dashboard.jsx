@@ -28,6 +28,7 @@ import { glyphFor } from '../lib/subject.js'
 import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
 import Forecast from './Forecast.jsx'
+import Hint from './Hint.jsx'
 import useOnline from './useOnline.js'
 import usePointing from './usePointing.js'
 
@@ -515,18 +516,6 @@ function LevelUpLine({ levelUp, level }) {
   return (
     <span>
       Level {level + 1} earliest {when(levelUp.at)}, if every answer is right
-    </span>
-  )
-}
-
-// Nothing about a grid of characters says pointing at one does anything, so
-// the resting notes say so, in the verb the device has. Both are written and
-// CSS shows the one that fits — `hover: none` is a finger.
-function Hint({ pointer, touch, children }) {
-  return (
-    <span className="hint">
-      <span className="by-pointer">{pointer}</span>
-      <span className="by-touch">{touch}</span> {children}
     </span>
   )
 }

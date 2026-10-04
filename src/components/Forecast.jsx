@@ -1,4 +1,5 @@
 import { forecast, nextDue, peak } from '../lib/standing.js'
+import Hint from './Hint.jsx'
 import usePointing from './usePointing.js'
 
 // The footline track, carrying the next 24 hours.
@@ -66,6 +67,13 @@ export default function Forecast({ summary }) {
       </div>
 
       <span>+24h</span>
+
+      {/* The hours read out like the kanji and the bars do, and say so the
+          same way. At the far end, after the track, so the label that
+          changes under the cursor keeps its place. */}
+      <Hint pointer="Point at" touch="Tap">
+        an hour
+      </Hint>
     </div>
   )
 }

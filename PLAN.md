@@ -1368,6 +1368,26 @@ side, layout and data unchanged, at 1440 and at an upright iPad's 820:
   it sits on top of Two voices, so it can be added later without undoing
   anything.
 
+**The footline says it reads too.** `Point at an hour` (`Tap` under
+`hover: none`) at the far end of the forecast, after `+24h`, so the label
+that changes under the cursor keeps its place. `Hint` is its own component
+now, shared by the grid, the pace bars and the footline.
+
+**Screen tests.** The counting had tests; the screen did not. Now
+`Forecast.test.jsx`, `Dashboard.test.jsx` and `App.test.jsx` render into
+jsdom (a dev dependency only) with React's own `act` — no testing library —
+through `src/test/dom.js`, which sends mouse and finger pointer events.
+They hold: a mouse reads on hover and lets go on leaving; a tap holds
+through the leave its lift sends, moves on another tap, lets go on the same
+one or outside; the arrows walk; Disconnect asks before it acts and calms
+after four seconds; a fresh board ignores a return to the tab and a stale
+one reads everything again, by return or by `online`; a level-up found on
+the re-read goes to the app rather than reading the old level; a failed
+re-read keeps the board, and only a 401 takes it away; a token survives a
+network failure or a 5xx on open and is dropped only on a 401. The API is
+mocked with hand-written objects of a few fields each. The tap tests were
+checked to fail against the old leave-lets-go behaviour.
+
 ---
 
 ## Reference
