@@ -79,7 +79,7 @@ async function comeBack() {
   await settle()
 }
 
-const readout = host => host.querySelector('.readout').textContent
+const readout = host => host.querySelector('.level .readout').textContent
 
 beforeEach(() => {
   vi.clearAllMocks()

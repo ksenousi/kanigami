@@ -379,70 +379,130 @@ body {
   color: var(--srs-burned);
 }
 
-/* The footline track, carrying the next 24 hours. Empty hours are 1px — the
-   baseline itself, not a gap in it. */
-/* Fixed width, because this line changes as you move along the track and a
-   label that resizes would drag the hour out from under the cursor. 18ch
-   rather than the longest string's 14 characters: `ch` measures the font,
-   and the 0.18em letter-spacing on this line is not in it. */
-.forecast .when {
-  min-width: 18ch;
+/* ---- 刻 the next 24 hours ----
+   A column per hour: a stack — the level-up's kanji, the count, the bar —
+   standing on the shared baseline, and the hour named beneath. No gaps
+   between columns, so the baselines join into one hairline and every hour is
+   a full-height target for a finger. */
+.forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-/* No gaps between the hours: an empty hour is 1px of the baseline, and a
-   gutter between them turns the rule this is supposed to be into a row of
-   ticks. */
-/* `.track.hours`, not `.hours`: this element carries both classes, and
-   `.footline .track` sets height 1px further down the file at the same
-   specificity — so the plain selector loses the tie and the columns collapse
-   to a hairline with nothing to hover. */
-.footline .track.hours {
-  display: flex;
-  align-items: flex-end;
+.forecast .days {
+  position: relative;
   height: 24px;
-  background: transparent;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
 }
 
-/* Each hour is a full-height column so there is something to hover; the bar
-   inside it is what you actually see. A 1px empty hour is otherwise an
-   impossible target. */
+.forecast .days span {
+  position: absolute;
+  top: 0;
+  padding-left: 4px;
+  border-left: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.forecast .hours {
+  display: grid;
+  cursor: default;
+}
+
 .forecast .hour {
-  flex: 1;
-  height: 100%;
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  min-width: 0;
 }
 
-/* --rule here left the empty hours at 1.28:1, so a quiet stretch read as a
-   gap rather than as a baseline and the row came apart into ticks. The
-   no-gaps layout below only preserves the connective tissue if you can see
-   it. */
+.forecast .stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  height: 150px;
+  padding-inline: 2px;
+  border-bottom: 1px solid var(--rule);
+}
+
 .forecast .hour i {
   display: block;
   width: 100%;
-  background: var(--dim);
+  border-radius: 1px 1px 0 0;
+  background: var(--text-soft);
+  opacity: 0.55;
 }
 
-.forecast .hour.soon i {
-  background: color-mix(in srgb, var(--accent) 55%, var(--ground));
+.forecast .hour.marked i {
+  opacity: 0.85;
 }
 
-/* The backlog is a marker, not an hour. Full height so it cannot be missed,
-   three pixels wide so it cannot be mistaken for a quantity — it is already
-   the largest figure on the screen above. */
-.forecast .hour.now {
-  flex: 0 0 3px;
-  margin-right: 4px;
+.forecast .n {
+  font-family: var(--mono);
+  font-size: var(--label);
+  line-height: 1;
+  color: var(--text-soft);
 }
 
+/* The backlog: the accent, the one thing on the chart asking for you now. */
 .forecast .hour.now i {
   background: var(--accent);
+  opacity: 1;
 }
 
-/* Under the cursor. Neutral rather than accented, so the highlight does not
-   claim the meaning that vermilion carries everywhere else. */
+.forecast .hour.now .n {
+  color: var(--accent);
+}
+
+/* Under the pointer. Neutral, so the highlight does not claim the meaning
+   vermilion carries everywhere else. */
 .forecast .hour.reading i {
-  background: var(--text-soft);
+  background: var(--text-strong);
+  opacity: 1;
+}
+
+.forecast .hour.reading .n {
+  color: var(--text-strong);
+}
+
+.forecast .hour.reading .stack {
+  background: color-mix(in srgb, var(--text-soft) 7%, transparent);
+}
+
+.forecast .mark {
+  font-size: var(--small);
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  color: var(--text-strong);
+}
+
+.forecast .mark.quiet {
+  color: var(--text-soft);
+}
+
+/* Every hour named: bright when reviews arrive in it, --dim when empty, the
+   current hour in the accent. A new day's first hour carries the rule the
+   day's name hangs from. */
+.forecast .at {
+  padding-top: 6px;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0;
+  text-align: center;
+  color: var(--dim);
+}
+
+.forecast .hour.busy .at {
+  color: var(--text-strong);
+}
+
+.forecast .hour.now .at {
+  color: var(--accent);
 }
 
 .eyebrow {
@@ -1764,63 +1824,6 @@ button.quiet {
 
 .board .footline:not(.forecast) {
   margin-top: auto;
-}
-
-/* The kanji the level-up waits on, above the hour each comes up: the
-   characters in the serif, a short tick in the accent down to the hour.
-   Strong ink when one of them passes on that review, softer otherwise. The
-   strip makes room above itself only when something is marked. */
-.board .forecast.marked {
-  align-items: flex-end;
-  padding-top: 38px;
-}
-
-.board .forecast.marked > span {
-  padding-bottom: 1px;
-}
-
-.forecast .hour {
-  position: relative;
-}
-
-.forecast .hour .mark {
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  pointer-events: none;
-  white-space: nowrap;
-  font-size: var(--small);
-  line-height: 1;
-  letter-spacing: 0;
-  color: var(--text-strong);
-}
-
-.forecast .hour .mark::after {
-  content: '';
-  width: 1px;
-  height: 8px;
-  background: var(--accent);
-}
-
-.forecast .hour .mark.quiet {
-  color: var(--text-soft);
-}
-
-.board .forecast.lifted {
-  padding-top: 64px;
-}
-
-.forecast .hour .mark.up::after {
-  height: 34px;
-}
-
-.board .forecast-key {
-  margin-top: -22px;
 }
 
 /* ---- ahead ----

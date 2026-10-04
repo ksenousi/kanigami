@@ -1,120 +1,116 @@
 import { forecast, nextDue, peak } from '../lib/standing.js'
-import Hint from './Hint.jsx'
-import { clock } from '../lib/dates.js'
+import { clock, count as many, weekday } from '../lib/dates.js'
 import { stageName } from '../lib/srs.js'
+import Hint from './Hint.jsx'
 import usePointing from './usePointing.js'
 
-// The footline track, carrying the next 24 hours.
+// 刻 The next 24 hours, every hour named — decided from a prototype (see
+// "The next 24 hours" in PLAN.md). It was a 24px strip with no times on it:
+// you pointed at an hour to learn when it was. Now it is a small bar chart
+// that reads without pointing.
 //
-// Every screen already draws a 1px rule across the bottom. On home that rule
-// is the forecast: the summary's 25 buckets — the current hour and the 24
-// after it — rising from the rule as segments, the next few warm, empty
-// hours staying exactly as tall as the rule they are part of. Nothing here
-// is a chart — it is the rule, told what it knows.
-//
-// **The backlog does not set the scale.** WaniKani's first bucket holds
-// everything already due, which on a neglected account is larger than the
-// rest of the day put together — and it is already the biggest number on the
-// screen above. Letting it scale the rule spends the whole width saying that
-// twice and flattens the twenty-three hours this exists to show. So the
-// current hour is a narrow full-height tick, a marker rather than a quantity,
-// and the hours after it are scaled among themselves.
-//
-// **Hovering an hour re-points the label** rather than floating a box over
-// the page. The line of type is already there and already says something
-// about the forecast; under the cursor it says something more specific. No
-// tooltip, no card, nothing that appears and covers.
-//
-// **And the keyboard gets the same reading.** The per-hour counts exist
-// nowhere else in the app, so leaving them behind a pointer left them out of
-// reach entirely for anyone not using one. The track takes focus and the
-// arrows walk it; the label is the live region, so what a sighted user reads
-// under the cursor is the same string a screen reader is handed.
-const TALLEST = 20
-const WARM = 4 // hours after this one that stay near the accent
+// - **One column per bucket** of the summary — the current hour and the 24
+//   after it — each with its two-digit hour beneath the baseline: bright when
+//   reviews arrive then, `--dim` when the hour is empty, the current hour in
+//   the accent. Above, today and tomorrow are named where each begins.
+// - **Each bar carries its count**, and the kanji the level-up waits on sit
+//   above the bar of the hour they come up in — strong ink when one right
+//   answer passes them, softer otherwise.
+// - **The backlog does not set the scale.** WaniKani's first bucket holds
+//   everything already due, which on a neglected account outweighs the rest
+//   of the day and is already the largest figure above. It is drawn in the
+//   accent and stops at the top with an arrow, and the other hours are
+//   scaled among themselves.
+// - **Pointing at a bar, or tapping it, re-points the line beneath** to that
+//   hour in words — its slot, its count, the kanji in it. The arrows walk the
+//   hours from the keyboard; the line is the live region.
+const TALLEST = 96 // px, the busiest hour after this one
 
-//
-// **The kanji the level-up waits on are marked above their hour** — the hour
-// each next comes up, in strong ink when one right answer passes it, softer
-// when it has further to go — and the hour's readout names them. `waitingOn`
-// is levelUpKanji's list; one outside these 25 hours is simply not marked.
 export default function Forecast({ summary, waitingOn = [], nextLevel = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
-  // Unclipped: WaniKani sends now plus 24 hours, and the +24h at the far end
-  // of the track is only true if the twenty-fourth is actually drawn.
+  // Unclipped: WaniKani sends now plus 24 hours, and all of them are drawn.
   const hours = forecast(summary)
-  const tallest = peak(hours.slice(1))
+  const busiest = Math.max(1, peak(hours.slice(1)))
   const marks = markHours(hours, waitingOn)
-  // Marks in neighbouring hours would run together into one word, so each
-  // one right after a low one is lifted a row, on a longer tick.
-  const lifted = new Set()
-  for (const index of [...marks.keys()].sort((a, b) => a - b)) {
-    if (marks.has(index - 1) && !lifted.has(index - 1)) lifted.add(index)
-  }
+  const today = hours[0] ? new Date(hours[0].at).toDateString() : null
+  const midnight = hours.findIndex((h, i) => i > 0 && new Date(h.at).toDateString() !== today)
+  const share = i => `${(i / Math.max(1, hours.length)) * 100}%`
 
   return (
-    <>
-      <div className={['footline forecast', marks.size ? 'marked' : '', lifted.size ? 'lifted' : ''].join(' ').trim()}>
-        {/* The label is the live region, so the arrows announce as they walk.
-            It is `polite`, because this reads while somebody is deliberately
-            stepping through hours and should not interrupt anything. */}
-        <span className="when" aria-live="polite">
-          {reading === null ? nextLabel(summary, hours[0]) : hourLabel(hours[reading], reading, marks.get(reading))}
-        </span>
+    <section className="forecast" aria-label="Reviews over the next 24 hours">
+      <div className="days" aria-hidden="true">
+        <span style={{ left: 0 }}>today</span>
+        {midnight > 0 ? <span style={{ left: share(midnight) }}>{weekday(hours[midnight].at)}</span> : null}
+      </div>
 
-        <div
-          className="track hours"
-          role="group"
-          aria-label="Reviews due over the next 24 hours"
-          onKeyDown={walk(hours.length, reading, point)}
-          {...groupProps}
-        >
-          {hours.map((hour, index) => (
+      <div
+        className="hours"
+        role="group"
+        aria-label="Reviews due in each of the next 24 hours"
+        style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))` }}
+        onKeyDown={walk(hours.length, reading, point)}
+        {...groupProps}
+      >
+        {hours.map((hour, index) => {
+          const capped = index === 0 && hour.count > busiest
+          const height = hour.count
+            ? Math.max(3, Math.round(((capped ? busiest : hour.count) / busiest) * TALLEST))
+            : 0
+          const kanji = marks.get(index)
+          return (
             <span
               key={hour.at}
-              className={`hour${warmth(hour, index)}${reading === index ? ' reading' : ''}`}
+              className={[
+                'hour',
+                hour.count ? 'busy' : '',
+                index === 0 ? 'now' : '',
+                kanji ? 'marked' : '',
+                reading === index ? 'reading' : ''
+              ]
+                .join(' ')
+                .trim()}
               // A mouse reads on hover; a tap reads and holds — see usePointing.
               {...itemProps(index)}
             >
-              <i style={{ height: `${height(hour, index, tallest)}px` }} />
-              {marks.has(index) ? (
-                <span
-                  className={['mark', marks.get(index).some(k => k.stage === 4) ? '' : 'quiet', lifted.has(index) ? 'up' : '']
-                    .join(' ')
-                    .trim()}
-                  aria-hidden="true"
-                >
-                  <span className="kanji-name">{marks.get(index).map(k => k.characters).join('')}</span>
-                </span>
-              ) : null}
+              <span className="stack">
+                {kanji ? (
+                  <span className={kanji.some(k => k.stage === 4) ? 'mark' : 'mark quiet'} aria-hidden="true">
+                    <span className="kanji-name">{kanji.map(k => k.characters).join('')}</span>
+                  </span>
+                ) : null}
+                {hour.count ? (
+                  <span className="n">
+                    {many(hour.count)}
+                    {capped ? '↑' : ''}
+                  </span>
+                ) : null}
+                <i style={{ height: `${height}px` }} />
+              </span>
+              <span className="at">{String(new Date(hour.at).getHours()).padStart(2, '0')}</span>
             </span>
-          ))}
-        </div>
-
-        <span>+24h</span>
-
-        {/* The hours read out like the kanji and the bars do, and say so the
-            same way. At the far end, after the track, so the label that
-            changes under the cursor keeps its place. */}
-        <Hint pointer="Point at" touch="Tap">
-          an hour
-        </Hint>
+          )
+        })}
       </div>
-      {marks.size ? (
-        <p className="notes forecast-key">
-          <span className="hint">
-            Marked: the kanji level {nextLevel} waits on, at the hour each comes up · in strong ink, one step from
-            passing
-          </span>
-        </p>
-      ) : null}
-    </>
+
+      <p className="notes readout" aria-live="polite">
+        <span className="soft">
+          {reading === null ? resting(summary, hours) : hourLabel(hours, reading, today, marks.get(reading))}
+        </span>
+        <span className="hint">
+          Count above each bar
+          {marks.size ? ` · the kanji level ${nextLevel} waits on above theirs, strong ink one step from passing` : ''}
+        </span>
+        <Hint pointer="Point at" touch="Tap">
+          a bar for its hour
+        </Hint>
+      </p>
+    </section>
   )
 }
 
 // Which hour each of the level-up's kanji next comes up in: the bucket its
-// `available_at` falls in, today's backlog for one already due. Lessons have
-// no review yet, and anything past the last bucket is off the strip.
+// `available_at` falls in, the current hour for one already due. Lessons have
+// no review yet, and anything past the last bucket is off the chart.
 function markHours(hours, waitingOn) {
   const marks = new Map()
   if (hours.length === 0) return marks
@@ -132,15 +128,13 @@ function markHours(hours, waitingOn) {
 }
 
 // Left and right walk an hour, Home and End go to the ends, Escape gives the
-// label back to its resting state. Returns a handler rather than closing over
-// the component's scope, so the walk is nothing but arithmetic.
+// line back to its resting state. The first press lands on the current hour
+// whichever way it went, rather than stepping off and skipping hour zero.
 function walk(count, now, point) {
   return function key(event) {
     const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
     if (step) {
       event.preventDefault()
-      // The first press lands on the current hour whichever way it went,
-      // rather than stepping off a resting label and skipping hour zero.
       point(now === null ? 0 : Math.min(count - 1, Math.max(0, now + step)))
       return
     }
@@ -156,41 +150,30 @@ function walk(count, now, point) {
   }
 }
 
-// The current hour is a marker, not a measurement: full height when anything
-// is waiting, and part of the baseline when nothing is. Everything after it
-// is proportional to the busiest hour still to come.
-function height(hour, index, tallest) {
-  if (hour.count === 0) return 1
-  if (index === 0) return TALLEST + 4
-  if (tallest === 0) return 1
-  return Math.max(2, Math.round((hour.count / tallest) * TALLEST))
-}
-
-// Only an hour with something in it gets any warmth. Lighting an empty
-// current hour makes an empty queue look like a full one.
-function warmth(hour, index) {
-  if (hour.count === 0) return ''
-  if (index === 0) return ' now'
-  return index <= WARM ? ' soon' : ''
-}
-
-
-// What the label says while an hour is under the cursor.
-function hourLabel(hour, index, marked) {
+// What the line says while an hour is read: its slot, its count, and the
+// level-up's kanji in it.
+function hourLabel(hours, index, today, marked) {
+  const hour = hours[index]
   if (!hour) return ''
-  const base =
-    index === 0 ? `${hour.count} due now` : hour.count === 0 ? `${clock(hour.at)} · none` : `${clock(hour.at)} · ${hour.count}`
-  if (!marked) return base
-  return `${base} · ${marked.map(k => `${k.characters} ${k.stage === 4 ? 'to pass' : stageName(k.stage)}`).join(', ')}`
+  const start = new Date(hour.at)
+  const end = new Date(start.getTime() + 60 * 60 * 1000)
+  const slot =
+    index === 0 ? 'Now' : `${clock(start)}–${clock(end)}${start.toDateString() !== today ? ` ${weekday(start)}` : ''}`
+  const count = index === 0 ? `${many(hour.count)} due` : hour.count ? `${many(hour.count)} reviews` : 'none'
+  const kanji = marked
+    ? ` · ${marked.map(k => `${k.characters} ${k.stage === 4 ? 'to pass' : stageName(k.stage)}`).join(', ')}`
+    : ''
+  return `${slot} · ${count}${kanji}`
 }
 
-// The first bucket is the current hour, so it already says whether anything
-// is due — no need to compare its timestamp against the clock, which got this
-// wrong whenever the two disagreed. If nothing is due now, the next bucket
-// holding anything is in the future by definition.
-function nextLabel(summary, now) {
-  if (now?.count > 0) return `${now.count} due`
-
-  const when = nextDue(summary)
-  return when ? `next at ${clock(when)}` : 'nothing in 24h'
+// The line at rest: what is due now, or when the next ones come, and the
+// day's total. The first bucket is the current hour, so it already says
+// whether anything is due.
+function resting(summary, hours) {
+  const total = hours.reduce((sum, h) => sum + h.count, 0)
+  const now = hours[0]?.count ?? 0
+  if (now > 0) return `${many(now)} due now · ${many(total - now)} more by this time tomorrow`
+  const next = nextDue(summary)
+  if (!next) return 'Nothing due in the next 24 hours'
+  return `Nothing due now · next at ${clock(next)} · ${many(total)} by this time tomorrow`
 }

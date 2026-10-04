@@ -1556,6 +1556,29 @@ All of it was acted on, on the owner's say-so, without a prototype:
     — the dial's pace gets there` (or how much faster), with `Set the dial
     to it`; a goal no pace reaches says it is sooner than WaniKani's
     intervals allow. A first pick starts at the month the dial reaches it.
+- **The next 24 hours — 刻 every hour named, decided from a prototype.**
+  The owner found the 24px strip hard to read: no time on it until you
+  pointed, a warm colour on the first four hours that read as a second
+  series, and the level-up kanji over an hour you could not name. Four
+  chart types went up (labelled bars, sittings as a list, a calendar day
+  band, a running total); labelled bars were picked, then drawn five ways of
+  marking time (a ruler of 1/3/6-hour ticks, a background grid, every hour
+  named, times on the bars only, parts of the day). **Every hour named** was
+  picked:
+  - A column per summary bucket (now and the 24 after), a 150px stack on a
+    shared baseline — the level-up's kanji, the count, the bar, one scale of
+    96px for the busiest hour after this one — and the two-digit hour under
+    every column: `--text-strong` when reviews arrive then, `--dim` when
+    empty, the current hour in the accent. `today` and the next day's name
+    hang from a rule where each begins.
+  - The backlog is drawn in the accent and capped at the top with `↑` when
+    it outweighs the day, so it never flattens the hours after it.
+  - The line beneath reads `38 due now · 106 more by this time tomorrow` or
+    `Nothing due now · next at 11:00 · 55 by this time tomorrow`; pointing
+    at or tapping a bar makes it `11:00–12:00 · 12 reviews · 薬 to pass`.
+  - Gone: the warm "soon" colour, the narrow backlog tick, the lifted marks
+    and the separate key line. Rejected: sittings (loses the shape of the
+    day), the day band, the running total, and the other four time marks.
 - **Apprentice keeps the accent in the spread** — it is the hot end of the
   spread's walk from hot to drained, items back within hours. But `146
   taught` in past 7 days borrowed that red for lessons done, which read as
