@@ -64,6 +64,33 @@ describe('Forecast', () => {
     expect(label(host)).toBe('38 due')
   })
 
+  it('marks the kanji the level-up waits on above their hour, and names them', async () => {
+    const at = i => new Date(START + i * HOUR + 30 * 60 * 1000).toISOString()
+    const waitingOn = [
+      { characters: '薬', stage: 4, availableAt: at(2) },
+      { characters: '皿', stage: 4, availableAt: at(2) },
+      { characters: '涙', stage: 1, availableAt: at(3) },
+      { characters: '汗', stage: 0, availableAt: null }, // in lessons: nothing to mark
+      { characters: '鼻', stage: 2, availableAt: at(40) } // past the strip
+    ]
+    const host = await render(<Forecast summary={summary} waitingOn={waitingOn} nextLevel={16} />)
+    const marks = [...host.querySelectorAll('.mark')]
+    expect(marks.map(m => m.textContent)).toEqual(['薬皿', '涙'])
+    expect(marks[0].classList.contains('quiet')).toBe(false)
+    expect(marks[1].classList.contains('quiet')).toBe(true)
+    // in the very next hour, so lifted a row
+    expect(marks[1].classList.contains('up')).toBe(true)
+    await hover(hours(host)[2])
+    expect(label(host)).toMatch(/· 7 · 薬 to pass, 皿 to pass$/)
+    expect(host.querySelector('.forecast-key').textContent).toContain('level 16 waits on')
+  })
+
+  it('marks nothing without a level-up to wait on', async () => {
+    const host = await render(<Forecast summary={summary} />)
+    expect(host.querySelector('.mark')).toBeNull()
+    expect(host.querySelector('.forecast-key')).toBeNull()
+  })
+
   it('walks the hours from the keyboard', async () => {
     const host = await render(<Forecast summary={summary} />)
     const strip = host.querySelector('.hours')

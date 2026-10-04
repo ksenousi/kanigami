@@ -244,6 +244,42 @@ describe('the pace dial', () => {
     expect(host.querySelector('.dial .readout .usual:not(.hidden)').textContent).toMatch(/^Level 30 ≈ .+ at 10 days a level$/)
   })
 
+  it('remembers a goal of a level by a month, and says the pace it asks for', async () => {
+    history()
+    const host = await board()
+    const pick = async (id, value) => {
+      const select = host.querySelector(`#${id}`)
+      const set = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value').set
+      set.call(select, String(value))
+      await act(async () => select.dispatchEvent(new Event('change', { bubbles: true })))
+    }
+    await pick('goal-level', 20)
+    const stored = JSON.parse(localStorage.getItem('kanigami-goal'))
+    expect(stored.level).toBe(20)
+    // the first pick starts at the month the dial's pace gets there, so it does
+    expect(host.querySelector('.dial').textContent).toContain('the dial’s pace gets there')
+    expect(host.querySelector('.dial .goal-line')).toBeTruthy()
+
+    // Level 60 by the end of this month: 55 levels in a few weeks, which no
+    // pace reaches, even the 1-day floor used when the SRS table is missing.
+    await pick('goal-level', 60)
+    await pick('goal-year', new Date().getFullYear())
+    await pick('goal-month', new Date().getMonth())
+    expect(host.querySelector('.dial').textContent).toContain('sooner than WaniKani’s intervals allow')
+
+    await pick('goal-level', '')
+    expect(localStorage.getItem('kanigami-goal')).toBeNull()
+    expect(host.querySelector('.dial .goal-line')).toBeNull()
+  })
+
+  it('reads a remembered goal back on the next visit', async () => {
+    history()
+    localStorage.setItem('kanigami-goal', JSON.stringify({ level: 40, year: new Date().getFullYear() + 3, month: 0 }))
+    const host = await board()
+    expect(host.querySelector('#goal-level').value).toBe('40')
+    expect(host.querySelector('.dial').textContent).toMatch(/To reach level 40 by Jan \d{4}: [\d.]+ days a level/)
+  })
+
   it('stays away until a level has passed', async () => {
     const host = await board()
     expect(host.querySelector('#pace-dial')).toBeNull()
@@ -280,6 +316,21 @@ describe('the decades on the dial', () => {
     const host = await board({ user: { ...USER, level: 6 } })
     expect(host.querySelector('.notes.flags').textContent).toContain('Your fastest · level 4, 7 days')
     expect(host.querySelectorAll('.dial .bars .fastest')).toHaveLength(1)
+  })
+})
+
+describe('upcoming burns', () => {
+  it('counts enlightened items whose next review is the burn, this week', async () => {
+    const soon = new Date(Date.now() + 2 * HOUR).toISOString()
+    api.getStartedAssignments.mockResolvedValue([
+      { data: { subject_id: 900, subject_type: 'vocabulary', srs_stage: 8, started_at: soon, available_at: soon } },
+      { data: { subject_id: 901, subject_type: 'vocabulary', srs_stage: 8, started_at: soon, available_at: soon } },
+      { data: { subject_id: 902, subject_type: 'vocabulary', srs_stage: 7, started_at: soon, available_at: soon } }
+    ])
+    api.getSubjectTotals.mockResolvedValue({ radical: 500, kanji: 2000, vocabulary: 6000 })
+    const host = await board()
+    const line = (await until(host, '.burnline')).textContent
+    expect(line).toMatch(/^2 up for burning this week · \d+ today$/)
   })
 })
 

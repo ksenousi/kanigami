@@ -17,7 +17,8 @@ token. There is no server and no database. The token is held in
 
 - **The figures** — reviews due, lessons waiting, kanji left to level up,
   reviews due within seven days, and meaning / reading accuracy — with the
-  next 24 hours of reviews drawn beneath them.
+  next 24 hours of reviews drawn beneath them, and the kanji your level-up
+  waits on marked at the hour each comes up.
 - **The level** — every kanji of your current level, locked ones included,
   ordered by progress, with when each comes back for review; a switch in
   the heading shows the level's radicals instead. A line projects the
@@ -29,8 +30,9 @@ token. There is no server and no database. The token is held in
   rotation.
 - **Ahead** — days per level for every level, the six decades WaniKani names
   marked across them, and a pace slider that re-projects level 60 and the
-  decades as you drag; then count milestones (the next round number for each
-  kind, and the ones reached) and coverage of the JLPT levels and Jōyō
+  decades as you drag, and a goal — a level by a month — that says the pace
+  it asks for; then upcoming burns and count milestones (the next round
+  number for each kind, and the ones reached) and coverage of the JLPT levels and Jōyō
   grades, with a slider through later levels.
 
 Point at a kanji, a level bar, or an hour to read it — or tap it on an iPad.

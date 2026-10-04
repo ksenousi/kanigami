@@ -1212,6 +1212,64 @@ button.quiet {
   text-transform: uppercase;
 }
 
+/* Upcoming burns: a line, a bar a day for the week in the enlightened
+   colour, and each day's count over its name. */
+.board .burns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.board .burnline {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--srs-burned);
+}
+
+.board .burnrow,
+.board .burnaxis {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.board .burnrow {
+  align-items: end;
+  height: 48px;
+}
+
+.board .burnrow span {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.board .burnrow i {
+  display: block;
+  width: 100%;
+  background: var(--srs-enlightened);
+}
+
+.board .burnrow .today i {
+  background: var(--text-soft);
+}
+
+.board .burnaxis {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  text-align: center;
+  color: var(--dim);
+}
+
+.board .burnaxis b {
+  display: block;
+  font-weight: 400;
+  color: var(--srs-burned);
+}
+
 /* ---- coverage ----
    The measure switch is two words on the house hairline, the chosen one
    lit. Each row: the group, a hairline lit to what is taught in the kanji
@@ -1420,6 +1478,55 @@ button.quiet {
   opacity: 0.6;
 }
 
+/* The goal's pace: solid, in strong ink — a line you chose, not the dial's
+   dashed accent or the median's dots. */
+.board .dial .goal-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px solid var(--text-strong);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* Goal level by month and year: native selects on the house hairline, a
+   finger's height, and the door to set the dial to the goal's pace. */
+.board .goalset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .goalset select {
+  min-height: 44px;
+  padding: 8px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+.board .goalset select:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.board .goalset button {
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+
 /* The level numbers, one slot per bar so each sits under its own. */
 .board .dial .levels {
   display: flex;
@@ -1509,6 +1616,16 @@ button.quiet {
 
 .board .ticks.has-low {
   height: 54px;
+}
+
+/* The goal's mark has a row of its own under the others. */
+.board .ticks.has-goal {
+  height: 80px;
+}
+
+.board .ticks .mark.goal {
+  top: 52px;
+  color: var(--text-strong);
 }
 
 .board .ticks .mark {
@@ -1647,6 +1764,63 @@ button.quiet {
 
 .board .footline:not(.forecast) {
   margin-top: auto;
+}
+
+/* The kanji the level-up waits on, above the hour each comes up: the
+   characters in the serif, a short tick in the accent down to the hour.
+   Strong ink when one of them passes on that review, softer otherwise. The
+   strip makes room above itself only when something is marked. */
+.board .forecast.marked {
+  align-items: flex-end;
+  padding-top: 38px;
+}
+
+.board .forecast.marked > span {
+  padding-bottom: 1px;
+}
+
+.forecast .hour {
+  position: relative;
+}
+
+.forecast .hour .mark {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: var(--small);
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--text-strong);
+}
+
+.forecast .hour .mark::after {
+  content: '';
+  width: 1px;
+  height: 8px;
+  background: var(--accent);
+}
+
+.forecast .hour .mark.quiet {
+  color: var(--text-soft);
+}
+
+.board .forecast.lifted {
+  padding-top: 64px;
+}
+
+.forecast .hour .mark.up::after {
+  height: 34px;
+}
+
+.board .forecast-key {
+  margin-top: -22px;
 }
 
 /* ---- ahead ----

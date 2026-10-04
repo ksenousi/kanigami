@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest'
 import {
   MIN_MISSES,
   accuracy,
+  burnsAhead,
   earliestLevelUp,
   leeches,
   levelKanji,
+  levelUpKanji,
   milestones,
   moved,
   nextUp,
   fastestLevel,
   pace,
+  paceToReach,
   project,
   road,
   srsSystems,
@@ -342,6 +345,16 @@ describe('earliestLevelUp', () => {
     expect(earliestLevelUp([], systems, 0, NOW)).toBeNull()
   })
 
+  it('names the kanji the level-up waits on, soonest to pass first', () => {
+    const fast = { ...kanji('apprentice', 4, at(1)), characters: 'A' }
+    const slow = { ...kanji('apprentice', 1, at(1)), characters: 'B' }
+    const mid = { ...kanji('apprentice', 4, at(20)), characters: 'C' }
+    const locked = { ...kanji('locked', null, null), characters: 'D' }
+    const passed = { ...kanji('passed', 5, at(1)), characters: 'E' }
+    expect(levelUpKanji([slow, locked, mid, passed, fast], systems, 2, NOW).map(k => k.characters)).toEqual(['A', 'C'])
+    expect(levelUpKanji([fast], systems, 0, NOW)).toEqual([])
+  })
+
   it('reads the fastest level off the table: two runs to guru', () => {
     // (4 + 8 + 23 + 47) hours, twice
     expect(fastestLevel(systems.get(1)) * 24).toBeCloseTo(164, 5)
@@ -445,5 +458,52 @@ describe('milestones', () => {
     expect(reached.map(m => m.at.getTime())).toEqual(reached.map(m => m.at.getTime()).sort((a, b) => b - a))
     const dated = next.filter(m => m.at)
     expect(dated.map(m => m.at.getTime())).toEqual(dated.map(m => m.at.getTime()).sort((a, b) => a - b))
+  })
+})
+
+describe('burnsAhead', () => {
+  it('counts only enlightened items, by the day their burn review comes', () => {
+    const days = burnsAhead(
+      [
+        assignment({ srs_stage: 8, available_at: local(14, 22) }), // tonight
+        assignment({ srs_stage: 8, available_at: local(16, 9) }), // in two days
+        assignment({ srs_stage: 7, available_at: local(14, 22) }), // master: not a burn
+        assignment({ srs_stage: 8, available_at: local(10, 8) }) // overdue: today
+      ],
+      NOW
+    )
+    expect(days.map(d => d.count)).toEqual([2, 0, 1, 0, 0, 0, 0])
+  })
+})
+
+describe('paceToReach', () => {
+  const DAY = 86400000
+  const p = { current: { level: 15, days: 13 } }
+  const by = days => new Date(NOW.getTime() + days * DAY)
+
+  it('finds the slowest pace that reaches the level by the date', () => {
+    // level 30 starts after the rest of this level plus 14 levels: at pace x,
+    // max(0, x - 13) + 14x days. By day 200 that allows x = 14.
+    expect(paceToReach(p, 15, 30, by(200), NOW, null, 7)).toBe(14)
+  })
+
+  it('rounds down, so the pace it names always gets there', () => {
+    const pace = paceToReach(p, 15, 30, by(205), NOW, null, 7)
+    expect(project(p, 15, pace, NOW).startOf(30) <= by(205)).toBe(true)
+  })
+
+  it('says null when even the fastest pace is too slow', () => {
+    expect(paceToReach(p, 15, 60, by(100), NOW, null, 7)).toBeNull()
+  })
+
+  it('never beats the earliest level-up', () => {
+    // the next level cannot start before the soonest level-up, whatever the pace
+    const soonest = by(3)
+    expect(paceToReach(p, 15, 16, by(2), NOW, soonest, 7)).toBeNull()
+    expect(paceToReach(p, 15, 16, by(4), NOW, soonest, 7)).not.toBeNull()
+  })
+
+  it('has nothing to ask of a level already reached', () => {
+    expect(paceToReach(p, 15, 15, by(100), NOW)).toBeNull()
   })
 })

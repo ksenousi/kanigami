@@ -14,21 +14,24 @@ import {
 import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
 import {
   accuracy,
+  burnsAhead,
   earliestLevelUp,
   fastestLevel,
   leeches,
   levelKanji,
+  levelUpKanji,
   milestones,
   moved,
   nextUp,
   pace,
+  paceToReach,
   project,
   road,
   srsSystems,
   week
 } from '../lib/board.js'
 import { glyphFor } from '../lib/subject.js'
-import { clock, count as many, dayMonthYear, monthYear, roughly, when } from '../lib/dates.js'
+import { clock, count as many, dayMonthYear, monthYear, roughly, weekday, when } from '../lib/dates.js'
 import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
 import { kanjiIndex } from '../lib/kanjiIndex.js'
@@ -110,6 +113,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           now,
           summary,
           days: week(started, now),
+          burns: burnsAhead(started, now),
           spread: spread(started),
           moved: moved(started, now),
           learned: learned(started),
@@ -139,6 +143,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             totals,
             milestones: milestones(started, now, totals),
             levelUp: srs ? earliestLevelUp(kanji, srs, passed.remaining, now) : null,
+            waitingOn: srs ? levelUpKanji(kanji, srs, passed.remaining, now) : [],
             // The level's own system — the accelerated one on levels 1–2.
             fastest: srs ? fastestLevel(srs.get(kanji.find(k => k.system)?.system)) : null,
             accuracy: statistics ? accuracy(statistics) : null,
@@ -246,7 +251,11 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           <Figures board={board} level={user.level} />
           {/* The next 24 hours belong with the reviews due they continue —
               they were the footline, 1,400px below the figure. */}
-          <Forecast summary={board.summary} />
+          <Forecast
+            summary={board.summary}
+            waitingOn={user.level < TOP_LEVEL ? (board.waitingOn ?? []) : []}
+            nextLevel={user.level + 1}
+          />
           <div className="columns">
             <div className="column">
               <Level key={user.level} board={board} level={user.level} token={token} />
@@ -268,6 +277,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             perLevel={paceFor(board.pace, chosenPace)}
             onPace={setChosenPace}
             milestones={board.milestones}
+            burns={board.burns}
             coverage={board.coverage}
           />
         </>
@@ -676,7 +686,7 @@ function paceFor(p, chosen) {
   return p?.median != null ? toStep(p.median) : null
 }
 
-function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, milestones: m, coverage: c }) {
+function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, milestones: m, burns, coverage: c }) {
   return (
     <div className="forward">
       <PaceDial
@@ -689,7 +699,7 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, milest
         onPace={onPace}
       />
       <div className="pair">
-        <Milestones milestones={m} now={now} />
+        <Milestones milestones={m} burns={burns} now={now} />
         <Coverage coverage={c} level={level} pace={p} now={now} soonest={soonest} perLevel={perLevel} />
       </div>
     </div>
@@ -726,8 +736,15 @@ function Waiting({ title }) {
 // took and the day it began, the day this one is on, or when one ahead would
 // start — with the legend beside it. The arrows walk it; the line is the live
 // region. The slider is a native range: a finger, a drag, the arrow keys.
+//
+// **A goal: a level by a month**, chosen under the readings and remembered
+// on this device (`kanigami-goal` — a level and a month, nothing else). The
+// dial still opens at the median; the goal draws a solid line across the
+// bars and a mark on the slider at the pace it asks for — the slowest that
+// gets there, from `paceToReach` — and says whether the dial's pace does.
 function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
+  const [goal, setGoal] = useState(readGoal)
   if (p === undefined) return <Waiting title="days per level" />
   if (!p || (p.levels.length === 0 && !p.current)) return null
 
@@ -750,10 +767,32 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
     .filter(l => !l.break && l.level > ACCELERATED)
     .reduce((best, l) => (!best || l.days < best.days ? l : best), null)
 
-  // Scaled by the passed levels and the dial, never by a break, and never by
-  // a current level already longer than all of them — that stops at the top.
+  const min = fastest ? Math.ceil(fastest / STEP) * STEP : 1
+  const max = Math.max(40, toStep((p.median ?? 0) * 2))
+
+  // The goal, if one is set for a level still ahead: the month it names runs
+  // to its last day, so `by` is the start of the month after.
+  const aim = goal && goal.level > level ? goal : null
+  const by = aim ? new Date(aim.year, aim.month + 1, 1) : null
+  const need = aim ? paceToReach(p, level, aim.level, by, now, soonest, min, STEP, max) : null
+  function choose(next) {
+    const value = next && next.level > level ? next : null
+    setGoal(value)
+    writeGoal(value)
+  }
+  function chooseLevel(target) {
+    if (!target) return choose(null)
+    if (goal) return choose({ ...goal, level: target })
+    // A first goal starts at the month the dial's pace reaches it.
+    const at = ahead?.startOf(target) ?? new Date(now.getFullYear() + 1, now.getMonth(), 1)
+    choose({ level: target, year: at.getFullYear(), month: at.getMonth() })
+  }
+
+  // Scaled by the passed levels, the dial and the goal, never by a break, and
+  // never by a current level already longer than all of them — that stops at
+  // the top.
   const passed = p.levels.filter(l => !l.break).map(l => l.days)
-  const tallest = Math.max(1, ...passed, perLevel ?? 0)
+  const tallest = Math.max(1, ...passed, perLevel ?? 0, need ?? 0)
   const height = days => Math.min(100, (days / tallest) * 100)
 
   const shown = reading === null ? null : slots[reading]
@@ -771,8 +810,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
     if (event.key === 'Escape') point(null)
   }
 
-  const min = fastest ? Math.ceil(fastest / STEP) * STEP : 1
-  const max = Math.max(40, toStep((p.median ?? 0) * 2))
   const at = days => ((days - min) / (max - min)) * 100
   // The ends label the top row; the marks sit on the row beneath, where the
   // end labels cannot reach them. Two marks too close to share it become one
@@ -834,6 +871,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
             </span>
           ))}
           {perLevel !== null ? <span className="pace-line" style={{ bottom: `${height(perLevel)}%` }} aria-hidden="true" /> : null}
+          {need !== null ? <span className="goal-line" style={{ bottom: `${height(need)}%` }} aria-hidden="true" /> : null}
           {p.median !== null ? <span className="median-line" style={{ bottom: `${height(p.median)}%` }} aria-hidden="true" /> : null}
         </div>
       </div>
@@ -890,7 +928,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
             aria-label="Days per level, for the projection"
             aria-valuetext={`${dayCount(perLevel)} days a level`}
           />
-          <div className={marks.length ? 'ticks has-low' : 'ticks'} aria-hidden="true">
+          <div className={['ticks', marks.length ? 'has-low' : '', need !== null ? 'has-goal' : ''].join(' ').trim()} aria-hidden="true">
             <span className="start" style={{ left: 0 }}>
               {dayCount(min)} days{fastest ? ', WaniKani’s fastest' : ''}
             </span>
@@ -899,6 +937,11 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
                 {m.label}
               </span>
             ))}
+            {need !== null ? (
+              <span className="mark goal" style={{ left: `${Math.max(4, Math.min(96, at(need)))}%` }}>
+                goal {dayCount(need)}
+              </span>
+            ) : null}
             <span className="end" style={{ left: '100%' }}>
               {max} days
             </span>
@@ -929,6 +972,74 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
         </div>
       ) : null}
 
+      <div className="goalset">
+        <span>Goal</span>
+        <select
+          id="goal-level"
+          aria-label="Goal level"
+          value={aim ? aim.level : ''}
+          onChange={event => chooseLevel(Number(event.target.value) || null)}
+        >
+          <option value="">none</option>
+          {Array.from({ length: TOP_LEVEL - level }, (_, i) => level + 1 + i).map(n => (
+            <option key={n} value={n}>
+              level {n}
+            </option>
+          ))}
+        </select>
+        {aim ? (
+          <>
+            <span>by</span>
+            <select
+              id="goal-month"
+              aria-label="Goal month"
+              value={aim.month}
+              onChange={event => choose({ ...aim, month: Number(event.target.value) })}
+            >
+              {MONTH_NAMES.map((name, m) => (
+                <option key={name} value={m}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <select
+              id="goal-year"
+              aria-label="Goal year"
+              value={aim.year}
+              onChange={event => choose({ ...aim, year: Number(event.target.value) })}
+            >
+              {goalYears(now, aim.year).map(y => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+            {need !== null && need !== perLevel ? (
+              <button className="quiet" type="button" onClick={() => onPace(need)}>
+                Set the dial to it
+              </button>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+      {aim ? (
+        <p className="notes" aria-live="polite">
+          {need === null ? (
+            <span className="hot">
+              Level {aim.level} by {MONTH_NAMES[aim.month]} {aim.year} is sooner than WaniKani’s intervals allow
+            </span>
+          ) : (
+            <span className="soft">
+              To reach level {aim.level} by {MONTH_NAMES[aim.month]} {aim.year}:{' '}
+              <span className="strong">{dayCount(need)} days a level</span> —{' '}
+              {perLevel !== null && perLevel <= need
+                ? 'the dial’s pace gets there'
+                : `${dayCount(toStep(perLevel - need))} days a level faster than the dial`}
+            </span>
+          )}
+        </p>
+      ) : null}
+
       {ahead ? (
         <p className="notes">
           <span className="proj">
@@ -938,6 +1049,39 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
       ) : null}
     </section>
   )
+}
+
+// The goal, kept on this device: `{ level, year, month }`, month 0–11.
+// Anything else in the slot is the same as no goal.
+const GOAL_KEY = 'kanigami-goal'
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function readGoal() {
+  try {
+    const g = JSON.parse(localStorage.getItem(GOAL_KEY))
+    const whole = n => Number.isInteger(n)
+    if (g && whole(g.level) && whole(g.year) && whole(g.month) && g.month >= 0 && g.month < 12) return g
+  } catch {
+    // Unreadable is the same as no goal.
+  }
+  return null
+}
+
+function writeGoal(goal) {
+  try {
+    if (goal) localStorage.setItem(GOAL_KEY, JSON.stringify(goal))
+    else localStorage.removeItem(GOAL_KEY)
+  } catch {
+    // No storage: the goal lasts this visit.
+  }
+}
+
+// This year and the next eight, and the goal's own year if it is outside
+// them, so a goal set long ago still shows what it was set to.
+function goalYears(now, held) {
+  const years = Array.from({ length: 9 }, (_, i) => now.getFullYear() + i)
+  if (!years.includes(held)) years.unshift(held)
+  return years
 }
 
 // What a pointed-at slot says.
@@ -1011,14 +1155,42 @@ function Taught({ learned: counts, totals, next = [] }) {
 // reached list is the latest few — a long account passes dozens.
 const REACHED_SHOWN = 5
 
-function Milestones({ milestones: m, now }) {
+//
+// **Upcoming burns lead it**: the enlightened items whose next review is the
+// burn, day by day for the week — the nearest thing you can do that ends in
+// one. Hidden when there are none.
+function Milestones({ milestones: m, burns = [], now }) {
   if (m === undefined) return <Waiting title="milestones" />
   if (!m || (m.next.length === 0 && m.reached.length === 0)) return null
   const reached = m.reached.slice(0, REACHED_SHOWN)
+  const burning = burns.reduce((sum, d) => sum + d.count, 0)
+  const most = Math.max(1, ...burns.map(d => d.count))
 
   return (
     <section className="milestones">
       <Head>milestones</Head>
+      {burning > 0 ? (
+        <div className="burns">
+          <span className="burnline">
+            {many(burning)} up for burning this week · {many(burns[0].count)} today
+          </span>
+          <div className="burnrow" aria-hidden="true">
+            {burns.map((d, i) => (
+              <span key={d.day.getTime()} className={i === 0 ? 'today' : ''}>
+                <i style={{ height: d.count ? `${Math.max(6, (d.count / most) * 100)}%` : '2px' }} />
+              </span>
+            ))}
+          </div>
+          <div className="burnaxis">
+            {burns.map((d, i) => (
+              <span key={d.day.getTime()}>
+                <b>{many(d.count)}</b>
+                {i === 0 ? 'today' : weekday(d.day)}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <ul className="ladder">
         {m.next.map((n, i) => (
           <li key={n.kind} className={i === 0 ? 'next soonest' : 'next'}>

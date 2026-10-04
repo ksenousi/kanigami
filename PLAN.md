@@ -1531,6 +1531,31 @@ All of it was acted on, on the owner's say-so, without a prototype:
   the hint follow the switch; the radicals are read on first asking, as
   before. The head no longer has room for the count, so the notes lead with
   it: `20 passed · 29 needed`, or `4 of 6 passed`.
+- **Three more, decided from a prototype** (asked what else fits; all
+  three built):
+  - **The level-up's kanji on the 24-hour strip.** `levelUpKanji()` — the
+    `remaining` soonest to pass, the ranking `earliestLevelUp` uses — and
+    each is marked above the hour it next comes up: the characters in the
+    serif over a short `--accent` tick, strong ink when one right answer
+    passes it, `--text-soft` otherwise; a mark in the hour right after
+    another is lifted a row so they never run together. The hour's readout
+    names them (`21:00 · 7 · 薬 to pass, 皿 to pass`) and a key line sits
+    under the strip. Lessons and anything past the strip go unmarked.
+  - **Upcoming burns** lead the milestones: `burnsAhead()`, enlightened
+    items by the day their burn review comes, the backlog in today —
+    `337 up for burning this week · 31 today`, a bar a day in
+    `--srs-enlightened`, the count over each day. Hidden when none.
+  - **A goal: a level by a month**, under the dial's readings — three
+    selects, level then month then year — **remembered on this device**
+    (`kanigami-goal`: level, year, month; nothing else). The dial itself
+    still opens at the median. `paceToReach()` gives the slowest pace that
+    reaches the level by the end of that month, never faster than the
+    dial's floor or the earliest level-up allow; the goal draws a solid
+    strong-ink line across the bars and `goal 24.5` on its own row under
+    the slider, and says `To reach level 30 by Sep 2027: 24.5 days a level
+    — the dial's pace gets there` (or how much faster), with `Set the dial
+    to it`; a goal no pace reaches says it is sooner than WaniKani's
+    intervals allow. A first pick starts at the month the dial reaches it.
 - **Apprentice keeps the accent in the spread** — it is the hot end of the
   spread's walk from hot to drained, items back within hours. But `146
   taught` in past 7 days borrowed that red for lessons done, which read as

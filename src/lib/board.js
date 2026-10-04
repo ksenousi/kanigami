@@ -438,3 +438,43 @@ export function milestones(assignments = [], now = new Date(), totals = null) {
   reached.sort((a, b) => b.at - a.at)
   return { next, reached }
 }
+
+// The kanji the level-up waits on: the `remaining` soonest to pass, if every
+// answer is right — the same ranking `earliestLevelUp` takes its moment from.
+// Passed and locked kanji are not among them; a level-up that also waits on
+// locked kanji gets every kanji that can be projected.
+export function levelUpKanji(kanji = [], systems = new Map(), remaining = 0, now = new Date()) {
+  if (remaining <= 0) return []
+  return kanji
+    .map(k => ({ k, pass: earliestPass(k, systems.get(k.system), now.getTime()) }))
+    .filter(x => x.pass !== null)
+    .sort((a, b) => a.pass - b.pass)
+    .slice(0, remaining)
+    .map(x => x.k)
+}
+
+// Enlightened items whose next review is the burn — answered right once more,
+// they are done. One bucket per local day for `days` days, the backlog in
+// today, the same days as `week`.
+export function burnsAhead(assignments = [], now = new Date(), days = 7) {
+  return week(assignments.filter(a => a?.data?.srs_stage === BURNED - 1), now, days)
+}
+
+// The slowest pace that still reaches `target` by `by`, rounded down to
+// `step`: what a goal asks of you. Null when even `fastest` days a level
+// cannot — no pace beats WaniKani's intervals or the earliest level-up.
+// Past `slowest` the answer is `slowest`; any pace from there gets you in.
+export function paceToReach(p, level, target, by, now = new Date(), soonest = null, fastest = 1, step = 0.5, slowest = 200) {
+  if (target <= level) return null
+  const reaches = pace => project(p, level, pace, now, soonest).startOf(target) <= by
+  if (!reaches(fastest)) return null
+  if (reaches(slowest)) return slowest
+  let lo = fastest
+  let hi = slowest
+  while (hi - lo > step / 4) {
+    const mid = (lo + hi) / 2
+    if (reaches(mid)) lo = mid
+    else hi = mid
+  }
+  return Math.max(fastest, Math.floor(lo / step) * step)
+}
