@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isFresh } from './totals.js'
+import { isComplete, isFresh } from './totals.js'
 
 // Only the pure judgement — the read/fetch/write around it is glue over
 // localStorage and the network. Fake numbers, as everywhere.
@@ -27,5 +27,17 @@ describe('isFresh', () => {
     expect(isFresh(null, NOW)).toBe(false)
     expect(isFresh({}, NOW)).toBe(false)
     expect(isFresh({ at: 'yesterday' }, NOW)).toBe(false)
+  })
+})
+
+describe('isComplete', () => {
+  it('keeps an old record as a fallback, whatever its age', () => {
+    expect(isComplete({ radical: 500, kanji: 2100, vocabulary: 6700, at: NOW - 90 * DAY })).toBe(true)
+  })
+
+  it('refuses a record missing a kind or a date', () => {
+    expect(isComplete({ radical: 500, kanji: 2100, at: NOW })).toBe(false)
+    expect(isComplete({ radical: 500, kanji: 2100, vocabulary: 6700 })).toBe(false)
+    expect(isComplete(null)).toBe(false)
   })
 })

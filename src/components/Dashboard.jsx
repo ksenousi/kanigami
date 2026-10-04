@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   getLevelKanji,
   getLevelRadicals,
@@ -8,7 +8,8 @@ import {
   getSpacedRepetitionSystems,
   getStartedAssignments,
   getSubjects,
-  getSummary
+  getSummary,
+  getUser
 } from '../lib/wanikani.js'
 import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
 import {
@@ -36,71 +37,138 @@ import usePointing from './usePointing.js'
 // once" was picked. See "The dashboard" in PLAN.md.
 //
 // A headline row of figures, then three columns: the level, where the
-// reviews stand, and what is slipping. The footline is home's forecast, unchanged.
+// reviews stand, and what is slipping. The footline is home's forecast.
 //
 // It reads and never writes, so it wants a token with no permissions at
-// all. Every read happens once, on mount, never on a timer. The four the
-// screen cannot stand without fail it together; the rest are commentary —
-// statistics, level history, WaniKani's totals, the SRS tables — and
-// degrade to null, taking only their own line down with them.
-export default function Dashboard({ token, user, onDisconnect }) {
+// all. The four reads the screen cannot stand without fail it together and
+// draw it as soon as they land; the rest are commentary — statistics, level
+// history, WaniKani's totals, the SRS tables — and fill in after, each
+// degrading to null and taking only its own line down with it.
+//
+// **Read once, then again when it has gone stale** — never on a timer. A
+// tab left open on an iPad lives for days, and a board read on Monday says
+// Monday's due count on Thursday. Coming back to the tab, or back online,
+// more than STALE_MS after the last read reads it all again, and the
+// masthead says when the figures were read and re-reads on a tap.
+const STALE_MS = 10 * 60 * 1000
+
+export default function Dashboard({ token, user, onUser, onDisconnect }) {
   const [board, setBoard] = useState(null)
   const [failure, setFailure] = useState(null)
   const [attempt, setAttempt] = useState(0)
+  const [busy, setBusy] = useState(true)
+  const readAt = useRef(0)
   const online = useOnline()
 
   useEffect(() => {
     let live = true
     setFailure(null)
+    setBusy(true)
     const optional = read => read.catch(() => null)
+    const now = new Date()
 
-    Promise.all([
+    const core = Promise.all([
       getSummary(token),
       getStartedAssignments(token),
       getLevelKanji(token, user.level),
-      getLevelKanjiSubjects(token, user.level),
+      getLevelKanjiSubjects(token, user.level)
+    ])
+    const commentary = Promise.all([
       optional(getReviewStatistics(token)),
       optional(getLevelProgressions(token)),
       optional(subjectTotals(token)),
       optional(getSpacedRepetitionSystems(token))
     ])
-      .then(async ([summary, started, levelAssignments, levelSubjects, statistics, progressions, totals, systems]) => {
-        const now = new Date()
-        const slipping = statistics ? leeches(statistics, started) : null
-        // Only the handful on screen — never a subject sync.
-        const leechSubjects = slipping?.length
-          ? await optional(getSubjects(token, slipping.map(l => l.subjectId)))
-          : null
+
+    core
+      .then(([summary, started, levelAssignments, levelSubjects]) => {
         if (!live) return
         const kanji = levelKanji(levelSubjects, levelAssignments)
         // The denominator is the level's subjects, not its assignments —
         // see getLevelKanjiSubjects for why those are different numbers.
         const passed = kanjiPassed(levelAssignments, levelSubjects.length)
-        setBoard({
+        readAt.current = now.getTime()
+        // A re-read keeps the last commentary on screen until its own
+        // arrives, rather than blanking half the board and redrawing it.
+        setBoard(held => ({
+          ...held,
           now,
           summary,
           days: week(started, now),
           spread: spread(started),
           moved: moved(started, now),
           learned: learned(started),
-          totals,
           kanji,
           next: nextUp(kanji, now),
-          passed,
-          levelUp: systems ? earliestLevelUp(kanji, srsSystems(systems), passed.remaining, now) : null,
-          accuracy: statistics ? accuracy(statistics) : null,
-          slipping: slipping && withSubjects(slipping, leechSubjects),
-          pace: progressions ? pace(progressions, user.level, now) : null
+          passed
+        }))
+
+        return commentary.then(async ([statistics, progressions, totals, systems]) => {
+          const slipping = statistics ? leeches(statistics, started) : null
+          // Only the handful on screen — never a subject sync.
+          const leechSubjects = slipping?.length
+            ? await optional(getSubjects(token, slipping.map(l => l.subjectId)))
+            : null
+          if (!live) return
+          setBoard(held => ({
+            ...held,
+            totals,
+            levelUp: systems ? earliestLevelUp(kanji, srsSystems(systems), passed.remaining, now) : null,
+            accuracy: statistics ? accuracy(statistics) : null,
+            slipping: slipping && withSubjects(slipping, leechSubjects),
+            pace: progressions ? pace(progressions, user.level, now) : null
+          }))
         })
       })
       .catch(problem => {
         if (live) setFailure(problem)
+      })
+      .finally(() => {
+        if (live) setBusy(false)
       })
 
     return () => {
       live = false
     }
   }, [token, user.level, attempt])
+
+  // Ask WaniKani for the user first: a level-up since the last read changes
+  // which level's kanji the board should be reading at all.
+  function refresh() {
+    setBusy(true)
+    getUser(token)
+      .then(fresh => {
+        if (fresh.level !== user.level) onUser(fresh)
+        else setAttempt(n => n + 1)
+      })
+      .catch(problem => {
+        setFailure(problem)
+        setBusy(false)
+      })
+  }
+
+  const stale = useRef(refresh)
+  stale.current = () => {
+    if (!busy && readAt.current && Date.now() - readAt.current > STALE_MS) refresh()
+  }
+
+  useEffect(() => {
+    const back = () => {
+      if (document.visibilityState === 'visible') stale.current()
+    }
+    const online = () => stale.current()
+    document.addEventListener('visibilitychange', back)
+    window.addEventListener('online', online)
+    return () => {
+      document.removeEventListener('visibilitychange', back)
+      window.removeEventListener('online', online)
+    }
+  }, [])
+
+  // A failure with a board already drawn is a re-read that did not land:
+  // the board stays, and the masthead says the figures are the old ones. Only
+  // a 401 — the token itself refused — takes the board away.
+  const blocking = failure && (!board || failure.status === 401)
 
   return (
     <div className="surface-ink board">
@@ -111,14 +179,27 @@ export default function Dashboard({ token, user, onDisconnect }) {
           level {user.level} · {user.username}
         </span>
         <span className="sp" />
-        <button className="quiet" type="button" onClick={onDisconnect}>
-          Disconnect
-        </button>
+        {board && !blocking ? (
+          <button
+            className={failure ? 'quiet hot' : 'quiet'}
+            type="button"
+            onClick={refresh}
+            disabled={busy}
+            aria-label={`Figures read at ${clock(board.now)}. Read again.`}
+          >
+            {busy ? 'reading' : failure ? `not updated · read ${clock(board.now)}` : `read ${clock(board.now)}`}
+          </button>
+        ) : null}
+        <Disconnect onDisconnect={onDisconnect} />
       </header>
 
-      {!online ? <p className="eyebrow hot">offline · this app is online only</p> : null}
+      {!online ? (
+        <p className="eyebrow hot" role="status">
+          offline · this app is online only
+        </p>
+      ) : null}
 
-      {failure ? (
+      {blocking ? (
         // Only 401 means the token is at fault; anything else gets another
         // go at the same reads rather than an offer to throw the token away.
         <div className="centred">
@@ -138,7 +219,7 @@ export default function Dashboard({ token, user, onDisconnect }) {
           <Figures board={board} level={user.level} />
           <div className="columns">
             <div className="column">
-              <Level board={board} level={user.level} token={token} />
+              <Level key={user.level} board={board} level={user.level} token={token} />
             </div>
             <div className="column">
               <Srs spread={board.spread} moved={board.moved} />
@@ -146,14 +227,14 @@ export default function Dashboard({ token, user, onDisconnect }) {
             </div>
             <div className="column">
               <Slipping slipping={board.slipping} />
-              <Pace pace={board.pace} level={user.level} />
+              <Pace pace={board.pace} />
             </div>
           </div>
           <Road pace={board.pace} level={user.level} now={board.now} />
         </>
       )}
 
-      {board ? (
+      {board && !blocking ? (
         <Forecast summary={board.summary} />
       ) : (
         <div className="footline">
@@ -163,6 +244,32 @@ export default function Dashboard({ token, user, onDisconnect }) {
         </div>
       )}
     </div>
+  )
+}
+
+// One stray tap on a tablet should not throw the token away, so the door
+// asks in place: the first press arms it for a few seconds, the second goes.
+// No dialog — the word itself changes.
+const ARMED_MS = 4000
+
+function Disconnect({ onDisconnect }) {
+  const [armed, setArmed] = useState(false)
+
+  useEffect(() => {
+    if (!armed) return
+    const calm = setTimeout(() => setArmed(false), ARMED_MS)
+    return () => clearTimeout(calm)
+  }, [armed])
+
+  return (
+    <button
+      className={armed ? 'quiet hot' : 'quiet'}
+      type="button"
+      onClick={() => (armed ? onDisconnect() : setArmed(true))}
+      onBlur={() => setArmed(false)}
+    >
+      {armed ? 'Confirm disconnect' : 'Disconnect'}
+    </button>
   )
 }
 
@@ -196,6 +303,9 @@ function Head({ children, right }) {
 function Figures({ board, level }) {
   const reviews = dueNow(board.summary)
   const lessons = lessonsWaiting(board.summary)
+  // Items whose next review falls in the coming seven days, the backlog
+  // included — a look forward, so never called "this week", which reads as
+  // reviews already done.
   const thisWeek = board.days.reduce((sum, d) => sum + d.count, 0)
   const { remaining, passed, total } = board.passed
 
@@ -221,7 +331,7 @@ function Figures({ board, level }) {
       </div>
       <div className="figure soft">
         <b>{thisWeek.toLocaleString()}</b>
-        <span>reviews this week</span>
+        <span>due within 7 days</span>
       </div>
       {board.accuracy ? (
         <div className="figure soft">
@@ -253,38 +363,42 @@ function percent(fraction) {
 // usual notes keep their room underneath, so the section never changes
 // height under the cursor.
 //
+// How far is the figure's job, so the notes do not say `8 to level 16`
+// again; they say how long, what is next, and the soonest it could end.
+//
 // The level's radicals fold away beneath, read only when first opened.
 function Level({ board, level, token }) {
-  const { passed, needed, remaining } = board.passed
+  const { passed, needed } = board.passed
   const next = board.next
   const onLevel = board.pace?.current?.days
   const [reading, setReading] = useState(null)
   const [open, setOpen] = useState(false)
   const [radicals, setRadicals] = useState(null)
 
+  function readRadicals() {
+    setRadicals('reading')
+    getLevelRadicals(token, level)
+      .then(([subjects, assignments]) => setRadicals(levelKanji(subjects, assignments)))
+      .catch(() => setRadicals('failed'))
+  }
+
   function toggle() {
     setOpen(!open)
-    if (!open && (radicals === null || radicals === 'failed')) {
-      setRadicals('reading')
-      getLevelRadicals(token, level)
-        .then(([subjects, assignments]) => setRadicals(levelKanji(subjects, assignments)))
-        .catch(() => setRadicals('failed'))
-    }
+    if (!open && (radicals === null || radicals === 'failed')) readRadicals()
   }
 
   const radicalsPassed = Array.isArray(radicals) ? radicals.filter(r => r.state === 'passed').length : null
 
   return (
     <section>
-      <Head right={`${passed} of ${needed} passed`}>level {level} kanji</Head>
+      {/* `of` read as the level's size, and the grid beside it shows more
+          cells than that: the second number is the 90% WaniKani asks for. */}
+      <Head right={`${passed} passed · ${needed} needed`}>level {level} kanji</Head>
       <Grid items={board.kanji} label={`Level ${level} kanji`} onRead={setReading} />
       <p className="notes readout" aria-live="polite">
         <span className={reading ? 'usual hidden' : 'usual'}>
-          {remaining > 0 && level < TOP_LEVEL ? (
-            <span className="soft">
-              {remaining} to level {level + 1}
-              {onLevel !== undefined ? ` · day ${Math.floor(onLevel) + 1}` : ''}
-            </span>
+          {onLevel !== undefined ? (
+            <span className="soft">day {Math.floor(onLevel) + 1} on this level</span>
           ) : null}
           {next ? (
             <span>
@@ -298,6 +412,9 @@ function Level({ board, level, token }) {
             </span>
           ) : null}
           <LevelUpLine levelUp={board.levelUp} level={level} />
+          <Hint pointer="point at" touch="tap">
+            a kanji for its next review
+          </Hint>
         </span>
         {reading ? (
           <span className="usual">
@@ -318,7 +435,12 @@ function Level({ board, level, token }) {
         radicals === 'reading' ? (
           <p className="notes" role="status">reading radicals</p>
         ) : radicals === 'failed' ? (
-          <p className="notes hot" role="alert">the radicals did not load · fold and open to try again</p>
+          <p className="notes row hot" role="alert">
+            <span>the radicals did not load</span>
+            <button className="quiet" type="button" onClick={readRadicals}>
+              Try again
+            </button>
+          </p>
         ) : radicals.length === 0 ? (
           <p className="notes">no radicals at this level</p>
         ) : (
@@ -346,14 +468,16 @@ function Grid({ items, label, onRead }) {
   }
 
   return (
-    <ul className="kanji" role="group" aria-label={label} onKeyDown={key} {...groupProps}>
+    // A list, so browse mode can walk it a cell at a time; each cell's words
+    // are text inside it rather than an aria-label, which a plain list item
+    // is not reliably read by. `role="list"` because Safari drops the list
+    // role from a list styled without bullets.
+    <ul className="kanji" role="list" aria-label={label} onKeyDown={key} {...groupProps}>
       {items.map((k, i) => (
-        <li
-          key={k.id}
-          className={[k.state, at === i ? 'reading' : ''].join(' ').trim()}
-          aria-label={`${k.characters ?? ''} ${k.meaning}: ${describe(k)}, ${nextReview(k, new Date())}`}
-          {...itemProps(i)}
-        >
+        <li key={k.id} className={[k.state, at === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
+          <span className="sr-only">
+            {`${k.characters ?? ''} ${k.meaning}: ${describe(k)}, ${nextReview(k, new Date())}`}
+          </span>
           <span className="character" aria-hidden="true">
             {k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')}
           </span>
@@ -395,6 +519,18 @@ function LevelUpLine({ levelUp, level }) {
   )
 }
 
+// Nothing about a grid of characters says pointing at one does anything, so
+// the resting notes say so, in the verb the device has. Both are written and
+// CSS shows the one that fits — `hover: none` is a finger.
+function Hint({ pointer, touch, children }) {
+  return (
+    <span className="hint">
+      <span className="by-pointer">{pointer}</span>
+      <span className="by-touch">{touch}</span> {children}
+    </span>
+  )
+}
+
 function describe(k) {
   if (k.state === 'locked') return 'locked'
   if (k.state === 'lesson') return 'waiting in lessons'
@@ -410,10 +546,13 @@ function Srs({ spread: bands, moved: gained }) {
       <p className="notes row">
         {/* Only the moves WaniKani dates — see `moved` for why master and
             enlightened cannot be here. */}
-        <span className="soft">this week</span>
-        <span className="srs-apprentice">+{gained.apprentice} apprentice</span>
-        <span className="srs-guru">+{gained.guru} guru</span>
-        <span className="srs-burned">+{gained.burned} burned</span>
+        {/* `+27 apprentice` read as the apprentice count going up by that;
+            it is lessons started, and the guru and burned counts are first
+            arrivals. Past, so it says past. */}
+        <span className="soft">past 7 days</span>
+        <span className="srs-apprentice">{gained.apprentice} started</span>
+        <span className="srs-guru">{gained.guru} to guru</span>
+        <span className="srs-burned">{gained.burned} burned</span>
       </p>
     </section>
   )
@@ -465,7 +604,13 @@ function Slipping({ slipping }) {
 // of type that is already there says something more specific. The arrows
 // walk it from the keyboard, and the caption is the live region, so a
 // screen reader hears what a pointer would show.
-function Pace({ pace: p, level }) {
+// Past DENSE levels the bars outgrow a column: thirty gaps of 4px is a
+// third of it gone before any bar is drawn, and a number every fifth level
+// runs together. So the gaps close to a pixel and only every tenth level is
+// numbered.
+const DENSE = 30
+
+function Pace({ pace: p }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   if (!p || (p.levels.length === 0 && !p.current)) return null
 
@@ -479,9 +624,11 @@ function Pace({ pace: p, level }) {
   const shown = reading === null ? null : bars[reading]
   // A milestone right beside this level gives way to it — 15 and 16 in
   // adjacent slots read as 1516.
-  const near = b => p.current && Math.abs(b.level - p.current.level) === 1
+  const dense = bars.length > DENSE
+  const every = dense ? 10 : 5
+  const near = b => p.current && Math.abs(b.level - p.current.level) < (dense ? 3 : 2)
   const numbered = b =>
-    b.current || b === shown || ((b.level === 1 || b.level % 5 === 0) && !near(b))
+    b.current || b === shown || ((b.level === 1 || b.level % every === 0) && !near(b))
 
   function key(event) {
     const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
@@ -496,7 +643,7 @@ function Pace({ pace: p, level }) {
     <section>
       <Head right={p.median !== null ? `median ${p.median.toFixed(1)}` : null}>days per level</Head>
       <div
-        className="bars"
+        className={dense ? 'bars dense' : 'bars'}
         role="group"
         aria-label="Days spent on each level"
         onKeyDown={key}
@@ -518,7 +665,7 @@ function Pace({ pace: p, level }) {
           </span>
         ))}
       </div>
-      <div className="levels" aria-hidden="true">
+      <div className={dense ? 'levels dense' : 'levels'} aria-hidden="true">
         {bars.map(b => (
           <span key={b.level} className={b.current ? 'hot' : b === shown ? 'soft' : ''}>
             {numbered(b) ? b.level : ''}
@@ -532,15 +679,16 @@ function Pace({ pace: p, level }) {
             {shown.break ? ' · break' : ''}
           </span>
         ) : (
-          <>
-            {p.eta ? <span className="soft">60 ≈ {monthYear(p.eta)}</span> : <span />}
-            {p.current ? (
-              <span className="hot">
-                {level} · day {Math.floor(p.current.days) + 1}
-              </span>
-            ) : null}
-          </>
+          // The day on this level is the level's notes' to say.
+          p.eta ? <span className="soft">level 60 ≈ {monthYear(p.eta)}</span> : <span />
         )}
+      </p>
+      {/* Its own line, and there whether or not a bar is read, so the
+          section never changes height under the cursor. */}
+      <p className="notes">
+        <Hint pointer="point at" touch="tap">
+          a bar for its level
+        </Hint>
       </p>
       {breaks.length > 0 ? (
         <p className="notes">
@@ -597,10 +745,15 @@ function Road({ pace: p, level, now }) {
   )
 }
 
-// Everything taught so far, against how much of it WaniKani has. The
-// denominators are commentary: without them, the bare counts.
+// Everything taught so far, against how much of it WaniKani has: the count,
+// a hairline lit to the share, and the share and the total in words — the
+// hairline alone is a length to estimate. The totals are commentary (cached
+// a week, and an old copy kept if the refresh fails); without them, the
+// bare counts.
 function Taught({ learned: counts, totals }) {
   if (counts.total === 0) return null
+
+  const all = totals ? totals.radical + totals.kanji + totals.vocabulary : null
 
   const kinds = [
     ['radical', counts.radical, totals?.radical, 'radicals'],
@@ -610,7 +763,7 @@ function Taught({ learned: counts, totals }) {
 
   return (
     <section>
-      <Head right={totals ? 'of all wanikani' : null}>taught</Head>
+      <Head right={all ? `${share(counts.total, all)} of all wanikani` : null}>taught</Head>
       <div className="fills">
         {kinds.map(([kind, count, total, word]) => (
           <div key={kind} className="kind">
@@ -621,13 +774,15 @@ function Taught({ learned: counts, totals }) {
             </span>
             {total ? (
               <>
+                <span className="of">
+                  <span className="soft">{share(count, total)}</span> of {total.toLocaleString()}
+                </span>
                 <span className="track" aria-hidden="true">
                   <span
                     className={`fill wk-${kind}`}
                     style={{ width: `${Math.min(100, (count / total) * 100)}%` }}
                   />
                 </span>
-                <span className="of">of {total.toLocaleString()}</span>
               </>
             ) : null}
           </div>
@@ -635,6 +790,15 @@ function Taught({ learned: counts, totals }) {
       </div>
     </section>
   )
+}
+
+// A share as a whole percentage — except that something taught is never 0%,
+// and nothing short of all of it is 100%.
+function share(count, total) {
+  const exact = (count / total) * 100
+  if (count > 0 && exact < 1) return '<1%'
+  if (count < total && exact > 99) return '>99%'
+  return `${Math.round(exact)}%`
 }
 
 // One segmented hairline, and the counts as one line of type beneath it,

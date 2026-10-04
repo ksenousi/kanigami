@@ -1164,7 +1164,7 @@ the most data per inch) — and **the original was kept over all four.**
   there is nothing to start.
 - **Figures** — one row, left-aligned, never wrapping: reviews due
   (`--accent` when any, `--dim` when none), lessons waiting, kanji to the
-  next level, reviews this week, and meaning / reading accuracy. The last
+  next level, due within 7 days, and meaning / reading accuracy. The last
   two are standing rather than calls to act and sit in `--text-soft`.
 - **Column one: the level.** Every kanji of the current level, locked ones
   included, eight across in the serif at `--display-lg`, **ordered by
@@ -1175,7 +1175,7 @@ the most data per inch) — and **the original was kept over all four.**
   lessons or locked `--dim` — and the mark beneath is the second: four pips
   lit in `--accent` to the apprentice stage, or one `--srs-guru` rule once
   passed. Each cell's `aria-label` says it in words. Under the grid:
-  `8 to level 16 · day 12`; the soonest unpassed kanji with their time —
+  `day 12 on this level`; the soonest unpassed kanji with their time —
   `薬 皿 up at 21:00, one step from passing` when every one of them sits at
   apprentice IV, which is WaniKani's stage read back; and
   `level 16 earliest thu 1 oct 04:00 · if every answer is right`, or
@@ -1185,7 +1185,7 @@ the most data per inch) — and **the original was kept over all four.**
   grid (`1,242 vocabulary` ran into the next column side by side) — now sits
   in column two.
 - **Column two: the spread.** The SRS spread, and
-  `this week +27 apprentice +46 guru +38 burned` — lessons started, first
+  `past 7 days 27 started 46 to guru 38 burned` — lessons started, first
   arrivals at guru, burns. Those are the only three moves an assignment
   dates (`started_at`, `passed_at`, `burned_at`). **Master and enlightened
   cannot be added**: WaniKani stamps no date for reaching either, and the
@@ -1194,14 +1194,15 @@ the most data per inch) — and **the original was kept over all four.**
   moved here from column one when the week left.
   **The week was removed** on the owner's say-so: seven days of hairlines,
   each lit to its share of the busiest, today holding the backlog in
-  `--accent`. The `reviews this week` figure still sums those days.
+  `--accent`. The figure that summed those days is now called `due within
+  7 days` — it counts next reviews ahead, and `this week` read as done.
 - **Column three: what keeps slipping, and pace.** The five lowest
   `percentage_correct` items still in rotation — burned items are finished
   and left out, and an item needs `MIN_MISSES` (3) misses to count, so one
   bad day on a new item is not a leech. Character, meaning in its subject
-  colour, reading, percentage in `--accent`. Then every passed level as a
+  colour, reading, percentage in `--text-soft`. Then every passed level as a
   bar as tall as it took, the current one in `--accent`, with the median and
-  `60 ≈ oct 2027` beneath. **Breaks are left out**: WaniKani keeps no
+  `level 60 ≈ oct 2027` beneath. **Breaks are left out**: WaniKani keeps no
   vacation history (`/user` says only whether one is on now), so a level
   over `BREAK_FACTOR` (3) × the median of all levels is taken to be a break.
   It keeps its place as a dotted hairline, stays out of the scale and the
@@ -1228,7 +1229,7 @@ the most data per inch) — and **the original was kept over all four.**
   is. Asked for after the cleanup took home's ruler out with home.
 - **Footline** — home's 24-hour forecast, unchanged.
 
-**The reads**, once on mount and never on a timer, like home's: `/summary`,
+**The reads**, on mount, again when stale, and never on a timer: `/summary`,
 `/assignments?started=true`, the level's kanji assignments, the level's kanji
 **subjects** (all of them, not just `total_count` — the grid draws locked
 ones, and it is one page of exactly what is on screen, so no-bulk-sync
@@ -1293,6 +1294,50 @@ under `@media (hover: hover)`, since iOS leaves a tapped door lit. **Below
 beneath it — three thirds left each kanji a cell narrower than the
 character — and the figures row wraps at every width, because its five
 labels need about 1,250px. Checked at 820, 1180 and 1440 against a stub.
+
+
+**The review pass.** A UX and UI review of the whole board, every finding
+fixed on the owner's say-so except restyling the type, which is the open
+question for the next prototype:
+
+- **The token is only forgotten when WaniKani refuses it** (401). A failed
+  `/user` on open — offline, a dropped connection — used to clear it, and on
+  an iPad that meant pasting 36 characters again; it now says
+  `WaniKani could not be reached` with Try again. `request()` turns the
+  browser's own `TypeError` ("Load failed") into that sentence, status 0.
+- **Stale reads re-read.** A tab left open on an iPad lives for days. When
+  the page becomes visible again, or comes back online, more than ten
+  minutes after the last read, it reads `/user` (a level-up changes which
+  level to read) and then everything again. Still no timer. The masthead
+  says `read 14:02` and re-reads on a tap; a re-read that fails keeps the
+  board and says `not updated · read 14:02`.
+- **The board draws as soon as the four core reads land**; statistics,
+  progressions, totals and the SRS tables fill in after, and a re-read keeps
+  the last commentary on screen until its own arrives.
+- **Disconnect asks in place**: the first press turns it to
+  `Confirm disconnect` for four seconds. It and the radicals fold are 44px
+  tall, so a finger can find them.
+- **Readouts say they exist**: `point at a kanji for its next review` and
+  `point at a bar for its level`, with `tap` in place of `point at` under
+  `hover: none`.
+- **Taught shows the share and the total**, asked for directly:
+  `341 radicals · 68% of 499`, with the hairline under the words at full
+  width, and `13% of all wanikani` in the head. A failed weekly refresh of
+  the totals falls back to the last cached copy, however old, so the
+  denominators are almost never missing.
+- **Fixed:** five-character vocabulary in `keeps slipping` ran over its own
+  meaning (now one grid sized to the widest word, like taught); guru,
+  master and enlightened were under 4.5:1 as label type and are lifted in
+  lightness only; the pace chart closes its gaps to 1px and numbers every
+  tenth level past thirty levels; the kanji grid is a real list with its
+  words inside each cell for a screen reader; the offline line is a status;
+  the radicals' failure line has its own Try again; the connecting screen
+  carries the masthead so the page does not jump.
+- **Said once:** the head reads `21 passed · 29 needed` (`of 29` read as
+  the level's size), the notes drop `8 to level 16` (the figure says it),
+  and the pace caption drops the day on this level (the notes say it).
+- On an upright iPad the romaji `kanigami` tag goes, and the masthead
+  wraps between its pieces rather than inside them.
 
 ---
 

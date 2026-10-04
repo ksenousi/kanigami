@@ -59,11 +59,14 @@
 
      These label the counts as well as drawing the bar, so each one has to be
      readable as --label type on the ground. 灰 ash is what burned is for:
-     --rule measured 1.28:1 and simply could not be read. */
-  --srs-guru: #8a6f4a;
-  --srs-master: #4f6b78;
-  --srs-enlightened: #5a5f7a;
-  --srs-burned: #8b8275;
+     --rule measured 1.28:1 and simply could not be read. Guru, master and
+     enlightened were chosen as bar colours and sat at 4.09, 3.40 and 3.08:1
+     carrying 17px counts; each was lifted in lightness only, hue and
+     saturation kept, to clear 4.5:1. */
+  --srs-guru: #977a51;        /* 4.79:1 */
+  --srs-master: #618494;      /* 4.80:1 */
+  --srs-enlightened: #777c9a; /* 4.71:1 */
+  --srs-burned: #8b8275;      /* 5.09:1 */
 
   /* ---- type scale ----
      Not part of the palette and not themeable: this is how big the app is,
@@ -690,6 +693,65 @@ button.quiet {
   margin-left: 18px;
 }
 
+/* Each piece of the masthead stays whole — an upright iPad broke 蟹紙 over
+   two lines and `read 8:26` after `read` — and the row wraps between them
+   instead. */
+.board .masthead {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+
+.board .masthead > * {
+  white-space: nowrap;
+}
+
+/* The masthead's doors — when the figures were read, and Disconnect — are
+   the only controls a finger has to find up here. */
+.board .masthead button {
+  min-height: 44px;
+}
+
+.board .masthead button + button {
+  margin-left: 18px;
+}
+
+.board .notes button {
+  font-size: var(--label);
+  letter-spacing: 0.15em;
+  padding-block: 0;
+}
+
+/* The resting notes say pointing at something reads it, in the verb the
+   device has. `hover: none` is a finger. */
+.board .hint {
+  color: var(--dim);
+}
+
+@media (hover: none) {
+  .board .hint .by-pointer {
+    display: none;
+  }
+}
+
+@media (hover: hover) {
+  .board .hint .by-touch {
+    display: none;
+  }
+}
+
+/* Words for a screen reader where the screen draws a character and a mark. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .board .figures {
   justify-content: flex-start;
   /* Five labels in mono capitals need about 1,250px with their gaps, so
@@ -794,6 +856,7 @@ button.quiet {
 }
 
 .board .kanji li {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -853,10 +916,12 @@ button.quiet {
 }
 
 /* The radicals' fold reads as a section head — the same hairline, lit on
-   hover like any other door. */
+   hover like any other door. Tall enough to land a finger on: as a bare
+   head it was 30px. */
 .board button.fold {
+  min-height: 44px;
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 14px;
   margin-top: 8px;
@@ -905,21 +970,28 @@ button.quiet {
 /* In a column, the spread and the taught line take the column's width
    rather than home's centred 620px, and read left to right. Three kinds
    side by side do not fit a third of the page — `1,242 vocabulary` ran
-   into the next column — so each kind is a row: the count, a hairline lit
-   to its share, the total. */
+   into the next column — so each kind is a row of its own. */
 .board .spreadline,
 .board .fills {
   width: 100%;
 }
 
 .board .fills {
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
-  align-items: center;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: baseline;
+  gap: 8px 14px;
 }
 
-/* The three rows share one grid, so the tracks line up whatever the
-   longest count is. */
+/* The words on one line — the count, then the share and the total — and
+   the hairline under them the full width. Beside the words, a third of the
+   page left the hairline a stub once the share was written out. */
+.board .fills .track {
+  grid-column: 1 / -1;
+  margin-bottom: 10px;
+}
+
+/* The three kinds share one grid, so the shares line up on the right
+   whatever the longest count is. */
 .board .fills .kind {
   display: contents;
 }
@@ -949,22 +1021,25 @@ button.quiet {
 }
 
 /* What keeps slipping: the character, what it is in its subject colour,
-   and the percentage in the accent — the one number here asking for
-   something. */
+   and the percentage. Not in the accent — that is for what asks to be done
+   now, and five of it in a column drowned the due count out.
+
+   One grid for all five rows, the way taught's fills are, so the character
+   column is as wide as the widest word rather than a fixed 5.5em that a
+   five-character vocabulary like 一人暮らし ran straight out of and over its
+   own meaning. */
 .board .slipping {
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: 8px 14px;
+  align-items: baseline;
 }
 
 .board .slipping li {
-  display: grid;
-  grid-template-columns: 5.5em minmax(0, 1fr) 5ch;
-  gap: 14px;
-  align-items: baseline;
+  display: contents;
   font-family: var(--mono);
   font-size: var(--label);
   letter-spacing: 0.15em;
@@ -1000,7 +1075,7 @@ button.quiet {
 
 .board .slipping .count {
   text-align: right;
-  color: var(--accent);
+  color: var(--text-soft);
 }
 
 .board .wk-radical {
@@ -1024,6 +1099,11 @@ button.quiet {
   gap: 4px;
   height: 56px;
   cursor: default;
+}
+
+.board .bars.dense,
+.board .levels.dense {
+  gap: 1px;
 }
 
 .board .bars > span {
@@ -1151,6 +1231,12 @@ button.quiet {
    tablet, the one size below desktop the board is meant for — not the start
    of a ramp toward a phone. */
 @media (max-width: 1279px) {
+  /* The romaji beside 蟹紙 says the wordmark twice, and on an upright iPad
+     it is the 30px that pushes Disconnect onto a line of its own. */
+  .board .masthead .tag {
+    display: none;
+  }
+
   .board .columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

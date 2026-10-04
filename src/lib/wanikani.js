@@ -43,12 +43,21 @@ async function throttle() {
 async function request(token, path) {
   await throttle()
   const url = path.startsWith('http') ? path : BASE + path
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Wanikani-Revision': REVISION
-    }
-  })
+  // A request that never got an answer — offline, a dropped connection, an
+  // iPad waking on bad Wi-Fi — throws the browser's own TypeError, which
+  // reads "Load failed" in Safari. Say what happened instead. Status 0, so
+  // nothing mistakes it for WaniKani rejecting the token.
+  let response
+  try {
+    response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Wanikani-Revision': REVISION
+      }
+    })
+  } catch {
+    throw new WaniKaniError('WaniKani could not be reached. Check the connection and try again.', 0)
+  }
 
   if (response.status === 401) {
     throw new WaniKaniError('That token was rejected. Check it in your WaniKani settings.', 401)
