@@ -585,7 +585,10 @@ function Srs({ spread: bands, moved: gained }) {
             it is lessons started, and the guru and burned counts are first
             arrivals. Past, so it says past. */}
         <span className="soft">Past 7 days</span>
-        <span className="srs-apprentice">{many(gained.apprentice)} taught</span>
+        {/* Lessons done are progress, so neutral ink — in apprentice's red
+            they read as a warning about something done right. Guru and
+            burned keep their band colours, which mean nothing urgent. */}
+        <span className="soft">{many(gained.apprentice)} taught</span>
         <span className="srs-guru">{many(gained.guru)} to guru</span>
         <span className="srs-burned">{many(gained.burned)} burned</span>
       </p>

@@ -1522,8 +1522,10 @@ All of it was acted on, on the owner's say-so, without a prototype:
 - Counts in `past 7 days` and the milestones are mono, per Two voices; the
   radicals fold is a head in capitals and says `4 passed · 6 in all`; the
   romaji tag is `--dim`.
-- **Left as recorded:** apprentice in the accent (so `146 taught` is
-  vermilion) — the review questioned it; it is the SRS spread's own colour.
+- **Apprentice keeps the accent in the spread** — it is the hot end of the
+  spread's walk from hot to drained, items back within hours. But `146
+  taught` in past 7 days borrowed that red for lessons done, which read as
+  an alarm about progress; on the owner's say-so it is neutral ink now.
 
 
 
