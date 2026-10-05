@@ -2,6 +2,7 @@ node_modules
 dist
 .claude/settings.local.json
 .claude/worktrees
+.claude/launch.json
 .DS_Store
 *.local
 .vite
