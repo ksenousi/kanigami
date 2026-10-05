@@ -479,15 +479,27 @@ body {
   background: color-mix(in srgb, var(--text-soft) 7%, transparent);
 }
 
+/* The level-up's kanji, wrapped inside their own hour rather than run on
+   one line across the hours beside it. */
 .forecast .mark {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px 2px;
+  max-width: 100%;
   font-size: var(--small);
   line-height: 1;
   letter-spacing: 0;
-  white-space: nowrap;
   color: var(--text-strong);
 }
 
-.forecast .mark.quiet {
+.forecast .mark .quiet {
+  color: var(--text-soft);
+}
+
+.forecast .mark .more {
+  font-family: var(--mono);
+  font-size: var(--label);
   color: var(--text-soft);
 }
 

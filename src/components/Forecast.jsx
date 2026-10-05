@@ -17,7 +17,8 @@ import usePointing from './usePointing.js'
 //   midnight, so the day boundary reads before any label does.
 // - **Each bar carries its count**, and the kanji the level-up waits on sit
 //   above the bar of the hour they come up in — strong ink when one right
-//   answer passes them, softer otherwise.
+//   answer passes them, softer otherwise — wrapped inside the hour's own
+//   column, three at most and `+n` for the rest.
 // - **The backlog does not set the scale.** WaniKani's first bucket holds
 //   everything already due, which on a neglected account outweighs the rest
 //   of the day and is already the largest figure above. It is drawn in the
@@ -27,6 +28,12 @@ import usePointing from './usePointing.js'
 //   hour in words — its slot, its count, the kanji in it. The arrows walk the
 //   hours from the keyboard; the line is the live region.
 const TALLEST = 96 // px, the busiest hour after this one
+
+// The most kanji drawn over one hour. A dozen on one line ran across the
+// hours either side and into the next hour's own; the rest are a count, and
+// the hour read on a tap names them all. The ones a right answer passes come
+// first.
+const SHOWN = 3
 
 export default function Forecast({ summary, waitingOn = [], nextLevel = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
@@ -81,8 +88,13 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
               >
                 <span className="stack">
                   {kanji ? (
-                    <span className={kanji.some(k => k.stage === 4) ? 'mark' : 'mark quiet'} aria-hidden="true">
-                      <span className="kanji-name">{kanji.map(k => k.characters).join('')}</span>
+                    <span className="mark" aria-hidden="true">
+                      {kanji.slice(0, SHOWN).map(k => (
+                        <span key={k.characters} className={k.stage === 4 ? '' : 'quiet'}>
+                          {k.characters}
+                        </span>
+                      ))}
+                      {kanji.length > SHOWN ? <span className="more">+{kanji.length - SHOWN}</span> : null}
                     </span>
                   ) : null}
                   {hour.count ? (
@@ -132,6 +144,7 @@ function markHours(hours, waitingOn) {
     if (!marks.has(index)) marks.set(index, [])
     marks.get(index).push(k)
   }
+  for (const kanji of marks.values()) kanji.sort((a, b) => (b.stage === 4) - (a.stage === 4))
   return marks
 }
 

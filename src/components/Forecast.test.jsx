@@ -121,11 +121,21 @@ describe('Forecast', () => {
     const host = await render(<Forecast summary={summary} waitingOn={waitingOn} nextLevel={16} />)
     const marks = [...host.querySelectorAll('.mark')]
     expect(marks.map(m => m.textContent)).toEqual(['薬皿', '涙'])
-    expect(marks[0].classList.contains('quiet')).toBe(false)
-    expect(marks[1].classList.contains('quiet')).toBe(true)
+    expect(marks[0].querySelector('.quiet')).toBeNull()
+    expect(marks[1].querySelector('.quiet')).not.toBeNull()
     await hover(hours(host)[2])
     expect(label(host)).toMatch(/· 7 reviews · 薬 to pass, 皿 to pass$/)
     expect(host.querySelector('.readout').textContent).toContain('level 16 waits on')
+  })
+
+  it('draws three kanji over a crowded hour, the closest to passing first, and counts the rest', async () => {
+    const at = new Date(START + 2 * HOUR + 30 * 60 * 1000).toISOString()
+    const waitingOn = [...'鼻堂塩席果'].map((characters, i) => ({ characters, stage: i === 3 ? 4 : 2, availableAt: at }))
+    const host = await render(<Forecast summary={summary} waitingOn={waitingOn} nextLevel={16} />)
+    expect(host.querySelector('.mark').textContent).toBe('席鼻堂+2')
+    await hover(hours(host)[2])
+    expect(label(host)).toContain('席 to pass, 鼻 apprentice')
+    expect(label(host)).toContain('果')
   })
 
   it('marks nothing without a level-up to wait on', async () => {
