@@ -685,7 +685,7 @@ function Srs({ spread: bands, moved: gained }) {
 }
 
 // The switch reads every level's slips or only this one's — the same ten
-// lowest, narrowed to what the current level holds. Every level's is first:
+// worst, narrowed to what the current level holds. Every level's is first:
 // it is the lifetime record, and a level's items are new enough that few of
 // them have been missed the three times it takes to count.
 //

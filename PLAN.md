@@ -1199,9 +1199,10 @@ the most data per inch) — and **the original was kept over all four.**
   `--accent`. The figure that summed those days is now called `due within
   7 days` — it counts next reviews ahead, and `this week` read as done.
 - **Column three: what keeps slipping, and pace.** (Pace has since moved
-  out to the full-width 歩 pace dial — see below.) The ten lowest (five
-  until the owner asked to see more; `SLIPPING` in `board.js`)
-  `percentage_correct` items still in rotation — burned items are finished
+  out to the full-width 歩 pace dial — see below.) The ten (five until the
+  owner asked to see more; `SLIPPING` in `board.js`) highest leech scores
+  among items still in rotation (lowest `percentage_correct` until *The
+  leech score*, below) — burned items are finished
   and left out, and an item needs `MIN_MISSES` (3) misses to count, so one
   bad day on a new item is not a leech. One line a row: character,
   meaning in its subject colour, reading, percentage in `--text-soft` (see
@@ -1664,6 +1665,18 @@ All of it was acted on, on the owner's say-so, without a prototype:
     full-width band** of its own (all at once, but it moves the board
     and leaves column three empty). WaniKani's old Critical Condition panel
     was shown for comparison and not wanted.
+- **The leech score** — asked for ("are we ranking them using the right
+  metrics?"). Lifetime `percentage_correct` never forgot: an item missed
+  often long ago kept its place after it stuck, three misses in five
+  answers outranked twenty in sixty, and averaging the halves hid a bad
+  one. Now each half scores `incorrect / current_streak ^ 1.5` — the score
+  WaniKani's community leech tools use — and an item ranks by its worse
+  half, ties to more misses, then lower share right. The weak half is the
+  half the score comes from. Shown to the owner on the fake account's
+  eighteen: 士, 必ず and 札 (fell back after long runs) entered the ten;
+  具合 (mending), 矢 and 眼 (fewer misses) left. The share right shown on
+  each row is unchanged; only the order is the score's, and the score is
+  never shown — it is a ranking, not a WaniKani figure.
 
 
 

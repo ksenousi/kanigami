@@ -73,9 +73,23 @@ describe('leeches', () => {
   const slipping = (id, percentage, misses, type = 'kanji') =>
     stat({ subject_id: id, subject_type: type, percentage_correct: percentage, meaning_incorrect: misses })
 
-  it('ranks the lowest accuracy first, ties to the most missed', () => {
-    const found = leeches([slipping(1, 70, 4), slipping(2, 58, 5), slipping(3, 70, 9)], [])
-    expect(found.map(l => l.subjectId)).toEqual([2, 3, 1])
+  it('ranks by misses over the current streak to the 1.5, so a run of right answers pulls it down', () => {
+    const found = leeches([
+      slipping(1, 80, 6),
+      stat({ subject_id: 2, subject_type: 'kanji', percentage_correct: 40, meaning_incorrect: 9, meaning_current_streak: 3 }),
+      slipping(3, 90, 4)
+    ], [])
+    expect(found.map(l => [l.subjectId, Math.round(l.score * 10) / 10])).toEqual([[1, 6], [3, 4], [2, 1.7]])
+  })
+
+  it('scores an item by its worse half, and breaks ties on misses, then on share right', () => {
+    const found = leeches([
+      stat({ subject_id: 1, subject_type: 'kanji', percentage_correct: 70, meaning_incorrect: 1, reading_incorrect: 5 }),
+      slipping(2, 60, 5),
+      slipping(3, 50, 5),
+      stat({ subject_id: 4, subject_type: 'kanji', percentage_correct: 70, meaning_incorrect: 3, reading_incorrect: 3 })
+    ], [])
+    expect(found.map(l => l.subjectId)).toEqual([1, 3, 2, 4])
   })
 
   it('skips burned items and items missed too few times to mean anything', () => {
@@ -116,7 +130,7 @@ describe('leeches', () => {
   it('reads the weak half’s streak into fell back, never stuck and mending', () => {
     const streaks = (subject_id, extra) =>
       stat({ subject_id, subject_type: 'kanji', percentage_correct: 50, meaning_correct: 5, meaning_incorrect: 3,
-        reading_correct: 9, reading_incorrect: 1, ...extra })
+        reading_correct: 9, reading_incorrect: 1, reading_current_streak: 9, reading_max_streak: 9, ...extra })
     const found = leeches([
       streaks(1, { meaning_current_streak: 1, meaning_max_streak: 6 }),
       streaks(2, { meaning_current_streak: 2, meaning_max_streak: 3 }),

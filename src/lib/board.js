@@ -89,15 +89,21 @@ export const MENDING = 3
 // A best streak this long means it held once and has since fallen back.
 export const HELD = 4
 
-// What keeps slipping: the lowest `percentage_correct` among items still in
-// rotation. Burned items are out — they are finished, however they got
-// there — which is why this needs the assignments as well as the
-// statistics. Ties go to whichever has been missed more.
+// What keeps slipping, ranked by the leech score WaniKani's community
+// tools use: for each half, misses over the current streak to the power
+// 1.5, and the item scores its worse half. Misses push it up; every right
+// answer in a row pulls it down harder than the last. It replaced lifetime
+// `percentage_correct`, which never forgot — an item missed often months
+// ago held its place long after it stuck — and ranked three misses in five
+// answers above twenty in sixty (PLAN.md, "The leech score"). Ties go to
+// whichever has been missed more, then to the lower share right. Burned
+// items are out — they are finished, however they got there — which is why
+// this needs the assignments as well as the statistics.
 //
-// `weak` is the half it is missed on: meaning or reading, whichever has the
-// lower share right, with that share. Null when the two are level or there
-// is only one half — a radical has no reading. `halves` is both shares, for
-// the readout, each null where that half has never been asked.
+// `weak` is the half it is missed on — the one the score comes from — with
+// that half's share right. Null when the two score level or there is only
+// one half — a radical has no reading. `halves` is both shares, for the
+// readout, each null where that half has never been asked.
 //
 // `streak` is WaniKani's current and best run of right answers on the weak
 // half — on the half with the shorter current run when neither is weaker —
@@ -126,6 +132,7 @@ export function leeches(statistics = [], assignments = [], count = SLIPPING, wit
         type: subjectTypeName(d.subject_type),
         percentage: d.percentage_correct,
         misses: (d.meaning_incorrect ?? 0) + (d.reading_incorrect ?? 0),
+        score: Math.max(leechScore(d, 'meaning'), leechScore(d, 'reading')),
         weak,
         halves: halves(d),
         streak,
@@ -135,7 +142,7 @@ export function leeches(statistics = [], assignments = [], count = SLIPPING, wit
       }
     })
     .filter(item => item.misses >= MIN_MISSES && typeof item.percentage === 'number')
-    .sort((a, b) => a.percentage - b.percentage || b.misses - a.misses)
+    .sort((a, b) => b.score - a.score || b.misses - a.misses || a.percentage - b.percentage)
     .slice(0, count)
 }
 
@@ -152,8 +159,10 @@ function halves(d) {
 function streakOf(d, weak) {
   const of = half => ({ half, current: d[`${half}_current_streak`] ?? 1, best: d[`${half}_max_streak`] ?? 1 })
   if (weak) return of(weak.half)
-  const asked = ['meaning', 'reading'].filter(h => (d[`${h}_correct`] ?? 0) + (d[`${h}_incorrect`] ?? 0) > 0)
-  return asked.map(of).sort((a, b) => a.current - b.current)[0] ?? of('meaning')
+  return ['meaning', 'reading']
+    .filter(h => asked(d, h))
+    .map(of)
+    .sort((a, b) => a.current - b.current)[0] ?? of('meaning')
 }
 
 // The kanji a slip is most likely being taken for, or the one inside a word
@@ -172,13 +181,19 @@ export function partnerFor(type, subject, shares) {
   return type === 'kanji' ? { id: ids[0], relation: 'alike' } : null
 }
 
+const asked = (d, half) => (d[`${half}_correct`] ?? 0) + (d[`${half}_incorrect`] ?? 0) > 0
+
+function leechScore(d, half) {
+  return (d[`${half}_incorrect`] ?? 0) / Math.max(1, d[`${half}_current_streak`] ?? 1) ** 1.5
+}
+
 function weakHalf(d) {
-  const meaning = share(d.meaning_correct, d.meaning_incorrect)
-  const reading = share(d.reading_correct, d.reading_incorrect)
-  if (meaning === null || reading === null || meaning === reading) return null
-  return meaning < reading
-    ? { half: 'meaning', percentage: Math.round(meaning * 100) }
-    : { half: 'reading', percentage: Math.round(reading * 100) }
+  if (!asked(d, 'meaning') || !asked(d, 'reading')) return null
+  const meaning = leechScore(d, 'meaning')
+  const reading = leechScore(d, 'reading')
+  if (meaning === reading) return null
+  const half = meaning > reading ? 'meaning' : 'reading'
+  return { half, percentage: Math.round(share(d[`${half}_correct`], d[`${half}_incorrect`]) * 100) }
 }
 
 // What moved this week, by the only three dates an assignment carries:

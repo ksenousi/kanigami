@@ -201,7 +201,8 @@
             meaning_current_streak: 1, meaning_max_streak: 3, reading_current_streak: 2, reading_max_streak: 2 }
         })),
         { data: { subject_id: 60100, subject_type: 'kanji', percentage_correct: 95,
-          meaning_correct: 4100, meaning_incorrect: 380, reading_correct: 3700, reading_incorrect: 560 } }
+          meaning_correct: 4100, meaning_incorrect: 380, reading_correct: 3700, reading_incorrect: 560,
+          meaning_current_streak: 40, meaning_max_streak: 40, reading_current_streak: 40, reading_max_streak: 40 } }
       ]
   if (!fresh) {
     SLIPPING.forEach(([, , , type, , , , , stage, hours], i) => {
