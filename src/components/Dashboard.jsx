@@ -930,7 +930,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
           />
           <div className={['ticks', marks.length ? 'has-low' : '', need !== null ? 'has-goal' : ''].join(' ').trim()} aria-hidden="true">
             <span className="start" style={{ left: 0 }}>
-              {dayCount(min)} days{fastest ? ', WaniKani’s fastest' : ''}
+              {dayCount(min)} days{fastest ? <span className="aside">, WaniKani’s fastest</span> : ''}
             </span>
             {marks.map(m => (
               <span key={m.label} className="mark low" style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }}>

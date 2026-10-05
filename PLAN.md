@@ -1603,3 +1603,31 @@ All of it was acted on, on the owner's say-so, without a prototype:
   have historically tripped CORS in browsers, unlike the read endpoints.
   Nothing in this plan needs those writes; if a later feature does, verify
   before designing around it.
+
+**Every screen, a phone included.** Asked for: the board has to work on any
+screen. This overturns "a phone is not a case worth spending anything on".
+At 375px the board scrolled 492px sideways — the tablet's two columns at
+160px each, the level's eight kanji printed over one another, the slider's
+labels on top of each other, coverage's shares off the edge. Below 700px
+(an iPad mini upright is 744px and keeps the tablet layout):
+
+- **One column**, the level's notes back under its grid, and the figures
+  two to a row with their labels free to wrap.
+- **The type scale steps down as a whole** — `--label` 14px, `--figure`
+  44px — so the hierarchy is the desktop's, nearer the floor.
+- **The 24 hours keep 26px an hour and scroll sideways** in their own strip;
+  the line beneath stays put and reads the tapped hour.
+- **The dial's decades keep their kanji**; only the current one keeps its
+  date. The last level number hangs left of its slot.
+- **Slider labels become a line under the slider**, start to end, wrapping,
+  instead of standing at their places; `, WaniKani's fastest` drops.
+- **Coverage's share sits beside the name**, the hairline full width under
+  both; section heads put their number under the name when both won't fit.
+- **The token field** sets at 16px without tracking, so the 36 characters
+  fit and iOS does not zoom on focus.
+
+Found on the way: on the tablet the milestones zig-zagged — the date
+dropped into column one, and auto-placement put the next label beside it.
+Each label is pinned to column one now. Checked for horizontal overflow at
+320, 375, 430, 600, 700, 744, 820, 1180, 1280, 1440 and 1920 against the
+fake.

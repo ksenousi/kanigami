@@ -390,6 +390,12 @@ body {
   gap: 6px;
 }
 
+.forecast .strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .forecast .days {
   position: relative;
   height: 24px;
@@ -1707,22 +1713,22 @@ button.quiet {
   color: var(--text-soft);
 }
 
-.board .ticks span {
+.board .ticks > span {
   position: absolute;
   top: 0;
   transform: translateX(-50%);
   white-space: nowrap;
 }
 
-.board .ticks span.start {
+.board .ticks > span.start {
   transform: none;
 }
 
-.board .ticks span.end {
+.board .ticks > span.end {
   transform: translateX(-100%);
 }
 
-.board .ticks span.low {
+.board .ticks > span.low {
   top: 26px;
 }
 
@@ -1860,9 +1866,8 @@ button.quiet {
 /* An iPad, either way up, or a narrow window. Below about 1,280px three
    columns of a third leave each of the level's eight kanji a cell narrower
    than the character, and they run into one another, so the level takes
-   the full width and the other two sit side by side beneath it. This is the
-   tablet, the one size below desktop the board is meant for — not the start
-   of a ramp toward a phone. */
+   the full width and the other two sit side by side beneath it. Below
+   700px the phone takes over, at the end of the file. */
 @media (max-width: 1279px) {
   /* The romaji beside 蟹紙 says the wordmark twice, and on an upright iPad
      it is the 30px that pushes Disconnect onto a line of its own. */
@@ -1907,6 +1912,12 @@ button.quiet {
     grid-template-columns: minmax(0, 1fr) max-content;
   }
 
+  /* Each label starts its own row: with the date dropped into column one,
+     auto-placement otherwise put the next label beside it, in column two. */
+  .board .ladder .what {
+    grid-column: 1;
+  }
+
   .board .ladder .next .when {
     grid-column: 1;
     margin-top: -8px;
@@ -1938,5 +1949,178 @@ button.quiet {
   .board .dial .decades > span {
     padding-left: 5px;
     letter-spacing: 0;
+  }
+}
+
+/* ---- a phone ----
+   Below 700px — every phone either way up, and a narrow window — the board
+   is one column. An iPad mini upright is 744px and keeps the tablet layout.
+
+   The whole type scale steps down together, so the hierarchy is the one the
+   desktop has, nearer the floor: 17px labels and 62px figures on a 375px
+   screen set three words to a line. --label stays at 14px, the size the
+   mono capitals read at without leaning in. */
+@media (max-width: 699px) {
+  :root {
+    --label: 14px;
+    --control: 16px;
+    --small: 17px;
+    --body: 19px;
+    --input: 21px;
+    --display: 26px;
+    --display-lg: 30px;
+    --figure: 44px;
+  }
+
+  .surface-ink {
+    padding-inline: 16px;
+    gap: 28px;
+  }
+
+  .board .masthead .eyebrow {
+    margin-left: 0;
+  }
+
+  /* The token gate's 36 characters at --input run past a phone's edge.
+     --control is 16px here, the floor below which iOS zooms the page on
+     focus, and without tracking the token just fits. */
+  .field input {
+    font-size: var(--control);
+    letter-spacing: 0;
+    padding-inline: 0;
+  }
+
+  .board .masthead {
+    column-gap: 18px;
+  }
+
+  /* Two figures to a row, their labels free to wrap under them. */
+  .board .figures {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 20px;
+  }
+
+  .board .columns,
+  .board .forward .pair {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  /* The level's notes go back under the grid. */
+  .board .level {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .board .kanji {
+    gap: 16px 4px;
+  }
+
+  /* A head that cannot fit its name and its number on one line puts the
+     number under the name, rather than pushing past the edge. */
+  .board .head {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .board .head h2 {
+    flex-basis: auto;
+  }
+
+  .board .head > span {
+    text-align: left;
+  }
+
+  /* 25 hours in 343px is 14px an hour, narrower than its name. The strip
+     keeps 26px an hour and scrolls sideways under a finger; the line
+     beneath stays put and still reads the tapped hour. */
+  .forecast .strip {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .forecast .strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .forecast .days,
+  .forecast .hours {
+    min-width: 650px;
+  }
+
+  /* The dial's decades keep their kanji; only the current one keeps its
+     date, a sixth of a phone being narrower than `Dec 2025`. */
+  .board .dial .decades > :not(.current) .when {
+    display: none;
+  }
+
+  .board .dial .chart {
+    padding-top: 48px;
+  }
+
+  /* The last level number sits in a 4px slot; it hangs left from it rather
+     than past the page's edge. */
+  .board .dial .levels span:last-child {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .board .dial .readings {
+    gap: 16px 40px;
+  }
+
+  /* The slider's labels cannot stand at their places in 343px without
+     printing over each other, so they become a line under it, start to
+     end, wrapping where they must. */
+  .board .ticks,
+  .board .ticks.has-low,
+  .board .ticks.has-goal {
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2px 16px;
+  }
+
+  .board .ticks > span,
+  .board .ticks > span.end,
+  .board .ticks > span.low,
+  .board .ticks .mark.goal {
+    position: static;
+    transform: none;
+  }
+
+  .board .ticks > span.end {
+    margin-left: auto;
+  }
+
+  .board .ticks .aside {
+    display: none;
+  }
+
+  /* Coverage: the share and counts beside the name, the hairline the full
+     width under both — dense packing pulls the share back up beside it. */
+  .board .cover {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-auto-flow: row dense;
+    gap: 6px 14px;
+  }
+
+  .board .cover .track {
+    grid-column: 1 / -1;
+    margin-bottom: 10px;
+  }
+
+  .board .ladder {
+    gap: 8px 14px;
+  }
+
+  .board .notes.spread-out {
+    flex-wrap: wrap;
+    white-space: normal;
+    gap: 4px 16px;
   }
 }

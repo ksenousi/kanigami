@@ -130,13 +130,14 @@ removes. Assume every commit is permanent and public.
 - One surface, 墨 ink, tokens in `src/index.css`. De-boxed — no borders or
   cards that only group things. A hairline that lights is the house pattern,
   not an outlined box.
-- **Desktop and iPad are the targets; a phone is not.** The iPad counts
+- **Every screen is a target: desktop, iPad, and phone.** The iPad counts
   either way up (820–1366px) and by touch alone, with no mouse: anything a
   mouse reads by hover has to read by tap too (`usePointing`), and `:hover`
   styles sit under `@media (hover: hover)` so a tap doesn't leave them lit.
-  Below 1,280px the board drops to the tablet layout. A phone is not a case
-  worth spending anything on — no phone breakpoints or type ramps, nothing
-  held back because it is tight at 375px, and no phone-only findings.
+  Below 1,280px the board drops to the tablet layout; below 700px to the
+  phone's single column, where the whole type scale steps down together and
+  the 24-hour strip scrolls sideways. A phone was once ruled out; the owner
+  reversed that — check new work at 375px as well as 820 and 1440.
 - **Capitals name things; everything else is read** (二 Two voices, in
   PLAN.md). Mono capitals are for section heads and figure labels only.
   Sentences are sentence-case sans, written that way in the JSX; counts are

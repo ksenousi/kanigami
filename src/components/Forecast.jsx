@@ -40,60 +40,64 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
 
   return (
     <section className="forecast" aria-label="Reviews over the next 24 hours">
-      <div className="days" aria-hidden="true">
-        <span style={{ left: 0 }}>today</span>
-        {midnight > 0 ? <span style={{ left: share(midnight) }}>{weekday(hours[midnight].at)}</span> : null}
-      </div>
+      {/* The strip: on a phone it keeps an hour wide enough to name and
+          scrolls sideways, rather than squeezing 25 hours into 335px. */}
+      <div className="strip">
+        <div className="days" aria-hidden="true">
+          <span style={{ left: 0 }}>today</span>
+          {midnight > 0 ? <span style={{ left: share(midnight) }}>{weekday(hours[midnight].at)}</span> : null}
+        </div>
 
-      <div
-        className="hours"
-        role="group"
-        aria-label="Reviews due in each of the next 24 hours"
-        style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))` }}
-        onKeyDown={walk(hours.length, reading, point)}
-        {...groupProps}
-      >
-        {hours.map((hour, index) => {
-          const capped = index === 0 && hour.count > busiest
-          const height = hour.count
-            ? Math.max(3, Math.round(((capped ? busiest : hour.count) / busiest) * TALLEST))
-            : 0
-          const kanji = marks.get(index)
-          return (
-            <span
-              key={hour.at}
-              className={[
-                'hour',
-                hour.count ? 'busy' : '',
-                index === 0 ? 'now' : '',
-                midnight > 0 && index >= midnight ? 'next-day' : '',
-                index === midnight ? 'midnight' : '',
-                kanji ? 'marked' : '',
-                reading === index ? 'reading' : ''
-              ]
-                .join(' ')
-                .trim()}
-              // A mouse reads on hover; a tap reads and holds — see usePointing.
-              {...itemProps(index)}
-            >
-              <span className="stack">
-                {kanji ? (
-                  <span className={kanji.some(k => k.stage === 4) ? 'mark' : 'mark quiet'} aria-hidden="true">
-                    <span className="kanji-name">{kanji.map(k => k.characters).join('')}</span>
-                  </span>
-                ) : null}
-                {hour.count ? (
-                  <span className="n">
-                    {many(hour.count)}
-                    {capped ? '↑' : ''}
-                  </span>
-                ) : null}
-                <i style={{ height: `${height}px` }} />
+        <div
+          className="hours"
+          role="group"
+          aria-label="Reviews due in each of the next 24 hours"
+          style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))` }}
+          onKeyDown={walk(hours.length, reading, point)}
+          {...groupProps}
+        >
+          {hours.map((hour, index) => {
+            const capped = index === 0 && hour.count > busiest
+            const height = hour.count
+              ? Math.max(3, Math.round(((capped ? busiest : hour.count) / busiest) * TALLEST))
+              : 0
+            const kanji = marks.get(index)
+            return (
+              <span
+                key={hour.at}
+                className={[
+                  'hour',
+                  hour.count ? 'busy' : '',
+                  index === 0 ? 'now' : '',
+                  midnight > 0 && index >= midnight ? 'next-day' : '',
+                  index === midnight ? 'midnight' : '',
+                  kanji ? 'marked' : '',
+                  reading === index ? 'reading' : ''
+                ]
+                  .join(' ')
+                  .trim()}
+                // A mouse reads on hover; a tap reads and holds — see usePointing.
+                {...itemProps(index)}
+              >
+                <span className="stack">
+                  {kanji ? (
+                    <span className={kanji.some(k => k.stage === 4) ? 'mark' : 'mark quiet'} aria-hidden="true">
+                      <span className="kanji-name">{kanji.map(k => k.characters).join('')}</span>
+                    </span>
+                  ) : null}
+                  {hour.count ? (
+                    <span className="n">
+                      {many(hour.count)}
+                      {capped ? '↑' : ''}
+                    </span>
+                  ) : null}
+                  <i style={{ height: `${height}px` }} />
+                </span>
+                <span className="at">{String(new Date(hour.at).getHours()).padStart(2, '0')}</span>
               </span>
-              <span className="at">{String(new Date(hour.at).getHours()).padStart(2, '0')}</span>
-            </span>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
 
       <p className="notes readout" aria-live="polite">
