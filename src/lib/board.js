@@ -476,5 +476,10 @@ export function paceToReach(p, level, target, by, now = new Date(), soonest = nu
     if (reaches(mid)) lo = mid
     else hi = mid
   }
-  return Math.max(fastest, Math.floor(lo / step) * step)
+  // The break-even lies between lo and hi, so the answer is the step under
+  // hi if that reaches, else the one below. Rounding lo down instead dropped
+  // a whole step whenever the break-even sat just over one.
+  let pace = Math.floor(hi / step) * step
+  while (pace > lo && !reaches(pace)) pace -= step
+  return Math.max(fastest, pace)
 }

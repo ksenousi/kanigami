@@ -506,4 +506,15 @@ describe('paceToReach', () => {
   it('has nothing to ask of a level already reached', () => {
     expect(paceToReach(p, 15, 15, by(100), NOW)).toBeNull()
   })
+
+  // Day 4 of level 5: at 10 days a level, level 20 unlocks 146 days out. A
+  // deadline an hour after that puts the break-even at 10.003 days a level —
+  // a search that stopped a quarter step short of it rounded down to 9.5,
+  // and a goal at the dial's own month said to go faster than the dial.
+  it('names the step just under the break-even, however close it falls', () => {
+    const early = { current: { level: 5, days: 4 } }
+    const deadline = new Date(by(146).getTime() + DAY / 24)
+    expect(paceToReach(early, 5, 20, deadline, NOW, null, 7, 0.5, 40)).toBe(10)
+    expect(paceToReach(early, 5, 20, deadline, NOW, null, 1, 0.5, 200)).toBe(10)
+  })
 })
