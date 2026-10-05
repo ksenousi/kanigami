@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "fake", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev:fake"], "port": 5173 }
+  ]
+}
