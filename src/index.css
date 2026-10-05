@@ -985,10 +985,17 @@ button.quiet {
 
 .board .kanji li {
   position: relative;
+}
+
+/* Each cell is a link out to WaniKani, drawn as nothing but the cell. */
+.board .kanji .open {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .board .kanji .character {
@@ -1202,6 +1209,26 @@ button.quiet {
   letter-spacing: 0;
   text-transform: none;
   color: var(--text-strong);
+}
+
+/* Each character links out to its WaniKani page: a hairline beneath, the
+   house pattern, lit under the pointer. */
+.board .slipping a.character {
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .board .slipping a.character:hover {
+    border-bottom-color: var(--text-soft);
+  }
+}
+
+/* The half it is missed on: its own line in the reading's ink, so it
+   wraps the same in every row and does not outshout the meaning. */
+.board .slipping .weak {
+  flex-basis: 100%;
 }
 
 .board .slipping .character img {

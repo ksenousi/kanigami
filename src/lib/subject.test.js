@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { glyphFor, subjectTypeName } from './subject.js'
+import { glyphFor, pageFor, subjectTypeName } from './subject.js'
 
 // Hand-authored, minimal, and fake. Never paste a live API payload in here.
 const mountain = {
@@ -61,5 +61,19 @@ describe('glyphFor', () => {
 
   it('reports nothing to draw rather than throwing', () => {
     expect(glyphFor({ characters: null })).toEqual({ text: null, image: null })
+  })
+})
+
+describe('pageFor', () => {
+  it('passes a WaniKani page through', () => {
+    expect(pageFor({ document_url: 'https://www.wanikani.com/kanji/%E5%B1%B1' })).toBe(
+      'https://www.wanikani.com/kanji/%E5%B1%B1'
+    )
+  })
+
+  it('refuses anything that is not a WaniKani page', () => {
+    expect(pageFor({ document_url: 'javascript:alert(1)' })).toBeNull()
+    expect(pageFor({ document_url: 'https://www.wanikani.com.example/kanji' })).toBeNull()
+    expect(pageFor({})).toBeNull()
   })
 })

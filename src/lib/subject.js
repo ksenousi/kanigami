@@ -10,6 +10,14 @@ export function subjectTypeName(type) {
   return type === 'kana_vocabulary' ? 'vocabulary' : type
 }
 
+// A subject's own page on WaniKani — the mnemonics this app never shows —
+// for a link out. Only ever a wanikani.com address: the URL comes from the
+// API, and an href is the one place a string from it could run as script.
+export function pageFor(subject) {
+  const url = subject?.document_url
+  return typeof url === 'string' && url.startsWith('https://www.wanikani.com/') ? url : null
+}
+
 // Some radicals have no Unicode character at all. WaniKani ships stroke
 // images for those; prefer the SVG, which is the only one that survives being
 // scaled to display size.

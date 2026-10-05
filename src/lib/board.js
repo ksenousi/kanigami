@@ -8,7 +8,7 @@
 // from the API, rather than one of ours.
 
 import { STAGES } from './standing.js'
-import { glyphFor, subjectTypeName } from './subject.js'
+import { glyphFor, pageFor, subjectTypeName } from './subject.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const BURNED = 9
@@ -81,6 +81,10 @@ export const MIN_MISSES = 3
 // there — which is why this needs the assignments as well as the
 // statistics. Ties go to whichever has been missed more.
 //
+// `weak` is the half it is missed on: meaning or reading, whichever has the
+// lower share right, with that share. Null when the two are level or there
+// is only one half — a radical has no reading.
+//
 // `within`, a set of subject ids, narrows it to those — the current level's,
 // for the switch between this level's slips and every level's.
 export function leeches(statistics = [], assignments = [], count = 5, within = null) {
@@ -95,11 +99,22 @@ export function leeches(statistics = [], assignments = [], count = 5, within = n
       subjectId: d.subject_id,
       type: subjectTypeName(d.subject_type),
       percentage: d.percentage_correct,
-      misses: (d.meaning_incorrect ?? 0) + (d.reading_incorrect ?? 0)
+      misses: (d.meaning_incorrect ?? 0) + (d.reading_incorrect ?? 0),
+      weak: weakHalf(d)
     }))
     .filter(item => item.misses >= MIN_MISSES && typeof item.percentage === 'number')
     .sort((a, b) => a.percentage - b.percentage || b.misses - a.misses)
     .slice(0, count)
+}
+
+function weakHalf(d) {
+  const share = (right = 0, wrong = 0) => (right + wrong ? right / (right + wrong) : null)
+  const meaning = share(d.meaning_correct, d.meaning_incorrect)
+  const reading = share(d.reading_correct, d.reading_incorrect)
+  if (meaning === null || reading === null || meaning === reading) return null
+  return meaning < reading
+    ? { half: 'meaning', percentage: Math.round(meaning * 100) }
+    : { half: 'reading', percentage: Math.round(reading * 100) }
 }
 
 // What moved this week, by the only three dates an assignment carries:
@@ -268,6 +283,7 @@ export function levelKanji(subjects = [], assignments = []) {
         // A radical may have no codepoint; the grid draws WaniKani's image.
         image: glyphFor(subject.data).image,
         meaning,
+        url: pageFor(subject.data),
         system: subject.data.spaced_repetition_system_id
       }
       if (!a) return { ...base, state: 'locked', stage: null, availableAt: null }

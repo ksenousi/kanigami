@@ -48,7 +48,8 @@
   const kanjiSubjects = KANJI.map(([characters, meaning], i) => ({
     id: 1000 + i,
     object: 'kanji',
-    data: { level: LEVEL, characters, meanings: [{ meaning, primary: true }], lesson_position: i, spaced_repetition_system_id: system }
+    data: { level: LEVEL, characters, meanings: [{ meaning, primary: true }], lesson_position: i, spaced_repetition_system_id: system,
+      document_url: `https://www.wanikani.com/kanji/${encodeURIComponent(characters)}` }
   }))
   // [srs stage, hours until its next review] per kanji; null is locked. Five
   // come up in the same hour, so the strip has a crowded one to draw.
@@ -156,9 +157,10 @@
   const statistics = fresh
     ? []
     : [
+        // Missed on the reading, but for the second, missed on its meaning.
         ...SLIPPING.map(([, , , type, percentage], i) => ({
           data: { subject_id: 60000 + i, subject_type: type, percentage_correct: percentage,
-            meaning_correct: 9, meaning_incorrect: 4, reading_correct: 8, reading_incorrect: 5 }
+            meaning_correct: 9, meaning_incorrect: i === 1 ? 6 : 4, reading_correct: 8, reading_incorrect: i === 1 ? 3 : 5 }
         })),
         // Three of the level's own kanji, for the switch to this level.
         ...[[1026, 64], [1027, 75], [1024, 79]].map(([subject_id, percentage]) => ({
@@ -170,7 +172,8 @@
       ]
   const slippingSubjects = SLIPPING.map(([characters, reading, meaning], i) => ({
     id: 60000 + i,
-    data: { characters, meanings: [{ meaning, primary: true }], readings: [{ reading, primary: true }] }
+    data: { characters, meanings: [{ meaning, primary: true }], readings: [{ reading, primary: true }],
+      document_url: `https://www.wanikani.com/${characters.length > 1 ? 'vocabulary' : 'kanji'}/${encodeURIComponent(characters)}` }
   }))
 
   // --- WaniKani's two SRS systems, intervals in seconds ---

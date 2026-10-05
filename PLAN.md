@@ -1599,6 +1599,18 @@ All of it was acted on, on the owner's say-so, without a prototype:
   wrap inside their own column now, three at most with `+n` for the rest,
   the ones a right answer passes first and lit one by one rather than as a
   group. The hour's tapped line still names them all.
+- **Out to WaniKani** — asked for. Each slipping character and each cell
+  of the level grid links to the subject's own WaniKani page, where the
+  mnemonic is, in a new tab. The URL is the subject's `document_url`, taken
+  only when it is a `https://www.wanikani.com/` address (`pageFor`). A
+  mouse clicks through; a finger's first tap on a grid cell reads it as
+  before and a second opens it, so tapping for the next review never leaves
+  the board. Enter opens the cell the arrows are on.
+- **The half it is missed on** — asked for. Under each slipping item,
+  `reading 62%` or `meaning 60%`: whichever half has the lower share right,
+  in the reading's ink on its own line. Nothing when the halves are level
+  or there is only one (a radical has no reading).
+- Considered and not built: the due count in the tab title.
 
 
 

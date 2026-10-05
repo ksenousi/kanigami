@@ -360,6 +360,21 @@ describe('keeps slipping', () => {
     expect(api.getSubjects).toHaveBeenCalledOnce()
   })
 
+  it('links each character out to its WaniKani page, and names the half it is missed on', async () => {
+    api.getReviewStatistics.mockResolvedValue([
+      { data: { subject_id: 700, subject_type: 'kanji', percentage_correct: 40,
+        meaning_correct: 9, meaning_incorrect: 1, reading_correct: 3, reading_incorrect: 7 } }
+    ])
+    const page = 'https://www.wanikani.com/kanji/%E5%B1%8A'
+    api.getSubjects.mockResolvedValue([{ ...subject(700, '届', 'Deliver'), data: { ...subject(700, '届', 'Deliver').data, document_url: page } }])
+    const host = await board()
+    await until(host, '.slipping')
+    const link = host.querySelector('.slipping a.character')
+    expect(link.getAttribute('href')).toBe(page)
+    expect(link.getAttribute('target')).toBe('_blank')
+    expect(host.querySelector('.slipping .weak').textContent).toBe('reading 30%')
+  })
+
   it('has no switch when the level’s assignments do not load', async () => {
     api.getLevelAssignments.mockRejectedValue(new Error('Load failed'))
     const host = await board()
@@ -466,6 +481,31 @@ describe('the level’s kanji', () => {
     expect(host.querySelector('.level .kanji').textContent).toContain('山')
     await click(button(host, 'radicals'))
     expect(api.getLevelRadicals).toHaveBeenCalledOnce()
+  })
+
+  it('opens a kanji’s WaniKani page on a second tap, never the first', async () => {
+    const page = 'https://www.wanikani.com/kanji/%E5%B1%B1'
+    const mountain = subject(1, '山', 'Mountain')
+    api.getLevelKanjiSubjects.mockResolvedValue([{ ...mountain, data: { ...mountain.data, document_url: page } }])
+    const host = await board()
+    const link = cell(host, 0).querySelector('a')
+    expect(link.getAttribute('href')).toBe(page)
+    // Whether the board let the click through, read after React has had
+    // it — and then stopped, since jsdom cannot open a tab.
+    const opened = []
+    const record = event => {
+      opened.push(!event.defaultPrevented)
+      event.preventDefault()
+    }
+    document.addEventListener('click', record)
+    const press = () => act(async () => link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })))
+    await tap(link)
+    await press()
+    expect(readout(host)).toContain('山 Mountain')
+    await tap(link)
+    await press()
+    document.removeEventListener('click', record)
+    expect(opened).toEqual([false, true])
   })
 
   it('carries each cell’s words for a screen reader', async () => {

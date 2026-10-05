@@ -90,6 +90,22 @@ describe('leeches', () => {
     expect(found.map(l => l.subjectId)).toEqual([2, 3])
   })
 
+  it('names the half it is missed on, and nothing for a radical or a tie', () => {
+    const half = (subject_id, extra) => stat({ subject_id, subject_type: 'kanji', percentage_correct: 50, ...extra })
+    const found = leeches([
+      half(1, { meaning_correct: 9, meaning_incorrect: 1, reading_correct: 3, reading_incorrect: 7 }),
+      half(2, { meaning_correct: 2, meaning_incorrect: 6, reading_correct: 9, reading_incorrect: 1 }),
+      half(3, { meaning_correct: 5, meaning_incorrect: 5 }),
+      half(4, { meaning_correct: 5, meaning_incorrect: 5, reading_correct: 5, reading_incorrect: 5 })
+    ])
+    expect(Object.fromEntries(found.map(l => [l.subjectId, l.weak]))).toEqual({
+      1: { half: 'reading', percentage: 30 },
+      2: { half: 'meaning', percentage: 25 },
+      3: null,
+      4: null
+    })
+  })
+
   it('names kana vocabulary as vocabulary', () => {
     expect(leeches([slipping(4, 50, 4, 'kana_vocabulary')], [])[0].type).toBe('vocabulary')
   })

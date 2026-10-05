@@ -31,7 +31,7 @@ import {
   srsSystems,
   week
 } from '../lib/board.js'
-import { glyphFor } from '../lib/subject.js'
+import { glyphFor, pageFor } from '../lib/subject.js'
 import { clock, count as many, dayMonthYear, monthYear, roughly, weekday, when } from '../lib/dates.js'
 import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
@@ -518,7 +518,9 @@ function Level({ board, level, token }) {
           ) : null}
           <LevelUpLine levelUp={board.levelUp} level={level} />
           <Hint pointer="Point at" touch="Tap">
-            {onRadicals ? 'a radical' : 'a kanji'} for its next review
+            {onRadicals ? 'a radical' : 'a kanji'} for its next review,{' '}
+            <span className="by-pointer">click</span>
+            <span className="by-touch">again</span> for its WaniKani page
           </Hint>
         </span>
         {reading ? (
@@ -536,10 +538,17 @@ function Level({ board, level, token }) {
 
 // One grid of the level's subjects, kanji or radicals. `onRead` hears the
 // item under the pointer or the keyboard, and null when both leave.
+//
+// Each cell links out to its WaniKani page. A mouse clicks through, since
+// it reads by hovering; **a finger's first tap reads and its second opens**,
+// so tapping for the next review never leaves the board. Enter opens the
+// cell the arrows are on. The links stay out of the tab order, which the
+// grid already walks as one stop.
 const ACROSS = 8
 
 function Grid({ items, label, onRead }) {
   const { at, point, groupProps, itemProps } = usePointing(i => onRead(i === null ? null : items[i]))
+  const opens = useRef(true)
 
   function key(event) {
     const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -ACROSS, ArrowDown: ACROSS }[event.key]
@@ -548,6 +557,7 @@ function Grid({ items, label, onRead }) {
       point(at === null ? 0 : Math.min(items.length - 1, Math.max(0, at + step)))
     }
     if (event.key === 'Escape') point(null)
+    if (event.key === 'Enter' && items[at]?.url) window.open(items[at].url, '_blank', 'noreferrer')
   }
 
   return (
@@ -558,21 +568,37 @@ function Grid({ items, label, onRead }) {
     <ul className="kanji" role="list" aria-label={label} onKeyDown={key} {...groupProps}>
       {items.map((k, i) => (
         <li key={k.id} className={[k.state, at === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
-          <span className="sr-only">
-            {`${k.characters ?? ''} ${k.meaning}: ${describe(k)}, ${nextReview(k, new Date())}`}
-          </span>
-          <span className="character" aria-hidden="true">
-            {k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')}
-          </span>
-          {k.state === 'apprentice' ? (
-            <span className="pips" aria-hidden="true">
-              {[1, 2, 3, 4].map(n => (
-                <i key={n} className={n <= k.stage ? 'lit' : ''} />
-              ))}
+          <a
+            className="open"
+            href={k.url ?? undefined}
+            target="_blank"
+            rel="noreferrer"
+            tabIndex={-1}
+            onPointerDown={event => {
+              opens.current = event.pointerType === 'mouse' || at === i
+            }}
+            onClick={event => {
+              if (!opens.current) event.preventDefault()
+              // A click with no press before it — a screen reader's — opens.
+              opens.current = true
+            }}
+          >
+            <span className="sr-only">
+              {`${k.characters ?? ''} ${k.meaning}: ${describe(k)}, ${nextReview(k, new Date())}`}
             </span>
-          ) : (
-            <span className="underline" aria-hidden="true" />
-          )}
+            <span className="character" aria-hidden="true">
+              {k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')}
+            </span>
+            {k.state === 'apprentice' ? (
+              <span className="pips" aria-hidden="true">
+                {[1, 2, 3, 4].map(n => (
+                  <i key={n} className={n <= k.stage ? 'lit' : ''} />
+                ))}
+              </span>
+            ) : (
+              <span className="underline" aria-hidden="true" />
+            )}
+          </a>
         </li>
       ))}
     </ul>
@@ -667,14 +693,27 @@ function Slipping({ slipping, level }) {
             const { text, image } = glyphFor(l.subject.data)
             const meaning = l.subject.data.meanings?.find(m => m.primary)?.meaning
             const reading = l.subject.data.readings?.find(r => r.primary)?.reading
+            const page = pageFor(l.subject.data)
+            const glyph = text ?? (image ? <img src={image} alt="" /> : '〓')
             return (
               <li key={l.subjectId}>
-                <span className="character">
-                  {text ?? (image ? <img src={image} alt="" /> : '〓')}
-                </span>
+                {/* Out to WaniKani's page for it, where the mnemonic is. */}
+                {page ? (
+                  <a className="character" href={page} target="_blank" rel="noreferrer" title="Open on WaniKani">
+                    {glyph}
+                  </a>
+                ) : (
+                  <span className="character">{glyph}</span>
+                )}
                 <span className="what">
                   <span className={`meaning wk-${l.type}`}>{meaning}</span>
                   {reading ? <span className="reading">{reading}</span> : null}
+                  {/* The half it is missed on — what to drill. */}
+                  {l.weak ? (
+                    <span className="weak">
+                      {l.weak.half} {l.weak.percentage}%
+                    </span>
+                  ) : null}
                 </span>
                 <span className="count">{l.percentage}%</span>
               </li>
