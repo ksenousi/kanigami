@@ -47,7 +47,7 @@ the last commit holding them is `03a7aa7` — and PLAN.md describes them.
   Keep projections labelled as projections, and keep them out of anything
   that reads as WaniKani's record.
 - **Never bulk-sync the subject database — with one sanctioned exception.**
-  Fetch only the subjects on screen — the level's kanji, the five slipping
+  Fetch only the subjects on screen — the level's kanji, the ten slipping
   items. A full sync is the offline feature this app deliberately does not
   have. The exception, on the owner's say-so: coverage reads every kanji
   subject (`getAllKanjiSubjects`, ~2,100, ~4 MB) at most once a week and

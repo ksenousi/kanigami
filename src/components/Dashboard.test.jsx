@@ -372,7 +372,27 @@ describe('keeps slipping', () => {
     const link = host.querySelector('.slipping a.character')
     expect(link.getAttribute('href')).toBe(page)
     expect(link.getAttribute('target')).toBe('_blank')
-    expect(host.querySelector('.slipping .weak').textContent).toBe('reading 30%')
+    expect(host.querySelector('.slipping .weak').textContent).toBe('r reading 30%, ')
+  })
+
+  it('reads a row in full by hover, and by a tap that holds', async () => {
+    api.getReviewStatistics.mockResolvedValue([
+      { data: { subject_id: 700, subject_type: 'kanji', percentage_correct: 40,
+        meaning_correct: 9, meaning_incorrect: 1, reading_correct: 3, reading_incorrect: 7 } }
+    ])
+    const deliver = subject(700, '届', 'Deliver')
+    api.getSubjects.mockResolvedValue([{ ...deliver, data: { ...deliver.data, readings: [{ reading: 'とど', primary: true }] } }])
+    const host = await board()
+    await until(host, '.slipping')
+    const readout = () => host.querySelector('.slipping + .readout').textContent
+    const row = host.querySelector('.slipping .meaning')
+    expect(readout()).toContain('for how it is missed')
+    await hover(row)
+    expect(readout()).toContain('届 Deliver, とど · missed 8 times · meaning 90%, reading 30% right')
+    await unhover(row)
+    expect(readout()).not.toContain('missed 8 times')
+    await tap(row)
+    expect(readout()).toContain('missed 8 times')
   })
 
   it('has no switch when the level’s assignments do not load', async () => {

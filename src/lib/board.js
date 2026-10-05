@@ -76,6 +76,9 @@ export function accuracy(statistics = []) {
 // slipping. Below it, one bad day on a new item reads as a leech.
 export const MIN_MISSES = 3
 
+// How many the list shows, at both scopes.
+export const SLIPPING = 10
+
 // What keeps slipping: the lowest `percentage_correct` among items still in
 // rotation. Burned items are out — they are finished, however they got
 // there — which is why this needs the assignments as well as the
@@ -83,11 +86,12 @@ export const MIN_MISSES = 3
 //
 // `weak` is the half it is missed on: meaning or reading, whichever has the
 // lower share right, with that share. Null when the two are level or there
-// is only one half — a radical has no reading.
+// is only one half — a radical has no reading. `halves` is both shares, for
+// the readout, each null where that half has never been asked.
 //
 // `within`, a set of subject ids, narrows it to those — the current level's,
 // for the switch between this level's slips and every level's.
-export function leeches(statistics = [], assignments = [], count = 5, within = null) {
+export function leeches(statistics = [], assignments = [], count = SLIPPING, within = null) {
   const burned = new Set(
     assignments.filter(a => a?.data?.srs_stage === BURNED).map(a => a.data.subject_id)
   )
@@ -100,15 +104,25 @@ export function leeches(statistics = [], assignments = [], count = 5, within = n
       type: subjectTypeName(d.subject_type),
       percentage: d.percentage_correct,
       misses: (d.meaning_incorrect ?? 0) + (d.reading_incorrect ?? 0),
-      weak: weakHalf(d)
+      weak: weakHalf(d),
+      halves: halves(d)
     }))
     .filter(item => item.misses >= MIN_MISSES && typeof item.percentage === 'number')
     .sort((a, b) => a.percentage - b.percentage || b.misses - a.misses)
     .slice(0, count)
 }
 
+const share = (right = 0, wrong = 0) => (right + wrong ? right / (right + wrong) : null)
+
+function halves(d) {
+  const percent = x => (x === null ? null : Math.round(x * 100))
+  return {
+    meaning: percent(share(d.meaning_correct, d.meaning_incorrect)),
+    reading: percent(share(d.reading_correct, d.reading_incorrect))
+  }
+}
+
 function weakHalf(d) {
-  const share = (right = 0, wrong = 0) => (right + wrong ? right / (right + wrong) : null)
   const meaning = share(d.meaning_correct, d.meaning_incorrect)
   const reading = share(d.reading_correct, d.reading_incorrect)
   if (meaning === null || reading === null || meaning === reading) return null

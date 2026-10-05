@@ -93,7 +93,7 @@
   --control: 19px; /* buttons */
   --small: 21px;   /* secondary prose — the dry-run note, an error */
   --body: 24px;    /* prose meant to be read: mnemonics, the lede */
-  --input: 26px;   /* what you type, and the question's loud word */
+  --input: 26px;   /* what you type, a slipping character */
 
   /* The display steps. These used to be eleven numbers written into eleven
      rules, which made the instruction above — raise the whole scale, never
@@ -101,7 +101,7 @@
      left every display size where it was, flattening the hierarchy in the
      exact way the note warns about. Two near-duplicates (24px beside 23px)
      collapsed into one step on the way in. */
-  --display: 31px;    /* the wordmark, a slipping character */
+  --display: 31px;    /* the wordmark */
   --display-lg: 39px; /* the level's kanji */
   --figure: 62px;     /* the standing figures */
 
@@ -1172,10 +1172,16 @@ button.quiet {
 
 /* What keeps slipping: the character, what it is in its subject colour,
    and the percentage. Not in the accent — that is for what asks to be done
-   now, and five of it in a column drowned the due count out.
+   now, and a column of it drowned the due count out.
 
-   One grid for all five rows, the way taught's fills are, so the character
-   column is as wide as the widest word rather than a fixed 5.5em that a
+   One line a row, so ten fit where five used to (picked from a prototype,
+   PLAN.md): the character a step down from --display, the meaning and the
+   reading side by side, and the half it is missed on as an initial beside
+   the share. The reading gives way first when a row is tight; the readout
+   under the list says everything the line leaves out.
+
+   One grid for every row, the way taught's fills are, so the character
+   column is as wide as the widest word rather than a fixed width that a
    five-character vocabulary like 一人暮らし ran straight out of and over its
    own meaning. */
 .board .slipping {
@@ -1184,8 +1190,9 @@ button.quiet {
   list-style: none;
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr) max-content;
-  gap: 8px 14px;
-  align-items: baseline;
+  gap: 4px 14px;
+  align-items: center;
+  outline-offset: 6px;
 }
 
 .board .slipping li {
@@ -1196,8 +1203,15 @@ button.quiet {
   color: var(--dim);
 }
 
-/* The meaning is a word to read, so it is set like the notes. */
+/* The meaning is a word to read, so it is set like the notes. It does not
+   shrink — the reading beside it goes first — and only a meaning too long
+   for the row on its own is cut. Not even a little shrink: a fraction of a
+   pixel is enough to put the ellipsis on it. */
 .board .slipping .meaning {
+  flex: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: var(--sans);
   font-size: var(--small);
   letter-spacing: 0;
@@ -1205,30 +1219,28 @@ button.quiet {
 
 .board .slipping .character {
   font-family: var(--jp-serif);
-  font-size: var(--display);
+  font-size: var(--input);
+  line-height: 1.5;
   letter-spacing: 0;
   text-transform: none;
   color: var(--text-strong);
+  border-bottom: 1px solid transparent;
 }
 
-/* Each character links out to its WaniKani page: a hairline beneath, the
-   house pattern, lit under the pointer. */
+/* Each character links out to its WaniKani page. The row being read lights
+   the hairline beneath its character — the house pattern — by pointer,
+   finger or arrow key alike. */
 .board .slipping a.character {
   text-decoration: none;
-  border-bottom: 1px solid transparent;
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (hover: hover) {
-  .board .slipping a.character:hover {
-    border-bottom-color: var(--text-soft);
-  }
+.board .slipping li.read .character {
+  border-bottom-color: var(--text-soft);
 }
 
-/* The half it is missed on: its own line in the reading's ink, so it
-   wraps the same in every row and does not outshout the meaning. */
-.board .slipping .weak {
-  flex-basis: 100%;
+.board .slipping li.read .count {
+  color: var(--text-strong);
 }
 
 .board .slipping .character img {
@@ -1239,19 +1251,30 @@ button.quiet {
 
 .board .slipping .what {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2px 10px;
+  align-items: baseline;
+  gap: 10px;
   min-width: 0;
+  white-space: nowrap;
 }
 
 .board .slipping .reading {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: var(--jp-sans);
   letter-spacing: 0;
 }
 
 .board .slipping .count {
   text-align: right;
+  white-space: nowrap;
   color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.board .slipping .weak {
+  color: var(--dim);
 }
 
 .board .wk-radical {

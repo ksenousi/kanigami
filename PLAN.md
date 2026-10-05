@@ -1199,11 +1199,13 @@ the most data per inch) — and **the original was kept over all four.**
   `--accent`. The figure that summed those days is now called `due within
   7 days` — it counts next reviews ahead, and `this week` read as done.
 - **Column three: what keeps slipping, and pace.** (Pace has since moved
-  out to the full-width 歩 pace dial — see below.) The five lowest
+  out to the full-width 歩 pace dial — see below.) The ten lowest (five
+  until the owner asked to see more; `SLIPPING` in `board.js`)
   `percentage_correct` items still in rotation — burned items are finished
   and left out, and an item needs `MIN_MISSES` (3) misses to count, so one
-  bad day on a new item is not a leech. Character, meaning in its subject
-  colour, reading, percentage in `--text-soft`. Then every passed level as a
+  bad day on a new item is not a leech. One line a row: character,
+  meaning in its subject colour, reading, percentage in `--text-soft` (see
+  *Ten, one line each*, below). Then every passed level as a
   bar as tall as it took, the current one in `--accent`, with the median and
   `level 60 ≈ oct 2027` beneath. **Breaks are left out**: WaniKani keeps no
   vacation history (`/user` says only whether one is on now), so a level
@@ -1608,9 +1610,28 @@ All of it was acted on, on the owner's say-so, without a prototype:
   the board. Enter opens the cell the arrows are on.
 - **The half it is missed on** — asked for. Under each slipping item,
   `reading 62%` or `meaning 60%`: whichever half has the lower share right,
-  in the reading's ink on its own line. Nothing when the halves are level
+  in the reading's ink on its own line. (Since cut to its initial beside
+  the share, with the full figure in the readout — *Ten, one line each*.) Nothing when the halves are level
   or there is only one (a radical has no reading).
 - Considered and not built: the due count in the tab title.
+- **Ten, one line each** — asked for ("I wanna see more in that list").
+  `keeps slipping` shows ten instead of five, at both scopes. Ten rows as
+  they were stood ~1,060px tall beside columns of 553 and 465, so the rows
+  went to one line each, picked from a prototype of three:
+  - **Picked — one line a row.** The character steps down to `--input`;
+    meaning and reading sit side by side with the reading giving way first
+    (the meaning never shrinks — a sub-pixel shrink alone put an ellipsis
+    on it); the half it is missed on becomes its initial, `r` or `m`,
+    beside the share. Column three is 628px at 1440.
+  - **A readout says the rest.** Point at a row, tap it, or arrow to it
+    for `一応 Just In Case, いちおう · missed 9 times · meaning 60%, reading
+    73% right` under the list, in the level grid's readout cell. The row's
+    character lights its hairline. As on the grid, a mouse clicks the
+    character through to WaniKani and a finger's first tap reads, its
+    second opens. `halves` on each `leeches` item carries both shares.
+  - Rejected: **ten rows as they were** (column three twice its
+    neighbours) and **five with a `5 more` toggle** (hides the list it was
+    asked to show).
 
 
 

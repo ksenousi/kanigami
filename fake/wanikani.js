@@ -152,7 +152,12 @@
     ['一応', 'いちおう', 'Just In Case', 'vocabulary', 61],
     ['必ず', 'かならず', 'Without Fail', 'vocabulary', 67],
     ['届', 'とど', 'Deliver', 'kanji', 70],
-    ['具合', 'ぐあい', 'Condition', 'vocabulary', 72]
+    ['具合', 'ぐあい', 'Condition', 'vocabulary', 72],
+    ['届ける', 'とどける', 'To Deliver', 'vocabulary', 76],
+    ['札', 'さつ', 'Bill', 'kanji', 78],
+    ['結局', 'けっきょく', 'After All', 'vocabulary', 80],
+    ['億', 'おく', 'Hundred Million', 'kanji', 81],
+    ['大分', 'だいぶ', 'Greatly', 'vocabulary', 83]
   ]
   const statistics = fresh
     ? []

@@ -104,6 +104,12 @@ describe('leeches', () => {
       3: null,
       4: null
     })
+    expect(Object.fromEntries(found.map(l => [l.subjectId, l.halves]))).toEqual({
+      1: { meaning: 90, reading: 30 },
+      2: { meaning: 25, reading: 90 },
+      3: { meaning: 50, reading: null },
+      4: { meaning: 50, reading: 50 }
+    })
   })
 
   it('names kana vocabulary as vocabulary', () => {

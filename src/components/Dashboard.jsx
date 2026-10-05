@@ -28,6 +28,7 @@ import {
   paceToReach,
   project,
   road,
+  SLIPPING,
   srsSystems,
   week
 } from '../lib/board.js'
@@ -138,10 +139,10 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           // level's assignments did not come.
           const slippingHere =
             statistics && onLevel
-              ? leeches(statistics, started, 5, new Set(onLevel.map(a => a.data.subject_id)))
+              ? leeches(statistics, started, SLIPPING, new Set(onLevel.map(a => a.data.subject_id)))
               : null
           // Only the handful on screen — never a subject sync. Both lists'
-          // at most ten, read together so the switch never waits.
+          // at most twenty, read together so the switch never waits.
           const ids = [...new Set([...(slipping ?? []), ...(slippingHere ?? [])].map(l => l.subjectId))]
           const leechSubjects = ids.length ? await optional(getSubjects(token, ids)) : null
           if (!live) return
@@ -658,7 +659,7 @@ function Srs({ spread: bands, moved: gained }) {
   )
 }
 
-// The switch reads every level's slips or only this one's — the same five
+// The switch reads every level's slips or only this one's — the same ten
 // lowest, narrowed to what the current level holds. Every level's is first:
 // it is the lifetime record, and a level's items are new enough that few of
 // them have been missed the three times it takes to count.
@@ -688,41 +689,126 @@ function Slipping({ slipping, level }) {
           {onLevel ? `Nothing on level ${level} missed often enough to count` : 'Nothing missed often enough to count'}
         </p>
       ) : (
-        <ul className="slipping">
-          {items.map(l => {
-            const { text, image } = glyphFor(l.subject.data)
-            const meaning = l.subject.data.meanings?.find(m => m.primary)?.meaning
-            const reading = l.subject.data.readings?.find(r => r.primary)?.reading
-            const page = pageFor(l.subject.data)
-            const glyph = text ?? (image ? <img src={image} alt="" /> : '〓')
-            return (
-              <li key={l.subjectId}>
-                {/* Out to WaniKani's page for it, where the mnemonic is. */}
-                {page ? (
-                  <a className="character" href={page} target="_blank" rel="noreferrer" title="Open on WaniKani">
-                    {glyph}
-                  </a>
-                ) : (
-                  <span className="character">{glyph}</span>
-                )}
-                <span className="what">
-                  <span className={`meaning wk-${l.type}`}>{meaning}</span>
-                  {reading ? <span className="reading">{reading}</span> : null}
-                  {/* The half it is missed on — what to drill. */}
-                  {l.weak ? (
-                    <span className="weak">
-                      {l.weak.half} {l.weak.percentage}%
-                    </span>
-                  ) : null}
-                </span>
-                <span className="count">{l.percentage}%</span>
-              </li>
-            )
-          })}
-        </ul>
+        <SlipList key={onLevel ? 'level' : 'all'} items={items} />
       )}
     </section>
   )
+}
+
+// One line a row — character, meaning, reading, and the share right, with
+// the half it is missed on as its initial — so ten fit where five used to
+// (picked from a prototype; see PLAN.md). What the line leaves out is in the
+// readout under it: point at a row, or tap it, for the reading in full, the
+// misses, and both halves' shares. Like the level grid, a mouse clicks the
+// character through to WaniKani, and a finger's first tap reads and its
+// second opens.
+function SlipList({ items }) {
+  const { at, point, groupProps, itemProps } = usePointing()
+  const opens = useRef(true)
+  const read = at === null ? null : items[at]
+
+  function key(event) {
+    const step = { ArrowUp: -1, ArrowDown: 1 }[event.key]
+    if (step) {
+      event.preventDefault()
+      point(at === null ? 0 : Math.min(items.length - 1, Math.max(0, at + step)))
+    }
+    if (event.key === 'Escape') point(null)
+    const page = read && pageFor(read.subject.data)
+    if (event.key === 'Enter' && page) window.open(page, '_blank', 'noreferrer')
+  }
+
+  return (
+    <>
+      <ul className="slipping" role="list" aria-label="What keeps slipping" onKeyDown={key} {...groupProps}>
+        {items.map((l, i) => {
+          const { text, image } = glyphFor(l.subject.data)
+          const meaning = meaningOf(l.subject.data)
+          const reading = readingOf(l.subject.data)
+          const page = pageFor(l.subject.data)
+          const glyph = text ?? (image ? <img src={image} alt="" /> : '〓')
+          return (
+            <li key={l.subjectId} className={at === i ? 'read' : undefined} {...itemProps(i)}>
+              {/* Out to WaniKani's page for it, where the mnemonic is. */}
+              {page ? (
+                <a
+                  className="character"
+                  href={page}
+                  target="_blank"
+                  rel="noreferrer"
+                  tabIndex={-1}
+                  onPointerDown={event => {
+                    opens.current = event.pointerType === 'mouse' || at === i
+                  }}
+                  onClick={event => {
+                    if (!opens.current) event.preventDefault()
+                    opens.current = true
+                  }}
+                >
+                  {glyph}
+                </a>
+              ) : (
+                <span className="character">{glyph}</span>
+              )}
+              <span className="what">
+                <span className={`meaning wk-${l.type}`}>{meaning}</span>
+                {reading ? <span className="reading">{reading}</span> : null}
+              </span>
+              <span className="count">
+                {/* The half it is missed on — what to drill — as its
+                    initial, so the row stays one line. Said in full to a
+                    screen reader. */}
+                {l.weak ? (
+                  <span className="weak">
+                    <span aria-hidden="true">{l.weak.half[0]} </span>
+                    <span className="sr-only">
+                      {l.weak.half} {l.weak.percentage}%,{' '}
+                    </span>
+                  </span>
+                ) : null}
+                {l.percentage}%
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+      <p className="notes readout" aria-live="polite">
+        <span className={read ? 'usual hidden' : 'usual'}>
+          <Hint pointer="Point at" touch="Tap">
+            one for how it is missed, <span className="by-pointer">click</span>
+            <span className="by-touch">again</span> for its WaniKani page
+          </Hint>
+        </span>
+        {read ? (
+          <span className="usual">
+            <span className="soft">{slipLine(read)}</span>
+          </span>
+        ) : null}
+      </p>
+    </>
+  )
+}
+
+const meaningOf = data => data.meanings?.find(m => m.primary)?.meaning
+const readingOf = data => data.readings?.find(r => r.primary)?.reading
+
+// 一応 Just in case, いちおう · missed 9 times · meaning 60%, reading 73%
+// right. The halves WaniKani has never asked — a radical's reading — are
+// left out rather than shown as nothing.
+function slipLine(l) {
+  const { data } = l.subject
+  const name = [glyphFor(data).text, meaningOf(data)].filter(Boolean).join(' ')
+  const reading = readingOf(data)
+  const shares = ['meaning', 'reading']
+    .filter(h => l.halves?.[h] != null)
+    .map(h => `${h} ${l.halves[h]}%`)
+  return [
+    reading ? `${name}, ${reading}` : name,
+    `missed ${l.misses} ${l.misses === 1 ? 'time' : 'times'}`,
+    shares.length ? `${shares.join(', ')} right` : null
+  ]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 // 歩 Ahead — the pace dial, then the count milestones and coverage side by
