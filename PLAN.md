@@ -1632,6 +1632,38 @@ All of it was acted on, on the owner's say-so, without a prototype:
   - Rejected: **ten rows as they were** (column three twice its
     neighbours) and **five with a `5 more` toggle** (hides the list it was
     asked to show).
+- **Lenses** — asked for ("so much potential for the keeps slipping
+  section"). Five directions were prototyped and all but WaniKani's own
+  were liked; three ways to fit them in were prototyped next, and lenses
+  was picked. Column three keeps its place and size; a second, quieter line
+  of words under the scope switch — `--text-soft` with its hairline when
+  chosen, `--dim` otherwise — picks how the same slips are looked at. Never
+  saved: the board opens on worst.
+  - **worst** — the ranked ten, one line each, as before.
+  - **next** — the same ten in the order WaniKani next asks for them,
+    grouped `due now` · `next 6 hours` · `later today` · `later`, each row
+    ending with the hour (`now` in `--accent`) and the share. The readout
+    adds the stage. Every time is the assignment's own `available_at`.
+  - **how** — grouped by the weak half's streak, WaniKani's
+    `*_current_streak` and `*_max_streak`: `fell back` (best ≥ `HELD`, 4,
+    and the current under `MENDING`), `never stuck` (best under 4),
+    `mending` (current ≥ 3). The row ends with the streak drawn: the
+    current run in `--text-soft`, the rest of the best in `--rule`, a mark
+    on the floor in `--dim` when the last answer missed.
+  - **alike** — up to six pairs: a slipping kanji beside the look-alike
+    WaniKani names (`visually_similar_subject_ids`) with the lowest share
+    right, or a word beside its weakest kanji (`component_subject_ids`). A
+    pair whose two halves both slip shows once. `partnerFor` picks; the
+    partners' subjects are read once, when the lens first opens.
+  - **field** — every slip, not ten: misses across on a log scale, share
+    right up, each mark its character in its subject colour. The worst
+    `FIELD` (60) at most, read as subjects when the lens first opens; the
+    head says how many there are in all.
+  - Rejected: **one merged list** (field strip, grouped rows, look-alikes
+    in the readout — runs long and the pairs become words) and **a
+    full-width band** of its own (all at once, but it moves the board
+    and leaves column three empty). WaniKani's old Critical Condition panel
+    was shown for comparison and not wanted.
 
 
 

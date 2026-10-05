@@ -7,6 +7,7 @@ import {
   leeches,
   levelKanji,
   levelUpKanji,
+  partnerFor,
   milestones,
   moved,
   nextUp,
@@ -110,6 +111,28 @@ describe('leeches', () => {
       3: { meaning: 50, reading: null },
       4: { meaning: 50, reading: 50 }
     })
+  })
+
+  it('reads the weak half’s streak into fell back, never stuck and mending', () => {
+    const streaks = (subject_id, extra) =>
+      stat({ subject_id, subject_type: 'kanji', percentage_correct: 50, meaning_correct: 5, meaning_incorrect: 3,
+        reading_correct: 9, reading_incorrect: 1, ...extra })
+    const found = leeches([
+      streaks(1, { meaning_current_streak: 1, meaning_max_streak: 6 }),
+      streaks(2, { meaning_current_streak: 2, meaning_max_streak: 3 }),
+      streaks(3, { meaning_current_streak: 4, meaning_max_streak: 4 })
+    ], [])
+    expect(Object.fromEntries(found.map(l => [l.subjectId, [l.kind, l.streak]]))).toEqual({
+      1: ['fell', { half: 'meaning', current: 1, best: 6 }],
+      2: ['never', { half: 'meaning', current: 2, best: 3 }],
+      3: ['mending', { half: 'meaning', current: 4, best: 4 }]
+    })
+  })
+
+  it('carries when it is next up and its stage, off the assignment', () => {
+    const at = '2026-10-06T09:00:00.000Z'
+    const found = leeches([slipping(1, 50, 4), slipping(2, 60, 4)], [{ data: { subject_id: 1, srs_stage: 3, available_at: at } }])
+    expect(found.map(l => [l.due, l.stage])).toEqual([[at, 3], [null, null]])
   })
 
   it('names kana vocabulary as vocabulary', () => {
@@ -543,5 +566,20 @@ describe('paceToReach', () => {
     const deadline = new Date(by(146).getTime() + DAY / 24)
     expect(paceToReach(early, 5, 20, deadline, NOW, null, 7, 0.5, 40)).toBe(10)
     expect(paceToReach(early, 5, 20, deadline, NOW, null, 1, 0.5, 200)).toBe(10)
+  })
+})
+
+describe('partnerFor', () => {
+  const shares = new Map([[10, 90], [11, 70], [20, 95], [21, 80]])
+
+  it('takes the look-alike right least often, or the first when none is reviewed', () => {
+    expect(partnerFor('kanji', { visually_similar_subject_ids: [10, 11, 12] }, shares)).toEqual({ id: 11, relation: 'alike' })
+    expect(partnerFor('kanji', { visually_similar_subject_ids: [12, 13] }, shares)).toEqual({ id: 12, relation: 'alike' })
+  })
+
+  it('takes the weakest kanji in a word, and nothing for a radical or a word of unreviewed kanji', () => {
+    expect(partnerFor('vocabulary', { component_subject_ids: [20, 21] }, shares)).toEqual({ id: 21, relation: 'part' })
+    expect(partnerFor('vocabulary', { component_subject_ids: [30] }, shares)).toBeNull()
+    expect(partnerFor('radical', { amalgamation_subject_ids: [10] }, shares)).toBeNull()
   })
 })

@@ -1277,6 +1277,224 @@ button.quiet {
   color: var(--dim);
 }
 
+/* The lenses: a second, quieter line of words under the scope switch —
+   the same pattern a step down, so the scope still reads as the choice
+   that changes what is counted and the lens as how it is looked at. */
+.board .lenses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  margin-top: -12px;
+}
+
+.board .lenses button {
+  min-height: 44px;
+  padding: 8px 0 7px;
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  text-transform: none;
+  color: var(--dim);
+  border-bottom-color: transparent;
+}
+
+.board .lenses button[aria-pressed='true'] {
+  color: var(--text-soft);
+  border-bottom-color: var(--text-soft);
+}
+
+/* A group's name between rows — next's hours, how's kinds — with its
+   count at the far end, across all three columns of the row grid. */
+.board .slipping li.group {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  padding-top: 10px;
+  color: var(--dim);
+}
+
+.board .slipping li.group:first-child {
+  padding-top: 0;
+}
+
+.board .slipping .due.now {
+  color: var(--accent);
+}
+
+/* How's streak: the current run lit, the rest of the best run in the
+   rule, a mark on the floor for a miss last time. */
+.board .slipping .streak {
+  display: inline-flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 0.8em;
+  margin-right: 8px;
+}
+
+.board .slipping .streak i {
+  width: 5px;
+  height: 100%;
+  background: var(--rule);
+}
+
+.board .slipping .streak i.on {
+  background: var(--text-soft);
+}
+
+.board .slipping .streak i.miss {
+  width: 8px;
+  height: 2px;
+  background: var(--dim);
+}
+
+/* Alike: each slip and the kanji it is taken for, side by side over a
+   hairline. */
+.board .pairs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.board .pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: end;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.board .pair .side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.board .pair .side.far {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.board .pair .character {
+  font-family: var(--jp-serif);
+  font-size: var(--display-lg);
+  line-height: 1.2;
+  color: var(--text-strong);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.board .pair.word .side:first-child .character {
+  font-size: var(--display);
+}
+
+@media (hover: hover) {
+  .board .pair a.character:hover {
+    border-bottom-color: var(--text-soft);
+  }
+}
+
+.board .pair .character img {
+  height: 0.9em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+.board .pair .meaning {
+  font-size: var(--label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.board .pair .count,
+.board .pair .vs,
+.board .pair .note {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .pair .vs {
+  align-self: center;
+}
+
+.board .pair .note {
+  grid-column: 1 / -1;
+  font-family: var(--sans);
+  letter-spacing: 0;
+}
+
+/* Field: every slip placed by misses across and share right up. The axes
+   are two hairlines, the ticks only their ends. */
+.board .field {
+  position: relative;
+  width: calc(100% - 44px);
+  height: 340px;
+  margin: 10px 0 30px 44px;
+  border-left: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.board .field .tick {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.board .field .tick.up {
+  left: -10px;
+  transform: translate(-100%, -50%);
+}
+
+.board .field .tick.across {
+  bottom: -8px;
+  transform: translate(-50%, 100%);
+}
+
+.board .field .tick.across.end {
+  left: auto;
+  right: 0;
+  transform: translateY(100%);
+}
+
+.board .field .glyph {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 2px;
+  font-family: var(--jp-serif);
+  font-size: var(--control);
+  line-height: 1;
+  white-space: nowrap;
+  border-bottom: 1px solid transparent;
+  cursor: default;
+}
+
+.board .field .glyph.long {
+  font-size: var(--label);
+}
+
+.board .field .glyph.read {
+  z-index: 1;
+  color: var(--text-strong);
+  border-bottom-color: var(--text-strong);
+}
+
+.board .field .glyph img {
+  height: 0.9em;
+  width: auto;
+  filter: var(--strokes);
+}
+
 .board .wk-radical {
   color: var(--subject-radical);
 }

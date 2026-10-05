@@ -395,6 +395,33 @@ describe('keeps slipping', () => {
     expect(readout()).toContain('missed 8 times')
   })
 
+  it('looks at the same slips by lens, reading the look-alikes only when that lens opens', async () => {
+    api.getReviewStatistics.mockResolvedValue([
+      { data: { subject_id: 700, subject_type: 'kanji', percentage_correct: 40, meaning_correct: 3, meaning_incorrect: 5,
+        meaning_current_streak: 1, meaning_max_streak: 5 } },
+      { data: { subject_id: 701, subject_type: 'kanji', percentage_correct: 88, meaning_correct: 8, meaning_incorrect: 1 } }
+    ])
+    const end = subject(700, '末', 'End')
+    api.getSubjects
+      .mockResolvedValueOnce([{ ...end, data: { ...end.data, visually_similar_subject_ids: [701] } }])
+      .mockResolvedValueOnce([subject(701, '未', 'Not Yet')])
+    const host = await board()
+    await until(host, '.slipping')
+    expect(api.getSubjects).toHaveBeenCalledOnce()
+
+    await click(button(host, 'how'))
+    expect(host.querySelector('.slipping li.group').textContent).toBe('fell back1')
+
+    await click(button(host, 'alike'))
+    await until(host, '.pair')
+    expect(api.getSubjects).toHaveBeenLastCalledWith(expect.anything(), [701])
+    expect(host.querySelector('.pair').textContent).toContain('未 sticks; 末 is the one to fix')
+
+    await click(button(host, 'worst'))
+    await click(button(host, 'alike'))
+    expect(api.getSubjects).toHaveBeenCalledTimes(2)
+  })
+
   it('has no switch when the level’s assignments do not load', async () => {
     api.getLevelAssignments.mockRejectedValue(new Error('Load failed'))
     const host = await board()

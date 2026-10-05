@@ -79,6 +79,16 @@ export const MIN_MISSES = 3
 // How many the list shows, at both scopes.
 export const SLIPPING = 10
 
+// How many the field plots, at most. Every slip is fetched as a subject to
+// draw it, and a long-time account can have hundreds; the worst sixty are
+// the field's shape, and the head says how many there are in all.
+export const FIELD = 60
+
+// A current streak this long means it is mending on its own.
+export const MENDING = 3
+// A best streak this long means it held once and has since fallen back.
+export const HELD = 4
+
 // What keeps slipping: the lowest `percentage_correct` among items still in
 // rotation. Burned items are out — they are finished, however they got
 // there — which is why this needs the assignments as well as the
@@ -89,24 +99,41 @@ export const SLIPPING = 10
 // is only one half — a radical has no reading. `halves` is both shares, for
 // the readout, each null where that half has never been asked.
 //
+// `streak` is WaniKani's current and best run of right answers on the weak
+// half — on the half with the shorter current run when neither is weaker —
+// and `kind` reads the two together: `mending` once the current run is
+// MENDING or more, `fell` when the best reached HELD and the current has
+// not, `never` when it has never held. WaniKani's streaks start at 1, so a
+// current streak of 1 is a miss on the last answer.
+//
+// `due` and `stage` are WaniKani's, off the assignment: when it is next up
+// and where it stands. Null without an assignment.
+//
 // `within`, a set of subject ids, narrows it to those — the current level's,
 // for the switch between this level's slips and every level's.
 export function leeches(statistics = [], assignments = [], count = SLIPPING, within = null) {
-  const burned = new Set(
-    assignments.filter(a => a?.data?.srs_stage === BURNED).map(a => a.data.subject_id)
-  )
+  const assigned = new Map(assignments.filter(a => a?.data).map(a => [a.data.subject_id, a.data]))
 
   return statistics
     .map(stat => stat?.data)
-    .filter(d => d && !burned.has(d.subject_id) && (!within || within.has(d.subject_id)))
-    .map(d => ({
-      subjectId: d.subject_id,
-      type: subjectTypeName(d.subject_type),
-      percentage: d.percentage_correct,
-      misses: (d.meaning_incorrect ?? 0) + (d.reading_incorrect ?? 0),
-      weak: weakHalf(d),
-      halves: halves(d)
-    }))
+    .filter(d => d && assigned.get(d.subject_id)?.srs_stage !== BURNED && (!within || within.has(d.subject_id)))
+    .map(d => {
+      const weak = weakHalf(d)
+      const streak = streakOf(d, weak)
+      const assignment = assigned.get(d.subject_id)
+      return {
+        subjectId: d.subject_id,
+        type: subjectTypeName(d.subject_type),
+        percentage: d.percentage_correct,
+        misses: (d.meaning_incorrect ?? 0) + (d.reading_incorrect ?? 0),
+        weak,
+        halves: halves(d),
+        streak,
+        kind: streak.current >= MENDING ? 'mending' : streak.best >= HELD ? 'fell' : 'never',
+        due: assignment?.available_at ?? null,
+        stage: assignment?.srs_stage ?? null
+      }
+    })
     .filter(item => item.misses >= MIN_MISSES && typeof item.percentage === 'number')
     .sort((a, b) => a.percentage - b.percentage || b.misses - a.misses)
     .slice(0, count)
@@ -120,6 +147,29 @@ function halves(d) {
     meaning: percent(share(d.meaning_correct, d.meaning_incorrect)),
     reading: percent(share(d.reading_correct, d.reading_incorrect))
   }
+}
+
+function streakOf(d, weak) {
+  const of = half => ({ half, current: d[`${half}_current_streak`] ?? 1, best: d[`${half}_max_streak`] ?? 1 })
+  if (weak) return of(weak.half)
+  const asked = ['meaning', 'reading'].filter(h => (d[`${h}_correct`] ?? 0) + (d[`${h}_incorrect`] ?? 0) > 0)
+  return asked.map(of).sort((a, b) => a.current - b.current)[0] ?? of('meaning')
+}
+
+// The kanji a slip is most likely being taken for, or the one inside a word
+// that is pulling it down — for the look-alike lens. A kanji's partner is
+// the look-alike WaniKani names (`visually_similar_subject_ids`) with the
+// lowest share right, or, when none of them has been reviewed, the first
+// of them: one still ahead. A word's is the kanji in it with the lowest
+// share right, and nothing when none has been reviewed. Radicals have
+// neither. `shares` maps subject id to `percentage_correct`.
+export function partnerFor(type, subject, shares) {
+  const ids =
+    type === 'kanji' ? subject?.visually_similar_subject_ids : type === 'vocabulary' ? subject?.component_subject_ids : null
+  if (!ids?.length) return null
+  const reviewed = ids.filter(id => typeof shares.get(id) === 'number').sort((a, b) => shares.get(a) - shares.get(b))
+  if (reviewed.length) return { id: reviewed[0], relation: type === 'kanji' ? 'alike' : 'part' }
+  return type === 'kanji' ? { id: ids[0], relation: 'alike' } : null
 }
 
 function weakHalf(d) {

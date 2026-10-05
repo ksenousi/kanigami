@@ -147,39 +147,89 @@
   }
 
   // --- what keeps slipping, and lifetime accuracy ---
+  // Each: characters, reading, meaning, type, meaning right/wrong, reading
+  // right/wrong, meaning streak now/best, reading streak now/best, stage,
+  // hours until next up, and the look-alikes (a kanji) or the kanji inside
+  // (a word). Enough of every kind for each lens to have something to say.
   const SLIPPING = [
-    ['一人暮らし', 'ひとりぐらし', 'Living Alone', 'vocabulary', 58],
-    ['一応', 'いちおう', 'Just In Case', 'vocabulary', 61],
-    ['必ず', 'かならず', 'Without Fail', 'vocabulary', 67],
-    ['届', 'とど', 'Deliver', 'kanji', 70],
-    ['具合', 'ぐあい', 'Condition', 'vocabulary', 72],
-    ['届ける', 'とどける', 'To Deliver', 'vocabulary', 76],
-    ['札', 'さつ', 'Bill', 'kanji', 78],
-    ['結局', 'けっきょく', 'After All', 'vocabulary', 80],
-    ['億', 'おく', 'Hundred Million', 'kanji', 81],
-    ['大分', 'だいぶ', 'Greatly', 'vocabulary', 83]
+    ['末', 'まつ', 'End', 'kanji', [9, 6], [8, 3], [1, 5], [3, 4], 2, 0, ['未']],
+    ['一人暮らし', 'ひとりぐらし', 'Living Alone', 'vocabulary', [12, 1], [7, 8], [6, 6], [1, 3], 3, 5, ['一', '人', '暮']],
+    ['一応', 'いちおう', 'Just In Case', 'vocabulary', [8, 6], [11, 3], [1, 4], [2, 6], 2, 1, ['一', '応']],
+    ['未', 'み', 'Not Yet', 'kanji', [10, 5], [9, 3], [1, 4], [4, 5], 1, 3, ['末']],
+    ['失', 'しつ', 'Fault', 'kanji', [10, 4], [7, 5], [2, 5], [1, 4], 2, 2, ['矢', '夫']],
+    ['大分', 'だいぶ', 'Greatly', 'vocabulary', [11, 2], [6, 7], [5, 5], [1, 2], 2, 0, ['大', '分']],
+    ['必ず', 'かならず', 'Without Fail', 'vocabulary', [13, 2], [8, 6], [7, 7], [1, 5], 4, 8, ['必']],
+    ['届', 'とど', 'Deliver', 'kanji', [9, 3], [6, 6], [3, 4], [1, 2], 2, 0, ['屈']],
+    ['士', 'し', 'Samurai', 'kanji', [14, 7], [15, 2], [1, 9], [5, 8], 4, 20, ['土']],
+    ['具合', 'ぐあい', 'Condition', 'vocabulary', [9, 1], [6, 6], [4, 4], [3, 3], 3, 26, ['具', '合']],
+    ['矢', 'や', 'Arrow', 'kanji', [9, 3], [6, 4], [3, 5], [1, 3], 3, 30, ['失']],
+    ['眼', 'がん', 'Eyeball', 'kanji', [8, 4], [8, 3], [1, 6], [4, 4], 3, 4, ['眠', '根']],
+    ['届ける', 'とどける', 'To Deliver', 'vocabulary', [10, 2], [7, 5], [5, 5], [3, 3], 3, 7, ['届']],
+    ['札', 'さつ', 'Bill', 'kanji', [12, 2], [9, 5], [6, 6], [1, 7], 5, 52, ['礼']],
+    ['鏡', 'きょう', 'Mirror', 'kanji', [12, 3], [10, 4], [5, 5], [1, 6], 5, 70, ['境']],
+    ['待つ', 'まつ', 'To Wait', 'vocabulary', [14, 2], [10, 5], [7, 7], [4, 4], 6, 140, ['待']],
+    ['結局', 'けっきょく', 'After All', 'vocabulary', [15, 2], [11, 5], [8, 8], [5, 5], 6, 160, ['結', '局']],
+    ['億', 'おく', 'Hundred Million', 'kanji', [16, 3], [12, 4], [9, 9], [6, 6], 7, 400, ['憶']]
   ]
+  // The look-alikes and parts that are not slipping themselves: characters,
+  // reading, meaning, share right — null for one not reviewed yet.
+  const BESIDE = [
+    ['土', 'ど', 'Soil', 92], ['夫', 'ふ', 'Husband', 90], ['屈', 'くつ', 'Bend', null], ['眠', 'みん', 'Sleep', 88],
+    ['根', 'こん', 'Root', 93], ['礼', 'れい', 'Thanks', 94], ['境', 'きょう', 'Boundary', 91], ['憶', 'おく', 'Memory', null],
+    ['一', 'いち', 'One', 99], ['人', 'にん', 'Person', 98], ['暮', 'ぼ', 'Livelihood', 77], ['応', 'おう', 'Respond', 74],
+    ['大', 'だい', 'Big', 99], ['分', 'ぶん', 'Part', 95], ['必', 'ひつ', 'Certain', 81], ['具', 'ぐ', 'Tool', 86],
+    ['合', 'ごう', 'Suit', 90], ['待', 'たい', 'Wait', 89], ['結', 'けつ', 'Tie', 87], ['局', 'きょく', 'Bureau', 84]
+  ]
+  const idOf = new Map([...SLIPPING.map(([c], i) => [c, 60000 + i]), ...BESIDE.map(([c], i) => [c, 61000 + i])])
   const statistics = fresh
     ? []
     : [
-        // Missed on the reading, but for the second, missed on its meaning.
-        ...SLIPPING.map(([, , , type, percentage], i) => ({
-          data: { subject_id: 60000 + i, subject_type: type, percentage_correct: percentage,
-            meaning_correct: 9, meaning_incorrect: i === 1 ? 6 : 4, reading_correct: 8, reading_incorrect: i === 1 ? 3 : 5 }
+        ...SLIPPING.map(([, , , type, m, r, ms, rs], i) => ({
+          data: { subject_id: 60000 + i, subject_type: type,
+            percentage_correct: Math.round(((m[0] + r[0]) / (m[0] + m[1] + r[0] + r[1])) * 100),
+            meaning_correct: m[0], meaning_incorrect: m[1], reading_correct: r[0], reading_incorrect: r[1],
+            meaning_current_streak: ms[0], meaning_max_streak: ms[1], reading_current_streak: rs[0], reading_max_streak: rs[1] }
+        })),
+        ...BESIDE.filter(([, , , pct]) => pct !== null).map(([c, , , pct]) => ({
+          data: { subject_id: idOf.get(c), subject_type: 'kanji', percentage_correct: pct,
+            meaning_correct: pct, meaning_incorrect: 1, reading_correct: pct, reading_incorrect: 1 }
         })),
         // Three of the level's own kanji, for the switch to this level.
         ...[[1026, 64], [1027, 75], [1024, 79]].map(([subject_id, percentage]) => ({
           data: { subject_id, subject_type: 'kanji', percentage_correct: percentage,
-            meaning_correct: 5, meaning_incorrect: 2, reading_correct: 4, reading_incorrect: 2 }
+            meaning_correct: 5, meaning_incorrect: 2, reading_correct: 4, reading_incorrect: 2,
+            meaning_current_streak: 1, meaning_max_streak: 3, reading_current_streak: 2, reading_max_streak: 2 }
         })),
         { data: { subject_id: 60100, subject_type: 'kanji', percentage_correct: 95,
           meaning_correct: 4100, meaning_incorrect: 380, reading_correct: 3700, reading_incorrect: 560 } }
       ]
-  const slippingSubjects = SLIPPING.map(([characters, reading, meaning], i) => ({
-    id: 60000 + i,
-    data: { characters, meanings: [{ meaning, primary: true }], readings: [{ reading, primary: true }],
-      document_url: `https://www.wanikani.com/${characters.length > 1 ? 'vocabulary' : 'kanji'}/${encodeURIComponent(characters)}` }
-  }))
+  if (!fresh) {
+    SLIPPING.forEach(([, , , type, , , , , stage, hours], i) => {
+      started.push({
+        id: 9800 + i,
+        object: 'assignment',
+        data: { subject_id: 60000 + i, subject_type: type, srs_stage: stage, started_at: iso(now - 90 * D),
+          passed_at: stage >= 5 ? iso(now - 30 * D) : null, burned_at: null,
+          available_at: iso(hours === 0 ? now - H : hour0 + hours * H) }
+      })
+    })
+  }
+  const page_ = (characters, kind) => `https://www.wanikani.com/${kind}/${encodeURIComponent(characters)}`
+  const slippingSubjects = [
+    ...SLIPPING.map(([characters, reading, meaning, type, , , , , , , links], i) => ({
+      id: 60000 + i,
+      data: { characters, meanings: [{ meaning, primary: true }], readings: [{ reading, primary: true }],
+        document_url: page_(characters, type),
+        ...(type === 'kanji'
+          ? { visually_similar_subject_ids: links.map(c => idOf.get(c)) }
+          : { component_subject_ids: links.map(c => idOf.get(c)) }) }
+    })),
+    ...BESIDE.map(([characters, reading, meaning]) => ({
+      id: idOf.get(characters),
+      data: { characters, meanings: [{ meaning, primary: true }], readings: [{ reading, primary: true }],
+        document_url: page_(characters, 'kanji') }
+    }))
+  ]
 
   // --- WaniKani's two SRS systems, intervals in seconds ---
   const srs = (id, waits) => ({
