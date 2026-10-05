@@ -50,12 +50,13 @@
     object: 'kanji',
     data: { level: LEVEL, characters, meanings: [{ meaning, primary: true }], lesson_position: i, spaced_repetition_system_id: system }
   }))
-  // [srs stage, hours until its next review] per kanji; null is locked.
+  // [srs stage, hours until its next review] per kanji; null is locked. Five
+  // come up in the same hour, so the strip has a crowded one to draw.
   const STATES = fresh
     ? [[1, 1], [1, 1], [0, 0], [null], [null], [null]]
-    : [[4, 2], [4, 2], [1, 3], [7, 90], [6, 40], [5, 20], [6, 33], [5, 61], [6, 12], [5, 27], [5, 8], [5, 44],
-       [5, 15], [5, 70], [5, 5], [7, 120], [5, 26], [5, 19], [5, 52], [6, 38], [5, 31], [5, 22], [3, 15], [5, 66],
-       [3, 14], [3, 13], [2, 17], [2, 25], [1, 1], [0, 0], [0, 0], [null]]
+    : [[4, 2], [4, 2], [1, 13], [7, 90], [6, 40], [5, 20], [6, 33], [5, 61], [6, 12], [5, 27], [5, 8], [5, 44],
+       [5, 15], [5, 70], [5, 5], [7, 120], [5, 26], [5, 19], [5, 52], [6, 38], [5, 31], [5, 22], [3, 13], [5, 66],
+       [3, 13], [3, 13], [2, 13], [2, 13], [1, 13], [0, 0], [0, 0], [null]]
   const assign = (subject, type, [stage, hours]) => ({
     id: 5000 + subject.id,
     object: 'assignment',
@@ -159,6 +160,11 @@
           data: { subject_id: 60000 + i, subject_type: type, percentage_correct: percentage,
             meaning_correct: 9, meaning_incorrect: 4, reading_correct: 8, reading_incorrect: 5 }
         })),
+        // Three of the level's own kanji, for the switch to this level.
+        ...[[1026, 64], [1027, 75], [1024, 79]].map(([subject_id, percentage]) => ({
+          data: { subject_id, subject_type: 'kanji', percentage_correct: percentage,
+            meaning_correct: 5, meaning_incorrect: 2, reading_correct: 4, reading_incorrect: 2 }
+        })),
         { data: { subject_id: 60100, subject_type: 'kanji', percentage_correct: 95,
           meaning_correct: 4100, meaning_incorrect: 380, reading_correct: 3700, reading_incorrect: 560 } }
       ]
@@ -217,7 +223,11 @@
     [/\/level_progressions/, () => page(progressions), 'commentary'],
     [/\/review_statistics/, () => page(statistics), 'commentary'],
     [/\/spaced_repetition_systems/, () => page(systems), 'commentary'],
-    [/\/subjects\?ids=/, () => page(slippingSubjects), 'commentary'],
+    [/\/assignments\?levels=\d+&hidden/, () => page([...kanjiAssignments, ...radicalAssignments]), 'commentary'],
+    [/\/subjects\?ids=/, url => {
+      const ids = new Set(new URL(url).searchParams.get('ids').split(',').map(Number))
+      return page([...slippingSubjects, ...kanjiSubjects].filter(s => ids.has(s.id)))
+    }, 'commentary'],
     [/\/subjects\?types=radical&hidden/, () => ({ total_count: 499, data: [] }), 'commentary'],
     // The totals read and coverage's read are the same URL: one page with
     // every kanji, and its total_count.
@@ -245,6 +255,6 @@
     const [, answer, kind] = route
     if (scenario === 'radicals-fail' && kind === 'radicals') throw new TypeError('Load failed')
     if (DELAY[kind]) await wait(DELAY[kind])
-    return new Response(JSON.stringify(await answer()), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    return new Response(JSON.stringify(await answer(url)), { status: 200, headers: { 'Content-Type': 'application/json' } })
   }
 })()

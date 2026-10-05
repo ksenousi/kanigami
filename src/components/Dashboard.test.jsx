@@ -11,6 +11,7 @@ vi.mock('../lib/wanikani.js', () => ({
   getUser: vi.fn(),
   getSummary: vi.fn(),
   getStartedAssignments: vi.fn(),
+  getLevelAssignments: vi.fn(),
   getLevelKanji: vi.fn(),
   getLevelKanjiSubjects: vi.fn(),
   getLevelRadicals: vi.fn(),
@@ -47,6 +48,7 @@ function answer() {
     { data: { subject_id: 1, srs_stage: 2, started_at: new Date(now).toISOString(), available_at: new Date(now + HOUR).toISOString() } }
   ])
   api.getReviewStatistics.mockResolvedValue([])
+  api.getLevelAssignments.mockResolvedValue([])
   api.getLevelProgressions.mockResolvedValue([])
   api.getSpacedRepetitionSystems.mockResolvedValue([])
   api.getSubjects.mockResolvedValue([])
@@ -331,6 +333,39 @@ describe('upcoming burns', () => {
     const host = await board()
     const line = (await until(host, '.burnline')).textContent
     expect(line).toMatch(/^2 up for burning this week · \d+ today$/)
+  })
+})
+
+describe('keeps slipping', () => {
+  const stat = (subject_id, percentage) => ({
+    data: { subject_id, subject_type: 'kanji', percentage_correct: percentage, meaning_incorrect: 4 }
+  })
+
+  beforeEach(() => {
+    api.getReviewStatistics.mockResolvedValue([stat(700, 40), stat(1, 60)])
+    api.getLevelAssignments.mockResolvedValue([{ data: { subject_id: 1 } }])
+    api.getSubjects.mockResolvedValue([subject(700, '届', 'Deliver'), subject(1, '山', 'Mountain')])
+  })
+
+  const shown = host => [...host.querySelectorAll('.slipping .character')].map(c => c.textContent)
+
+  it('switches between every level and this one, reading the subjects once', async () => {
+    const host = await board()
+    await until(host, '.slipping')
+    expect(shown(host)).toEqual(['届', '山'])
+    await click(button(host, 'level 5'))
+    expect(shown(host)).toEqual(['山'])
+    await click(button(host, 'all levels'))
+    expect(shown(host)).toEqual(['届', '山'])
+    expect(api.getSubjects).toHaveBeenCalledOnce()
+  })
+
+  it('has no switch when the level’s assignments do not load', async () => {
+    api.getLevelAssignments.mockRejectedValue(new Error('Load failed'))
+    const host = await board()
+    await until(host, '.slipping')
+    expect(button(host, 'level 5')).toBeUndefined()
+    expect(shown(host)).toEqual(['届', '山'])
   })
 })
 

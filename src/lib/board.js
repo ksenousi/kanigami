@@ -80,14 +80,17 @@ export const MIN_MISSES = 3
 // rotation. Burned items are out — they are finished, however they got
 // there — which is why this needs the assignments as well as the
 // statistics. Ties go to whichever has been missed more.
-export function leeches(statistics = [], assignments = [], count = 5) {
+//
+// `within`, a set of subject ids, narrows it to those — the current level's,
+// for the switch between this level's slips and every level's.
+export function leeches(statistics = [], assignments = [], count = 5, within = null) {
   const burned = new Set(
     assignments.filter(a => a?.data?.srs_stage === BURNED).map(a => a.data.subject_id)
   )
 
   return statistics
     .map(stat => stat?.data)
-    .filter(d => d && !burned.has(d.subject_id))
+    .filter(d => d && !burned.has(d.subject_id) && (!within || within.has(d.subject_id)))
     .map(d => ({
       subjectId: d.subject_id,
       type: subjectTypeName(d.subject_type),

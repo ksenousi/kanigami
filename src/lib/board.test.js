@@ -85,6 +85,11 @@ describe('leeches', () => {
     expect(found.map(l => l.subjectId)).toEqual([3])
   })
 
+  it('narrows to the subjects it is given, when it is given some', () => {
+    const found = leeches([slipping(1, 40, 6), slipping(2, 50, 4), slipping(3, 60, 3)], [], 5, new Set([2, 3]))
+    expect(found.map(l => l.subjectId)).toEqual([2, 3])
+  })
+
   it('names kana vocabulary as vocabulary', () => {
     expect(leeches([slipping(4, 50, 4, 'kana_vocabulary')], [])[0].type).toBe('vocabulary')
   })

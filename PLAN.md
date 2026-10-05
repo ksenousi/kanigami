@@ -1586,6 +1586,19 @@ All of it was acted on, on the owner's say-so, without a prototype:
   spread's walk from hot to drained, items back within hours. But `146
   taught` in past 7 days borrowed that red for lessons done, which read as
   an alarm about progress; on the owner's say-so it is neutral ink now.
+- **Keeps slipping switches between every level and this one** — asked
+  for. `all levels` and `level 15` on the house switch, every level first:
+  it is the lifetime record, and a level's items are new enough that few
+  have the three misses it takes to count. Statistics carry no level, so
+  the level's subject ids come from one extra read,
+  `/assignments?levels=N&hidden=false` — one page, ids only, never a subject
+  sync. Both lists' subjects (ten at most) are read together, so switching
+  never waits; if the level's read fails the switch is simply not there.
+- **A crowded hour on the strip** — asked for: a dozen level-up kanji over
+  one hour ran on one unwrapped line across the hours either side. They
+  wrap inside their own column now, three at most with `+n` for the rest,
+  the ones a right answer passes first and lit one by one rather than as a
+  group. The hour's tapped line still names them all.
 
 
 

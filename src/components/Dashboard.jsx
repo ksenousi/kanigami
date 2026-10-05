@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  getLevelAssignments,
   getLevelKanji,
   getLevelRadicals,
   getLevelKanjiSubjects,
@@ -91,7 +92,8 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
       optional(getReviewStatistics(token)),
       optional(getLevelProgressions(token)),
       optional(subjectTotals(token)),
-      optional(getSpacedRepetitionSystems(token))
+      optional(getSpacedRepetitionSystems(token)),
+      optional(getLevelAssignments(token, user.level))
     ])
     // Coverage's two reads, apart from the rest: the kanji index is the
     // largest read the app makes, and the lists are a chunk of their own, so
@@ -130,12 +132,18 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           }))
         })
 
-        return commentary.then(async ([statistics, progressions, totals, systems]) => {
+        return commentary.then(async ([statistics, progressions, totals, systems, onLevel]) => {
           const slipping = statistics ? leeches(statistics, started) : null
-          // Only the handful on screen — never a subject sync.
-          const leechSubjects = slipping?.length
-            ? await optional(getSubjects(token, slipping.map(l => l.subjectId)))
-            : null
+          // This level's, for the switch — null, and no switch, if the
+          // level's assignments did not come.
+          const slippingHere =
+            statistics && onLevel
+              ? leeches(statistics, started, 5, new Set(onLevel.map(a => a.data.subject_id)))
+              : null
+          // Only the handful on screen — never a subject sync. Both lists'
+          // at most ten, read together so the switch never waits.
+          const ids = [...new Set([...(slipping ?? []), ...(slippingHere ?? [])].map(l => l.subjectId))]
+          const leechSubjects = ids.length ? await optional(getSubjects(token, ids)) : null
           if (!live) return
           const srs = systems ? srsSystems(systems) : null
           setBoard(held => ({
@@ -147,7 +155,10 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             // The level's own system — the accelerated one on levels 1–2.
             fastest: srs ? fastestLevel(srs.get(kanji.find(k => k.system)?.system)) : null,
             accuracy: statistics ? accuracy(statistics) : null,
-            slipping: slipping && withSubjects(slipping, leechSubjects),
+            slipping: slipping && {
+              all: withSubjects(slipping, leechSubjects),
+              level: slippingHere && withSubjects(slippingHere, leechSubjects)
+            },
             pace: progressions ? pace(progressions, user.level, now) : null
           }))
         })
@@ -265,7 +276,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
               <Taught learned={board.learned} totals={board.totals} next={board.milestones?.next} />
             </div>
             <div className="column">
-              <Slipping slipping={board.slipping} />
+              <Slipping slipping={board.slipping} level={user.level} />
             </div>
           </div>
           <Ahead
@@ -621,18 +632,38 @@ function Srs({ spread: bands, moved: gained }) {
   )
 }
 
-function Slipping({ slipping }) {
+// The switch reads every level's slips or only this one's — the same five
+// lowest, narrowed to what the current level holds. Every level's is first:
+// it is the lifetime record, and a level's items are new enough that few of
+// them have been missed the three times it takes to count.
+function Slipping({ slipping, level }) {
+  const [scope, setScope] = useState('all')
   if (slipping === undefined) return <Waiting title="keeps slipping" />
   if (!slipping) return null
+
+  const scopes = [['all', 'all levels'], ['level', `level ${level}`]]
+  const onLevel = scope === 'level' && slipping.level
+  const items = onLevel ? slipping.level : slipping.all
 
   return (
     <section>
       <Head>keeps slipping</Head>
-      {slipping.length === 0 ? (
-        <p className="notes">Nothing missed often enough to count</p>
+      {slipping.level ? (
+        <div className="switch" role="group" aria-label="Show what keeps slipping on">
+          {scopes.map(([key, label]) => (
+            <button key={key} type="button" aria-pressed={key === (onLevel ? 'level' : 'all')} onClick={() => setScope(key)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {items.length === 0 ? (
+        <p className="notes">
+          {onLevel ? `Nothing on level ${level} missed often enough to count` : 'Nothing missed often enough to count'}
+        </p>
       ) : (
         <ul className="slipping">
-          {slipping.map(l => {
+          {items.map(l => {
             const { text, image } = glyphFor(l.subject.data)
             const meaning = l.subject.data.meanings?.find(m => m.primary)?.meaning
             const reading = l.subject.data.readings?.find(r => r.primary)?.reading

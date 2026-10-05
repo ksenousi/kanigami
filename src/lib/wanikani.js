@@ -123,6 +123,15 @@ export function getLevelKanji(token, level) {
   return collection(token, `/assignments?levels=${level}&subject_types=kanji&hidden=false`)
 }
 
+// Everything of one level the user has reached — radicals, kanji and
+// vocabulary — for no more than its subject ids: which of what keeps
+// slipping is this level's. Statistics carry no level, and the subjects that
+// would say it are the bulk sync this app does not do. One page; a level is
+// a few hundred subjects at most.
+export function getLevelAssignments(token, level) {
+  return collection(token, `/assignments?levels=${level}&hidden=false`)
+}
+
 // The kanji the level *has*, which is a different question and the
 // denominator of that 90%. An assignment does not exist until its kanji is
 // unlocked — the radicals in it have to be passed first — so at the start of
