@@ -24,6 +24,7 @@ import {
   levelKanji,
   MIN_MISSES,
   levelUpKanji,
+  lockedBehind,
   milestones,
   moved,
   nextUp,
@@ -172,6 +173,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             total: all.length
           })
           const srs = systems ? srsSystems(systems) : null
+          const radicalItems = radicals ? levelKanji(radicals[0], radicals[1]) : null
           setBoard(held => ({
             ...held,
             totals,
@@ -186,7 +188,10 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
               level: everyHere && scoped(slippingHere, everyHere)
             },
             pace: progressions ? pace(progressions, user.level, now) : null,
-            radicals: radicals ? levelKanji(radicals[0], radicals[1]) : null
+            radicals: radicalItems,
+            // Without the intervals there is no soonest, but which radical
+            // holds which kanji is still WaniKani's to read.
+            behind: radicalItems ? lockedBehind(kanji, radicalItems, srs ?? new Map(), now) : null
           }))
         })
       })
@@ -552,16 +557,68 @@ function LevelLine({ board, level, perLevel }) {
           </div>
         ) : null}
       </div>
-      {levelUp?.at || ahead ? (
+      <Behind behind={board.behind} />
+      {levelUp?.at || ahead || board.behind?.blockers.some(b => b.at) ? (
         <p className="notes">
           <span className="proj">
-            {[levelUp?.at ? 'Earliest assumes every answer is right' : null, ahead ? '≈ at the dial’s pace' : null]
+            {[
+              levelUp?.at || board.behind?.blockers.some(b => b.at) ? 'Soonest and earliest assume every answer is right' : null,
+              ahead ? '≈ at the dial’s pace' : null
+            ]
               .filter(Boolean)
               .join(' · ')}
           </span>
         </p>
       ) : null}
     </section>
+  )
+}
+
+// What keeps the locked kanji locked: one row per radical of the level not
+// yet passed — the radical, where it stands and the soonest it could pass —
+// and the locked kanji it holds. A kanji with two radicals left sits on both
+// rows; WaniKani unlocks it when the last one passes. Hidden when nothing on
+// the level is locked.
+function Behind({ behind }) {
+  if (!behind || (behind.blockers.length === 0 && behind.others.length === 0)) return null
+  const glyph = item => item.characters ?? (item.image ? <img src={item.image} alt="" /> : '〓')
+
+  return (
+    <div className="behind">
+      <span className="what">locked behind</span>
+      <ul>
+        {behind.blockers.map(({ radical: r, holds, at }) => (
+          <li key={r.id}>
+            <span className="radical" aria-hidden="true">
+              {glyph(r)}
+            </span>
+            <span className="about">
+              <span className="name">{r.meaning}</span>
+              <span className="soft">
+                {r.state === 'lesson' ? 'in lessons' : stageName(r.stage)}
+                {at ? ` · passes ${when(at)} at the soonest` : ''}
+              </span>
+            </span>
+            <span className="holds">
+              <span className="say-holds">holds </span>
+              {holds.map(k => (
+                <span key={k.id} className="kanji-held">
+                  {glyph(k)}
+                </span>
+              ))}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {behind.others.length > 0 ? (
+        <p className="notes">
+          <span className="soft">
+            <span className="glyphs">{behind.others.map(k => k.characters).join(' ')}</span>{' '}
+            {behind.others.length === 1 ? 'waits' : 'wait'} on a radical from another level
+          </span>
+        </p>
+      ) : null}
+    </div>
   )
 }
 

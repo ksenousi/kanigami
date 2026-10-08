@@ -50,7 +50,10 @@
     id: 1000 + i,
     object: 'kanji',
     data: { level: LEVEL, characters, meanings: [{ meaning, primary: true }], lesson_position: i, spaced_repetition_system_id: system,
-      document_url: `https://www.wanikani.com/kanji/${encodeURIComponent(characters)}` }
+      document_url: `https://www.wanikani.com/kanji/${encodeURIComponent(characters)}`,
+      // Only the locked one names its radicals: 械 waits on 戈, the
+      // radical still in apprentice, for the level line's locked behind.
+      ...(characters === '械' ? { component_subject_ids: [3004] } : {}) }
   }))
   // [srs stage, hours until its next review] per kanji; null is locked. Five
   // come up in the same hour, so the strip has a crowded one to draw.
@@ -78,7 +81,7 @@
   // --- the level's radicals ---
   const RADICALS = fresh
     ? [['一', 'ground'], ['丨', 'stick'], ['口', 'mouth']]
-    : [['工', 'construction'], ['言', 'say'], ['金', 'gold'], ['竹', 'bamboo'], ['石', 'stone'], ['耳', 'ear']]
+    : [['工', 'construction'], ['言', 'say'], ['金', 'gold'], ['竹', 'bamboo'], ['戈', 'spear'], ['耳', 'ear']]
   const radicalSubjects = RADICALS.map(([characters, meaning], i) => ({
     id: 3000 + i,
     object: 'radical',

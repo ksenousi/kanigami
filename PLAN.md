@@ -1804,3 +1804,16 @@ mono line pinned under the masthead. **A was picked**; B, C and D rejected.
 - **The level column keeps the grid**, its switch, the pointed-at readout
   and the hint; its count, day, next and level-up lines moved up. The
   radicals' and vocabulary's `4 of 6 passed` stays there.
+
+**Locked behind — which radical holds which kanji.** Asked for, under the
+level line's reads. One row per radical of the level not yet passed that
+some locked kanji lists among its `component_subject_ids` (WaniKani's own
+list, read): the radical in `--subject-radical`, its meaning in strong ink,
+its stage, `passes Sun 11 Oct 02:00 at the soonest` (WaniKani's intervals,
+every answer right, like the level-up), then `holds` and the kanji in
+`--subject-kanji`. A kanji with two radicals left sits on both rows; rows
+are soonest radical first, a hairline between them. Locked kanji none of
+the level's radicals hold say `wait on a radical from another level`.
+Hidden when nothing is locked. `lockedBehind()` in board.js; `levelKanji`
+now carries each subject's `components`. The fake's 械 names its radical,
+the fake's fifth radical renamed 戈 spear to match.

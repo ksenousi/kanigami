@@ -7,6 +7,7 @@ import {
   leeches,
   levelKanji,
   levelUpKanji,
+  lockedBehind,
   partnerFor,
   milestones,
   moved,
@@ -424,6 +425,43 @@ describe('earliestLevelUp', () => {
     expect(fastestLevel(systems.get(1)) * 24).toBeCloseTo(164, 5)
     expect(fastestLevel(systems.get(2)) < fastestLevel(systems.get(1))).toBe(true)
     expect(fastestLevel(undefined)).toBeNull()
+  })
+})
+
+
+describe('lockedBehind', () => {
+  const system = {
+    id: 1,
+    data: {
+      passing_stage_position: 5,
+      stages: [null, 14400, 28800, 82800, 169200, 601200, 1206000, 2588400, 10364400, null].map((interval, position) => ({
+        position,
+        interval,
+        interval_unit: 'seconds'
+      }))
+    }
+  }
+  const systems = srsSystems([system])
+  const radical = (id, state, stage, availableAt) => ({ id, state, stage, availableAt, system: 1 })
+  const locked = (id, components) => ({ id, state: 'locked', components })
+
+  it('says which radical holds which locked kanji, soonest radical first', () => {
+    const soon = new Date(NOW.getTime() + 3600000).toISOString()
+    const later = new Date(NOW.getTime() + 20 * 3600000).toISOString()
+    const { blockers, others } = lockedBehind(
+      [locked(10, [1, 2]), locked(11, [2]), locked(12, [99]), { id: 13, state: 'apprentice', components: [1] }],
+      [radical(1, 'apprentice', 3, later), radical(2, 'apprentice', 4, soon), radical(3, 'passed', 5, null)],
+      systems,
+      NOW
+    )
+    expect(blockers.map(b => [b.radical.id, b.holds.map(k => k.id)])).toEqual([[2, [10, 11]], [1, [10]]])
+    expect(blockers[0].at.toISOString()).toBe(soon)
+    expect(others.map(k => k.id)).toEqual([12])
+  })
+
+  it('leaves a passed radical out, whatever it held', () => {
+    const { blockers } = lockedBehind([locked(10, [1])], [radical(1, 'passed', 5, null)], systems, NOW)
+    expect(blockers).toEqual([])
   })
 })
 

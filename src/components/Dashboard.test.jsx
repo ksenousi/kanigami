@@ -556,6 +556,24 @@ describe('the level line', () => {
     expect(line(host)).toContain('Waits on 1 locked kanji · 1 of the level’s radicals not passed yet')
   })
 
+  it('says which radical holds which locked kanji', async () => {
+    api.getLevelKanjiSubjects.mockResolvedValue([
+      subject(1, '山', 'Mountain'),
+      { id: 2, data: { characters: '川', meanings: [{ meaning: 'River', primary: true }], lesson_position: 2, component_subject_ids: [31] } }
+    ])
+    api.getLevelRadicals.mockResolvedValue([
+      [{ id: 31, data: { characters: '工', meanings: [{ meaning: 'Construction', primary: true }], lesson_position: 0 } }],
+      [{ data: { subject_id: 31, srs_stage: 3, started_at: new Date().toISOString() } }]
+    ])
+    const host = await board()
+    await settle()
+    const row = host.querySelector('.level-line .behind li').textContent
+    expect(row).toContain('工')
+    expect(row).toContain('Construction')
+    expect(row).toContain('apprentice III')
+    expect(row).toContain('holds 川')
+  })
+
   it('hands its radicals to the grid’s switch, so they are read once', async () => {
     const host = await board()
     await settle()

@@ -363,7 +363,9 @@ export function levelKanji(subjects = [], assignments = []) {
         image: glyphFor(subject.data).image,
         meaning,
         url: pageFor(subject.data),
-        system: subject.data.spaced_repetition_system_id
+        system: subject.data.spaced_repetition_system_id,
+        // A kanji's radicals, WaniKani's own list — what keeps it locked.
+        components: subject.data.component_subject_ids ?? []
       }
       if (!a) return { ...base, state: 'locked', stage: null, availableAt: null }
       if (a.passed_at) return { ...base, state: 'passed', stage: a.srs_stage, availableAt: a.available_at }
@@ -475,6 +477,30 @@ export function earliestLevelUp(kanji = [], systems = new Map(), remaining = 0, 
     .sort((a, b) => a - b)
   if (passes.length < remaining) return { at: null, waitsOnLocked: true }
   return { at: new Date(passes[remaining - 1]), waitsOnLocked: false }
+}
+
+// What keeps the level's locked kanji locked: for each of the level's
+// radicals not yet passed, the locked kanji that list it among their
+// components, soonest radical first. WaniKani unlocks a kanji once every
+// radical in it has passed; which radicals those are is WaniKani's own
+// `component_subject_ids`, read, not worked out.
+//
+// `at` is the soonest the radical could pass, every answer right, on
+// WaniKani's own intervals — a projection, like the level-up. `others` are
+// locked kanji none of this level's radicals hold: they wait on something
+// else, a radical from another level.
+export function lockedBehind(kanji = [], radicals = [], systems = new Map(), now = new Date()) {
+  const locked = kanji.filter(k => k.state === 'locked')
+  const blockers = radicals
+    .filter(r => r.state !== 'passed')
+    .map(r => {
+      const at = earliestPass(r, systems.get(r.system), now.getTime())
+      return { radical: r, holds: locked.filter(k => k.components?.includes(r.id)), at: at === null ? null : new Date(at) }
+    })
+    .filter(b => b.holds.length > 0)
+    .sort((a, b) => (a.at?.getTime() ?? Infinity) - (b.at?.getTime() ?? Infinity))
+  const held = new Set(blockers.flatMap(b => b.holds.map(k => k.id)))
+  return { blockers, others: locked.filter(k => !held.has(k.id)) }
 }
 
 // Round numbers worth marking, for every count the board keeps.

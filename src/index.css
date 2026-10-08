@@ -1880,6 +1880,83 @@ button.quiet {
   color: var(--text-strong);
 }
 
+/* Locked behind: one row per radical still in the way — the radical in its
+   colour, where it stands, and the locked kanji it holds in theirs. A
+   hairline between rows, the house pattern; no boxes. */
+.board .level-line .behind {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.board .level-line .behind .what {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .level-line .behind ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.board .level-line .behind li {
+  display: grid;
+  grid-template-columns: 2.2em max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 32px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.board .level-line .behind .radical,
+.board .level-line .behind .holds {
+  font-family: var(--jp-sans);
+  font-size: var(--display);
+  line-height: 1;
+}
+
+.board .level-line .behind .radical {
+  color: var(--subject-radical);
+}
+
+.board .level-line .behind .about {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  min-width: 0;
+  font-size: var(--small);
+}
+
+.board .level-line .behind .name {
+  color: var(--text-strong);
+}
+
+.board .level-line .behind .holds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  color: var(--subject-kanji);
+}
+
+.board .level-line .behind .say-holds {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .level-line .behind img {
+  height: 0.9em;
+  width: auto;
+  filter: var(--strokes);
+}
+
 /* ---- 歩 the pace dial ----
    Days per level, full width: sixty slots, one per level, each a
    full-height column so there is something to point at or tap, with its
@@ -2470,6 +2547,15 @@ button.quiet {
   /* The level line's three reads stack. */
   .board .level-line .reads {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The kanji a radical holds drop under what it is. */
+  .board .level-line .behind li {
+    grid-template-columns: 2.2em minmax(0, 1fr);
+  }
+
+  .board .level-line .behind .holds {
+    grid-column: 2;
   }
 
   .board .columns,
