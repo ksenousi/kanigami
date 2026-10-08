@@ -1056,6 +1056,89 @@ button.quiet {
   opacity: 0.45;
 }
 
+/* A locked kanji wears the radicals still holding it, small, in the
+   radical colour; the cell holds its place for them either way. */
+.board .kanji .by {
+  display: flex;
+  gap: 2px;
+  font-family: var(--jp-sans);
+  font-size: 15px;
+  line-height: 1;
+  color: var(--subject-radical);
+}
+
+.board .kanji .by img {
+  height: 1em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+/* The kanji the chosen radical holds, lit in the kanji colour. */
+.board .kanji li.lit .character {
+  color: var(--subject-kanji);
+}
+
+/* Above the grid, the level's radicals still holding kanji: each a word
+   to tap, its glyph over its name, the chosen one underlined in the
+   radical colour — the house hairline, not a box. */
+.board .holders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin-bottom: 18px;
+}
+
+.board .holders button {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 2px 6px;
+  border-bottom: 2px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.board .holders .glyph {
+  font-family: var(--jp-sans);
+  font-size: var(--display);
+  line-height: 1;
+  color: var(--subject-radical);
+}
+
+.board .holders .glyph img {
+  height: 0.9em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+.board .holders .name {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .holders button[aria-pressed='true'] {
+  border-bottom-color: var(--subject-radical);
+}
+
+.board .holders button[aria-pressed='true'] .name {
+  color: var(--text-strong);
+}
+
+.board .holders button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .board .holders button:hover .name {
+    color: var(--text-soft);
+  }
+}
+
 /* The notes and a pointed-at item's readout share one cell, so the section
    keeps the height of whichever is taller and nothing moves under the
    cursor. */
@@ -1573,7 +1656,7 @@ button.quiet {
   padding: 0;
   list-style: none;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content max-content;
+  grid-template-columns: minmax(0, 1fr) max-content;
   gap: 8px 18px;
   align-items: baseline;
   font-family: var(--mono);
@@ -1597,8 +1680,23 @@ button.quiet {
   white-space: nowrap;
 }
 
+/* In a third of the page — the milestones live in column two — the label,
+   the count to go and the date do not fit one row: `1,000 vocabulary` ran
+   into `203 to go`. So the date drops under its label, as it always did on
+   a tablet. Each label starts its own row: with the date dropped into
+   column one, auto-placement otherwise put the next label beside it. */
+.board .ladder .what {
+  grid-column: 1;
+}
+
+.board .ladder .next .when {
+  grid-column: 1;
+  margin-top: -8px;
+  text-align: left;
+}
+
 .board .ladder .reached .when {
-  grid-column: 3;
+  grid-column: 2;
 }
 
 .board .ladder .togo {
@@ -1775,6 +1873,15 @@ button.quiet {
   padding-top: 28px;
 }
 
+.board .level-line .states > span {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
 .board .level-line .states i,
 .board .level-line .tally i {
   display: block;
@@ -1782,25 +1889,76 @@ button.quiet {
 }
 
 .board .level-line .states i {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   height: 10px;
 }
 
+.board .level-line .passed > i,
 .board .level-line i.passed {
   background: var(--srs-guru);
 }
 
+.board .level-line .apprentice > i,
 .board .level-line i.apprentice {
   background: color-mix(in srgb, var(--accent) 55%, var(--ground));
 }
 
-.board .level-line i.apprentice.four {
+.board .level-line .apprentice.four > i {
   background: var(--accent);
 }
 
+.board .level-line .lesson > i,
 .board .level-line i.lesson {
   background: color-mix(in srgb, var(--dim) 45%, var(--ground));
+}
+
+/* Under each locked cell, its kanji and the radicals holding it, stacked,
+   each in its subject's colour. */
+.board .level-line .states .under {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--jp-sans);
+  font-size: 15px;
+  line-height: 1.15;
+}
+
+.board .level-line .held {
+  color: var(--subject-kanji);
+}
+
+.board .level-line .holder {
+  font-size: 13px;
+  color: var(--subject-radical);
+}
+
+/* The same, radical by radical, as one line under the strip. */
+.board .level-line .holding {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+  margin: 0;
+  font-size: var(--small);
+}
+
+.board .level-line .holding > span {
+  white-space: nowrap;
+}
+
+.board .level-line .holding .radical {
+  font-family: var(--jp-sans);
+  color: var(--subject-radical);
+}
+
+.board .level-line .holding .kanji-held {
+  font-family: var(--jp-sans);
+  color: var(--subject-kanji);
+}
+
+.board .level-line img {
+  height: 0.9em;
+  width: auto;
+  filter: var(--strokes);
 }
 
 /* The 90% WaniKani levels you up at: a strong hairline over the cells,
@@ -1867,83 +2025,6 @@ button.quiet {
 .board .level-line .glyphs {
   font-family: var(--jp-sans);
   color: var(--text-strong);
-}
-
-/* Locked behind: one row per radical still in the way — the radical in its
-   colour, where it stands, and the locked kanji it holds in theirs. A
-   hairline between rows, the house pattern; no boxes. */
-.board .level-line .behind {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.board .level-line .behind .what {
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.03em;
-  color: var(--dim);
-}
-
-.board .level-line .behind ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.board .level-line .behind li {
-  display: grid;
-  grid-template-columns: 2.2em max-content minmax(0, 1fr);
-  align-items: center;
-  gap: 4px 32px;
-  padding: 10px 0;
-  border-top: 1px solid var(--rule);
-}
-
-.board .level-line .behind .radical,
-.board .level-line .behind .holds {
-  font-family: var(--jp-sans);
-  font-size: var(--display);
-  line-height: 1;
-}
-
-.board .level-line .behind .radical {
-  color: var(--subject-radical);
-}
-
-.board .level-line .behind .about {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 14px;
-  min-width: 0;
-  font-size: var(--small);
-}
-
-.board .level-line .behind .name {
-  color: var(--text-strong);
-}
-
-.board .level-line .behind .holds {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  color: var(--subject-kanji);
-}
-
-.board .level-line .behind .say-holds {
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.03em;
-  color: var(--dim);
-}
-
-.board .level-line .behind img {
-  height: 0.9em;
-  width: auto;
-  filter: var(--strokes);
 }
 
 /* ---- 歩 the pace dial ----
@@ -2438,27 +2519,6 @@ button.quiet {
     grid-column: 2;
   }
 
-  /* Two-up at half an iPad, the ladder drops its date under its label so
-     the label never wraps. */
-  .board .ladder {
-    grid-template-columns: minmax(0, 1fr) max-content;
-  }
-
-  /* Each label starts its own row: with the date dropped into column one,
-     auto-placement otherwise put the next label beside it, in column two. */
-  .board .ladder .what {
-    grid-column: 1;
-  }
-
-  .board .ladder .next .when {
-    grid-column: 1;
-    margin-top: -8px;
-    text-align: left;
-  }
-
-  .board .ladder .reached .when {
-    grid-column: 2;
-  }
 
   .board .dial .under {
     grid-template-columns: minmax(0, 1fr);
@@ -2538,13 +2598,10 @@ button.quiet {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* The kanji a radical holds drop under what it is. */
-  .board .level-line .behind li {
-    grid-template-columns: 2.2em minmax(0, 1fr);
-  }
-
-  .board .level-line .behind .holds {
-    grid-column: 2;
+  /* A cell is narrower than a character here, so the strip's glyphs give
+     way to the line under it, which says the same. */
+  .board .level-line .states .under {
+    display: none;
   }
 
   .board .columns,

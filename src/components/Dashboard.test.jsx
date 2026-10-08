@@ -567,11 +567,31 @@ describe('the level line', () => {
     ])
     const host = await board()
     await settle()
-    const row = host.querySelector('.level-line .behind li').textContent
-    expect(row).toContain('工')
-    expect(row).toContain('Construction')
-    expect(row).toContain('apprentice III')
-    expect(row).toContain('holds 川')
+    expect(host.querySelector('.level-line .holding').textContent).toContain('工 Construction → 川')
+    const cell = host.querySelector('.level-line .states .locked .under').textContent
+    expect(cell).toBe('川工')
+  })
+
+  it('lights the locked kanji a radical holds in the level’s grid', async () => {
+    api.getLevelKanjiSubjects.mockResolvedValue([
+      subject(1, '山', 'Mountain'),
+      { id: 2, data: { characters: '川', meanings: [{ meaning: 'River', primary: true }], lesson_position: 2, component_subject_ids: [31] } }
+    ])
+    api.getLevelRadicals.mockResolvedValue([
+      [{ id: 31, data: { characters: '工', meanings: [{ meaning: 'Construction', primary: true }], lesson_position: 0 } }],
+      [{ data: { subject_id: 31, srs_stage: 3, started_at: new Date().toISOString() } }]
+    ])
+    const host = await board()
+    await settle()
+    const locked = () => [...host.querySelectorAll('.level .kanji li')].find(li => li.textContent.includes('川'))
+    expect(locked().querySelector('.by').textContent).toBe('工')
+    const radical = host.querySelector('.level .holders button')
+    await click(radical)
+    expect(radical.getAttribute('aria-pressed')).toBe('true')
+    expect(locked().classList.contains('lit')).toBe(true)
+    expect(readout(host)).toContain('Holds 川')
+    await click(radical)
+    expect(locked().classList.contains('lit')).toBe(false)
   })
 
   it('hands its radicals to the grid’s switch, so they are read once', async () => {

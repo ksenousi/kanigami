@@ -1824,3 +1824,28 @@ word: the hairline, the counts by state and the level-up read already say
 it. The day moved into the head (`day 4 · 0 of 32 needed`); `of your usual
 18` went with the sentence, the dial having the median. A level with no
 kanji says so in a note.
+
+**Locked behind, redone from a prototype: B and C, both.** The rows were
+built first without one; a prototype then offered **A** rows under the reads
+(what had shipped), **B** the strip says it, **C** in the level's grid, **D**
+a map of lines from radicals to kanji. The owner picked **B and C**; A and D
+went.
+
+- **B, in the level line.** Each locked cell at the end of the strip
+  carries its kanji in `--subject-kanji` with the radicals holding it
+  stacked under it in `--subject-radical`. One line under the counts says
+  it radical by radical: `戈 spear → 戦 識 織 · soonest 9 Oct`, and locked
+  kanji no radical of the level holds `· a radical from another level`.
+  Below 700px a cell is narrower than a character, so the cells' glyphs
+  hide and the line carries it.
+- **C, in the level's grid.** Over the kanji grid, a row of the level's
+  radicals still holding kanji, each its glyph over its name; a locked kanji
+  in the grid wears its holding radicals small beneath it. Tapping a radical
+  underlines it in the radical colour, lights the kanji it holds in the
+  kanji colour, and the readout says `戈 spear · apprentice III · passes Sun
+  11 Oct 02:00 at the soonest` and `Holds 械 · tap it again to let go`;
+  tapping it again lets go. Switching to radicals or vocab lets go too.
+
+Found on the way: moving the milestones into column two left the ladder's
+labels running into their counts at 1440 (`1,000 vocabulary203 to go`). The
+tablet's ladder — the date under its label — is now the ladder everywhere.

@@ -472,6 +472,7 @@ function LevelLine({ board, level, perLevel }) {
   // The level's radicals that have not passed: what the locked kanji wait on.
   const radicalsShort = Array.isArray(board.radicals) ? board.radicals.filter(r => r.state !== 'passed').length : null
   const ahead = !top && perLevel !== null && p ? project(p, level, perLevel, board.now, levelUp?.at ?? null) : null
+  const holders = holdersOf(board.behind)
 
   const next = board.next
   let up = null
@@ -502,7 +503,21 @@ function LevelLine({ board, level, perLevel }) {
         <>
           <div className="states" aria-hidden="true">
             {kanji.map(k => (
-              <i key={k.id} className={k.state === 'apprentice' && k.stage === 4 ? 'apprentice four' : k.state} />
+              <span key={k.id} className={k.state === 'apprentice' && k.stage === 4 ? 'apprentice four' : k.state}>
+                <i />
+                {/* A locked kanji wears its own character, and under it the
+                    radicals holding it — the strip says what the lock is. */}
+                {k.state === 'locked' ? (
+                  <span className="under">
+                    <span className="held">{glyph(k)}</span>
+                    {(holders.get(k.id) ?? []).map(r => (
+                      <span key={r.id} className="holder">
+                        {glyph(r)}
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
+              </span>
             ))}
             {!top ? (
               <span className="need" style={{ left: `${(needed / total) * 100}%` }}>
@@ -518,6 +533,7 @@ function LevelLine({ board, level, perLevel }) {
               </span>
             ))}
           </p>
+          <Holding behind={board.behind} />
         </>
       ) : null}
       <div className="reads">
@@ -550,7 +566,6 @@ function LevelLine({ board, level, perLevel }) {
           </div>
         ) : null}
       </div>
-      <Behind behind={board.behind} />
       {levelUp?.at || ahead || board.behind?.blockers.some(b => b.at) ? (
         <p className="notes">
           <span className="proj">
@@ -567,52 +582,55 @@ function LevelLine({ board, level, perLevel }) {
   )
 }
 
-// What keeps the locked kanji locked: one row per radical of the level not
-// yet passed — the radical, where it stands and the soonest it could pass —
-// and the locked kanji it holds. A kanji with two radicals left sits on both
-// rows; WaniKani unlocks it when the last one passes. Hidden when nothing on
+// What keeps the locked kanji locked, as one line under the strip: each of
+// the level's radicals not yet passed, its name, the locked kanji it holds
+// and the soonest it could pass — the strip's cells say the same kanji by
+// kanji. Decided from a prototype (PLAN.md, "Locked behind"): the strip
+// saying it was picked over rows, the grid and a map. Hidden when nothing on
 // the level is locked.
-function Behind({ behind }) {
+function Holding({ behind }) {
   if (!behind || (behind.blockers.length === 0 && behind.others.length === 0)) return null
-  const glyph = item => item.characters ?? (item.image ? <img src={item.image} alt="" /> : '〓')
 
   return (
-    <div className="behind">
-      <span className="what">locked behind</span>
-      <ul>
-        {behind.blockers.map(({ radical: r, holds, at }) => (
-          <li key={r.id}>
-            <span className="radical" aria-hidden="true">
-              {glyph(r)}
-            </span>
-            <span className="about">
-              <span className="name">{r.meaning}</span>
-              <span className="soft">
-                {r.state === 'lesson' ? 'in lessons' : stageName(r.stage)}
-                {at ? ` · passes ${when(at)} at the soonest` : ''}
-              </span>
-            </span>
-            <span className="holds">
-              <span className="say-holds">holds </span>
-              {holds.map(k => (
-                <span key={k.id} className="kanji-held">
-                  {glyph(k)}
-                </span>
-              ))}
-            </span>
-          </li>
-        ))}
-      </ul>
-      {behind.others.length > 0 ? (
-        <p className="notes">
-          <span className="soft">
-            <span className="glyphs">{behind.others.map(k => k.characters).join(' ')}</span>{' '}
-            {behind.others.length === 1 ? 'waits' : 'wait'} on a radical from another level
+    <p className="holding">
+      {behind.blockers.map(({ radical: r, holds, at }) => (
+        <span key={r.id}>
+          <span className="radical">{glyph(r)}</span> <span className="soft">{r.meaning}</span> →{' '}
+          <span className="kanji-held">
+            {holds.map(k => (
+              <span key={k.id}>{glyph(k)}</span>
+            ))}
           </span>
-        </p>
+          {at ? <span className="dim"> · soonest {dayMonth(at)}</span> : null}
+        </span>
+      ))}
+      {behind.others.length > 0 ? (
+        <span>
+          <span className="kanji-held">
+            {behind.others.map(k => (
+              <span key={k.id}>{glyph(k)}</span>
+            ))}
+          </span>
+          <span className="dim"> · a radical from another level</span>
+        </span>
       ) : null}
-    </div>
+    </p>
   )
+}
+
+// Each locked kanji's radicals still in the way, by kanji id, for its cell —
+// in the level line's strip and in the level's grid.
+function holdersOf(behind) {
+  const holders = new Map()
+  for (const { radical, holds } of behind?.blockers ?? []) {
+    for (const k of holds) holders.set(k.id, [...(holders.get(k.id) ?? []), radical])
+  }
+  return holders
+}
+
+// A subject's character, or WaniKani's image for a radical without one.
+function glyph(item) {
+  return item.characters ?? (item.image ? <img src={item.image} alt="" /> : '〓')
 }
 
 function percent(fraction) {
@@ -650,6 +668,8 @@ const OTHERS = {
 function Level({ board, level, token }) {
   const [reading, setReading] = useState(null)
   const [showing, setShowing] = useState('kanji')
+  // The radical whose locked kanji are lit in the grid, by id.
+  const [holding, setHolding] = useState(null)
   // Per kind: null until asked for, then 'reading', 'failed' or the items.
   const [others, setOthers] = useState({ radicals: null, vocab: null })
 
@@ -664,15 +684,19 @@ function Level({ board, level, token }) {
   function show(kind) {
     setShowing(kind)
     setReading(null)
+    setHolding(null)
     if (kind === 'radicals' && Array.isArray(board.radicals)) return
     if (OTHERS[kind] && (others[kind] === null || others[kind] === 'failed')) readOther(kind)
   }
 
+  const blockers = board.behind?.blockers ?? []
+  const held = blockers.find(b => b.radical.id === holding) ?? null
+  const holders = holdersOf(board.behind)
   const other = OTHERS[showing]
   // The radicals come with the board's commentary now; asked for before it
   // lands, or if it failed, they are read as before.
-  const held = showing === 'radicals' && Array.isArray(board.radicals) ? board.radicals : others[showing]
-  const items = other ? held : board.kanji
+  const kept = showing === 'radicals' && Array.isArray(board.radicals) ? board.radicals : others[showing]
+  const items = other ? kept : board.kanji
   const otherPassed = other && Array.isArray(items) ? items.filter(r => r.state === 'passed').length : null
   // The kanji's count, the day, what is next and the level-up are the level
   // line's now, at the top of the board. Radicals and vocabulary have no
@@ -696,8 +720,31 @@ function Level({ board, level, token }) {
         </h2>
       </div>
       <div className="body">
+        {!other && blockers.length > 0 ? (
+          <div className="holders" role="group" aria-label="Radicals holding locked kanji">
+            {blockers.map(({ radical: r }) => (
+              <button
+                key={r.id}
+                type="button"
+                aria-pressed={holding === r.id}
+                onClick={() => setHolding(h => (h === r.id ? null : r.id))}
+              >
+                <span className="glyph" aria-hidden="true">
+                  {glyph(r)}
+                </span>
+                <span className="name">{r.meaning}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
         {!other ? (
-          <Grid items={board.kanji} label={`Level ${level} kanji`} onRead={setReading} />
+          <Grid
+            items={board.kanji}
+            label={`Level ${level} kanji`}
+            onRead={setReading}
+            holders={holders}
+            lit={held ? new Set(held.holds.map(k => k.id)) : null}
+          />
         ) : items === null || items === 'reading' ? (
           <p className="notes" role="status">
             <span className="hint">Reading {other.noun}…</span>
@@ -721,7 +768,7 @@ function Level({ board, level, token }) {
         )}
       </div>
       <p className="notes readout" aria-live="polite">
-        <span className={reading ? 'usual hidden' : 'usual'}>
+        <span className={reading || held ? 'usual hidden' : 'usual'}>
           {count ? <span className="soft">{count}</span> : null}
           <Hint pointer="Point at" touch="Tap">
             {other ? other.one : 'a kanji'} for its next review,{' '}
@@ -729,6 +776,18 @@ function Level({ board, level, token }) {
             <span className="by-touch">again</span> for its WaniKani page
           </Hint>
         </span>
+        {held && !reading ? (
+          <span className="usual">
+            <span className="soft">
+              {held.radical.characters ?? ''} {held.radical.meaning} ·{' '}
+              {held.radical.state === 'lesson' ? 'in lessons' : stageName(held.radical.stage)}
+              {held.at ? ` · passes ${when(held.at)} at the soonest` : ''}
+            </span>
+            <span className="soft">
+              Holds {held.holds.map(k => k.characters).join(' ')} · tap it again to let go
+            </span>
+          </span>
+        ) : null}
         {reading ? (
           <span className="usual">
             <span className="soft">
@@ -755,7 +814,7 @@ function Level({ board, level, token }) {
 // as fit; up and down then go to the word nearest above or below.
 const ACROSS = 8
 
-function Grid({ items, label, onRead, words = false }) {
+function Grid({ items, label, onRead, words = false, holders = null, lit = null }) {
   const { at, point, groupProps, itemProps } = usePointing(i => onRead(i === null ? null : items[i]))
   const opens = useRef(true)
 
@@ -784,7 +843,7 @@ function Grid({ items, label, onRead, words = false }) {
       {...groupProps}
     >
       {items.map((k, i) => (
-        <li key={k.id} className={[k.state, at === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
+        <li key={k.id} className={[k.state, at === i ? 'reading' : '', lit?.has(k.id) ? 'lit' : ''].join(' ').trim()} {...itemProps(i)}>
           <a
             className="open"
             href={k.url ?? undefined}
@@ -815,6 +874,14 @@ function Grid({ items, label, onRead, words = false }) {
             ) : (
               <span className="underline" aria-hidden="true" />
             )}
+            {/* A locked kanji wears the radicals still holding it. */}
+            {holders?.get(k.id) ? (
+              <span className="by" aria-hidden="true">
+                {holders.get(k.id).map(r => (
+                  <span key={r.id}>{glyph(r)}</span>
+                ))}
+              </span>
+            ) : null}
           </a>
         </li>
       ))}
