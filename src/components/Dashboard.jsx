@@ -491,9 +491,9 @@ function LevelLine({ board, level, perLevel }) {
   let up = null
   if (top || total === 0) up = null
   else if (remaining === 0) up = 'Ready — WaniKani levels you up on its next look'
+  // Waiting on locked kanji gets no read: the tally counts them and the
+  // holding line names the radicals behind them.
   else if (levelUp === undefined) up = 'Reading…'
-  // Which radicals hold them is the holding line's to say, radical by radical.
-  else if (levelUp?.waitsOnLocked) up = `Waits on ${many(tally.locked)} locked kanji`
 
   return (
     <section className="level-line">
