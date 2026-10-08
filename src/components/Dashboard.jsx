@@ -668,8 +668,6 @@ const OTHERS = {
 function Level({ board, level, token }) {
   const [reading, setReading] = useState(null)
   const [showing, setShowing] = useState('kanji')
-  // The radical whose locked kanji are lit in the grid, by id.
-  const [holding, setHolding] = useState(null)
   // Per kind: null until asked for, then 'reading', 'failed' or the items.
   const [others, setOthers] = useState({ radicals: null, vocab: null })
 
@@ -684,13 +682,10 @@ function Level({ board, level, token }) {
   function show(kind) {
     setShowing(kind)
     setReading(null)
-    setHolding(null)
     if (kind === 'radicals' && Array.isArray(board.radicals)) return
     if (OTHERS[kind] && (others[kind] === null || others[kind] === 'failed')) readOther(kind)
   }
 
-  const blockers = board.behind?.blockers ?? []
-  const held = blockers.find(b => b.radical.id === holding) ?? null
   const holders = holdersOf(board.behind)
   const other = OTHERS[showing]
   // The radicals come with the board's commentary now; asked for before it
@@ -720,30 +715,12 @@ function Level({ board, level, token }) {
         </h2>
       </div>
       <div className="body">
-        {!other && blockers.length > 0 ? (
-          <div className="holders" role="group" aria-label="Radicals holding locked kanji">
-            {blockers.map(({ radical: r }) => (
-              <button
-                key={r.id}
-                type="button"
-                aria-pressed={holding === r.id}
-                onClick={() => setHolding(h => (h === r.id ? null : r.id))}
-              >
-                <span className="glyph" aria-hidden="true">
-                  {glyph(r)}
-                </span>
-                <span className="name">{r.meaning}</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
         {!other ? (
           <Grid
             items={board.kanji}
             label={`Level ${level} kanji`}
             onRead={setReading}
             holders={holders}
-            lit={held ? new Set(held.holds.map(k => k.id)) : null}
           />
         ) : items === null || items === 'reading' ? (
           <p className="notes" role="status">
@@ -768,7 +745,7 @@ function Level({ board, level, token }) {
         )}
       </div>
       <p className="notes readout" aria-live="polite">
-        <span className={reading || held ? 'usual hidden' : 'usual'}>
+        <span className={reading ? 'usual hidden' : 'usual'}>
           {count ? <span className="soft">{count}</span> : null}
           <Hint pointer="Point at" touch="Tap">
             {other ? other.one : 'a kanji'} for its next review,{' '}
@@ -776,18 +753,6 @@ function Level({ board, level, token }) {
             <span className="by-touch">again</span> for its WaniKani page
           </Hint>
         </span>
-        {held && !reading ? (
-          <span className="usual">
-            <span className="soft">
-              {held.radical.characters ?? ''} {held.radical.meaning} ·{' '}
-              {held.radical.state === 'lesson' ? 'in lessons' : stageName(held.radical.stage)}
-              {held.at ? ` · passes ${when(held.at)} at the soonest` : ''}
-            </span>
-            <span className="soft">
-              Holds {held.holds.map(k => k.characters).join(' ')} · tap it again to let go
-            </span>
-          </span>
-        ) : null}
         {reading ? (
           <span className="usual">
             <span className="soft">
@@ -814,7 +779,7 @@ function Level({ board, level, token }) {
 // as fit; up and down then go to the word nearest above or below.
 const ACROSS = 8
 
-function Grid({ items, label, onRead, words = false, holders = null, lit = null }) {
+function Grid({ items, label, onRead, words = false, holders = null }) {
   const { at, point, groupProps, itemProps } = usePointing(i => onRead(i === null ? null : items[i]))
   const opens = useRef(true)
 
@@ -843,7 +808,7 @@ function Grid({ items, label, onRead, words = false, holders = null, lit = null 
       {...groupProps}
     >
       {items.map((k, i) => (
-        <li key={k.id} className={[k.state, at === i ? 'reading' : '', lit?.has(k.id) ? 'lit' : ''].join(' ').trim()} {...itemProps(i)}>
+        <li key={k.id} className={[k.state, at === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
           <a
             className="open"
             href={k.url ?? undefined}

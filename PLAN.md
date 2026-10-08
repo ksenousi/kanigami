@@ -1849,3 +1849,8 @@ went.
 Found on the way: moving the milestones into column two left the ladder's
 labels running into their counts at 1440 (`1,000 vocabulary203 to go`). The
 tablet's ladder — the date under its label — is now the ladder everywhere.
+
+**C trimmed: the radicals row went.** On the owner's word, the row of
+radicals over the level's grid — and the tap that lit the kanji each one
+holds — came out. The grid keeps only the radicals set small under each
+locked kanji.
