@@ -1176,6 +1176,34 @@ button.quiet {
   grid-column: 1 / -1;
 }
 
+/* Through a later level: the kanji line's gain faint beyond what is taught,
+   coverage's pattern, and the two lines the slider cannot move stepping
+   back. The kind is `display: contents`, so its cells carry the fade. */
+.board .fills .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+}
+
+.board .fills .fill.gain {
+  background: color-mix(in srgb, var(--subject-kanji) 32%, var(--ground));
+}
+
+.board .fills .plus {
+  color: var(--subject-kanji);
+}
+
+.board .fills .still > * {
+  opacity: 0.45;
+}
+
+/* Under taught and coverage, the slider they share runs the band's full
+   width. */
+.board .forward .through {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .board .counts {
   justify-content: flex-start;
   letter-spacing: 0.03em;
@@ -1823,6 +1851,13 @@ button.quiet {
 .board .dial .bars i.ahead,
 .board .dial .bars .current i.ahead {
   background: color-mix(in srgb, var(--text-soft) 13%, var(--ground));
+}
+
+/* The levels the through-level slider reaches, a step brighter than the
+   rest of what is ahead, so the dial shows the span taught and coverage
+   are counting. */
+.board .dial .bars .within i.ahead {
+  background: color-mix(in srgb, var(--text-soft) 34%, var(--ground));
 }
 
 /* Under the pointer. Neutral, like the forecast's, so it does not claim

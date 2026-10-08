@@ -467,15 +467,28 @@ describe('coverage', () => {
     expect(n5(host)).toMatch(/1 of 79/)
   })
 
+  const through = async (host, level) => {
+    const input = host.querySelector('#through-level')
+    const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
+    set.call(input, String(level))
+    await act(async () => input.dispatchEvent(new Event('input', { bubbles: true })))
+  }
+
   it('shows the gain through a later level when the slider moves', async () => {
     const host = await board()
     await until(host, '.cover')
-    const input = host.querySelector('#coverage-through')
-    const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
-    set.call(input, '20')
-    await act(async () => input.dispatchEvent(new Event('input', { bubbles: true })))
+    await through(host, 20)
     expect(n5(host)).toMatch(/^\+2 \d+% 3 of 79$/)
-    expect(host.querySelector('.cover').closest('section').textContent).toContain('Through level 20')
+    expect(host.querySelector('.forward .through').textContent).toContain('Through level 20')
+  })
+
+  it('moves taught’s kanji line with the same slider, and only that line', async () => {
+    const host = await board()
+    await until(host, '.cover')
+    await through(host, 20)
+    const fills = host.querySelector('.fills').textContent
+    expect(fills).toContain('+2 3 kanji')
+    expect(host.querySelectorAll('.fills .still')).toHaveLength(2)
   })
 
   it('switches to the Jōyō grades', async () => {

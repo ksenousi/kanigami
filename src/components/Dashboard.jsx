@@ -288,7 +288,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             </div>
             <div className="column">
               <Srs spread={board.spread} moved={board.moved} />
-              <Taught learned={board.learned} totals={board.totals} next={board.milestones?.next} />
+              <Milestones milestones={board.milestones} burns={board.burns} now={board.now} />
             </div>
             <div className="column">
               <Slipping slipping={board.slipping} level={user.level} now={board.now} readSubjects={ids => getSubjects(token, ids)} />
@@ -302,8 +302,9 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             fastest={board.fastest ?? null}
             perLevel={paceFor(board.pace, chosenPace)}
             onPace={setChosenPace}
+            learned={board.learned}
+            totals={board.totals}
             milestones={board.milestones}
-            burns={board.burns}
             coverage={board.coverage}
           />
         </>
@@ -1178,11 +1179,13 @@ function slipLine(l) {
     .join(' · ')
 }
 
-// 歩 Ahead — the pace dial, then the count milestones and coverage side by
-// side: everything on the board that looks forward, in one band. Decided
-// from a prototype (the dial, PLAN.md) and regrouped after a design review
-// (PLAN.md, "The regrouping"), which found projections scattered over five
-// places and the road repeating the dial's decade marks 400px below them.
+// 歩 Ahead — the pace dial, then taught and coverage side by side under one
+// "through level" slider: everything on the board that the dial's pace
+// moves, in one band. Decided from a prototype (the dial, PLAN.md) and
+// regrouped after a design review (PLAN.md, "The regrouping"), which found
+// projections scattered over five places and the road repeating the dial's
+// decade marks 400px below them. The milestones went back to column two
+// when the slider took taught along: they keep their own clock.
 //
 // The dial starts at the median and is never saved: the board opens on
 // your own pace every time, and the dial is for asking "and if faster?".
@@ -1209,7 +1212,13 @@ function paceFor(p, chosen) {
   return p?.median != null ? toStep(p.median) : null
 }
 
-function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, milestones: m, burns, coverage: c }) {
+function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, milestones: m, coverage: c }) {
+  const [through, setThrough] = useState(null)
+  // Only a level ahead is a projection; the slider at its start is now. It
+  // needs the kanji index, so it waits for coverage's read.
+  const at = c && through !== null && through > level ? through : null
+  const gain = at ? throughLevel(c.index, c.taught, at).size - c.taught.size : 0
+
   return (
     <div className="forward">
       <PaceDial
@@ -1220,12 +1229,70 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, milest
         fastest={fastest}
         perLevel={perLevel}
         onPace={onPace}
+        through={at}
       />
-      <div className="pair">
-        <Milestones milestones={m} burns={burns} now={now} />
-        <Coverage coverage={c} level={level} pace={p} now={now} soonest={soonest} perLevel={perLevel} />
+      <div className="through">
+        <div className="pair">
+          <Taught learned={counts} totals={totals} next={m?.next} at={at} gain={gain} />
+          <Coverage coverage={c} at={at} />
+        </div>
+        {c ? (
+          <Through level={level} at={at} onThrough={setThrough} pace={p} now={now} soonest={soonest} perLevel={perLevel} />
+        ) : null}
       </div>
     </div>
+  )
+}
+
+// The slider under taught and coverage: from now to level 60, and what it
+// says — through level L is when L+1 begins, at the dial's pace, so moving
+// the dial moves its date. It counts kanji only: the index behind it is
+// every kanji WaniKani teaches and nothing else, so radicals and vocabulary
+// stay at what is taught now, and the line says so.
+function Through({ level, at, onThrough, pace: p, now, soonest, perLevel }) {
+  const ahead = at ? project(p, level, perLevel, now, soonest) : null
+  const reachedBy = ahead ? (at >= TOP_LEVEL ? ahead.done : ahead.startOf(at + 1)) : null
+
+  return (
+    <>
+      <div className="slider">
+        <input
+          id="through-level"
+          type="range"
+          min={level}
+          max={TOP_LEVEL}
+          step={1}
+          value={at ?? level}
+          onChange={event => onThrough(Number(event.target.value))}
+          aria-label="Taught and coverage through level"
+          aria-valuetext={at ? `through level ${at}` : 'now'}
+        />
+        <div className="ticks" aria-hidden="true">
+          <span className="start" style={{ left: 0 }}>
+            now · level {level}
+          </span>
+          <span className="end" style={{ left: '100%' }}>
+            level 60
+          </span>
+        </div>
+      </div>
+      <p className="notes" aria-live="polite">
+        {at ? (
+          <>
+            <span className="soft">
+              Through level {at}
+              {reachedBy ? ` · ≈ ${monthYear(reachedBy)} at ${dayCount(perLevel)} days a level` : ''}
+            </span>
+            <span className="proj">
+              Projection · once WaniKani has taught you every kanji through level {at} · radicals and vocabulary
+              stay at what is taught now
+            </span>
+          </>
+        ) : (
+          <span className="hint">Drag the slider to see taught and coverage through a later level</span>
+        )}
+      </p>
+    </>
   )
 }
 
@@ -1265,7 +1332,7 @@ function Waiting({ title }) {
 // dial still opens at the median; the goal draws a solid line across the
 // bars and a mark on the slider at the pace it asks for — the slowest that
 // gets there, from `paceToReach` — and says whether the dial's pace does.
-function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
+function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   const [goal, setGoal] = useState(readGoal)
   if (p === undefined) return <Waiting title="days per level" />
@@ -1322,7 +1389,10 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
   // A number right beside this level's gives way to it — 14 and 15 in
   // adjacent slots read as 1415.
   const numbered = s =>
-    s.level === level || s === shown || ((s.level === 1 || s.level % 10 === 0) && Math.abs(s.level - level) >= 3)
+    s.level === level ||
+    s === shown ||
+    s.level === through ||
+    ((s.level === 1 || s.level % 10 === 0) && Math.abs(s.level - level) >= 3 && Math.abs(s.level - (through ?? -9)) >= 3)
 
   function key(event) {
     const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
@@ -1378,7 +1448,14 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
           {slots.map((s, i) => (
             <span
               key={s.level}
-              className={[s.kind, s.level === quickest?.level ? 'fastest' : '', reading === i ? 'reading' : ''].join(' ').trim()}
+              className={[
+                s.kind,
+                s.level === quickest?.level ? 'fastest' : '',
+                through && s.level > level && s.level <= through ? 'within' : '',
+                reading === i ? 'reading' : ''
+              ]
+                .join(' ')
+                .trim()}
               {...itemProps(i)}
             >
               {s.kind === 'passed' ? <i style={{ height: `${Math.max(4, height(s.days))}%` }} /> : null}
@@ -1400,7 +1477,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace }) {
       </div>
       <div className="levels" aria-hidden="true">
         {slots.map(s => (
-          <span key={s.level} className={s.level === level ? 'hot' : s === shown ? 'soft' : ''}>
+          <span key={s.level} className={s.level === level ? 'hot' : s === shown || s.level === through ? 'soft' : ''}>
             {numbered(s) ? s.level : ''}
           </span>
         ))}
@@ -1626,47 +1703,60 @@ function caption(s, ahead, perLevel) {
 //
 // Each hairline carries a tick where its next count milestone falls, so the
 // milestones' ladder has a place on the line it counts along.
-function Taught({ learned: counts, totals, next = [] }) {
+//
+// **Through a later level** (`at`, from the slider beneath), the kanji line
+// gains what WaniKani teaches up to there, faint beyond what is taught, with
+// `+N` — coverage's pattern. Radicals and vocabulary have no index to count
+// ahead with, so they stay put and step back, and the head names the level
+// rather than a share of everything that only one line has moved.
+function Taught({ learned: counts, totals, next = [], at = null, gain = 0 }) {
   if (counts.total === 0) return null
   const nextOf = kind => next.find(m => m.kind === kind)
 
   const all = totals ? totals.radical + totals.kanji + totals.vocabulary : null
 
   const kinds = [
-    ['radical', counts.radical, totals?.radical, 'radicals'],
-    ['kanji', counts.kanji, totals?.kanji, 'kanji'],
-    ['vocabulary', counts.vocabulary, totals?.vocabulary, 'vocabulary']
+    ['radical', counts.radical, totals?.radical, 'radicals', 0],
+    ['kanji', counts.kanji, totals?.kanji, 'kanji', gain],
+    ['vocabulary', counts.vocabulary, totals?.vocabulary, 'vocabulary', 0]
   ]
 
   return (
     <section>
-      <Head right={all ? `${share(counts.total, all)} of all wanikani` : null}>taught</Head>
+      <Head right={at ? `through level ${at}` : all ? `${share(counts.total, all)} of all wanikani` : null}>taught</Head>
       <div className="fills">
-        {kinds.map(([kind, count, total, word]) => (
-          <div key={kind} className="kind">
-            {/* Without a total there is no track or denominator, so the count
-                takes the whole row rather than one cell of three. */}
-            <span className={total ? `wk-${kind}` : `wk-${kind} alone`}>
-              {many(count)} {word}
-            </span>
-            {total ? (
-              <>
-                <span className="of">
-                  <span className="soft">{share(count, total)}</span> of {many(total)}
-                </span>
-                <span className="track" aria-hidden="true">
-                  <span
-                    className={`fill wk-${kind}`}
-                    style={{ width: `${Math.min(100, (count / total) * 100)}%` }}
-                  />
-                  {nextOf(kind) ? (
-                    <span className="tick" style={{ left: `${Math.min(100, (nextOf(kind).step / total) * 100)}%` }} />
-                  ) : null}
-                </span>
-              </>
-            ) : null}
-          </div>
-        ))}
+        {kinds.map(([kind, now, total, word, more]) => {
+          const count = Math.min(total ?? Infinity, now + more)
+          return (
+            <div key={kind} className={at && !more ? 'kind still' : 'kind'}>
+              {/* Without a total there is no track or denominator, so the count
+                  takes the whole row rather than one cell of three. */}
+              <span className={total ? `wk-${kind}` : `wk-${kind} alone`}>
+                {more > 0 ? <span className="plus">+{many(count - now)} </span> : null}
+                {many(count)} {word}
+              </span>
+              {total ? (
+                <>
+                  <span className="of">
+                    <span className="soft">{share(count, total)}</span> of {many(total)}
+                  </span>
+                  <span className="track" aria-hidden="true">
+                    {more > 0 ? (
+                      <span className={`fill gain wk-${kind}`} style={{ width: `${Math.min(100, (count / total) * 100)}%` }} />
+                    ) : null}
+                    <span
+                      className={`fill wk-${kind}`}
+                      style={{ width: `${Math.min(100, (now / total) * 100)}%` }}
+                    />
+                    {nextOf(kind) ? (
+                      <span className="tick" style={{ left: `${Math.min(100, (nextOf(kind).step / total) * 100)}%` }} />
+                    ) : null}
+                  </span>
+                </>
+              ) : null}
+            </div>
+          )
+        })}
       </div>
     </section>
   )
@@ -1744,10 +1834,9 @@ function Milestones({ milestones: m, burns = [], now }) {
 }
 
 // Coverage: how much of the JLPT levels, or the Jōyō grades, you have been
-// taught — and, dragging "through level", how much once WaniKani has taught
-// you every kanji through a later level, the gain drawn faint beyond what is
-// taught now. That level's date comes from the pace dial, so moving the dial
-// moves it.
+// taught — and, through a later level (`at`, from the slider it shares with
+// taught), how much once WaniKani has taught you every kanji up to there,
+// the gain drawn faint beyond what is taught now.
 //
 // The share column is as wide as its widest value at any point on the
 // slider, worked out up front, so dragging never narrows the hairlines.
@@ -1756,13 +1845,11 @@ const MEASURES = [
   ['JOYO', 'Jōyō', 'The 2,136 Jōyō kanji by school grade, as allocated in 2010']
 ]
 
-function Coverage({ coverage: c, level, pace: p, now, soonest, perLevel }) {
+function Coverage({ coverage: c, at }) {
   const [measure, setMeasure] = useState('JLPT')
-  const [through, setThrough] = useState(null)
   if (c === undefined) return <Waiting title="coverage" />
   if (!c) return null
 
-  const at = through === null || through <= level ? null : through
   const lists = c.lists[measure]
   const nowRows = coverage(lists, c.taught)
   const thenRows = at ? coverage(lists, throughLevel(c.index, c.taught, at)) : nowRows
@@ -1770,9 +1857,6 @@ function Coverage({ coverage: c, level, pace: p, now, soonest, perLevel }) {
   const widest = Math.max(
     ...endRows.map((row, i) => `+${row.have - nowRows[i].have} 100% ${many(row.have)} of ${many(row.total)}`.length)
   )
-  // Through level L is when level L+1 begins; through 60, when 60 is done.
-  const ahead = at ? project(p, level, perLevel, now, soonest) : null
-  const reachedBy = ahead ? (at >= TOP_LEVEL ? ahead.done : ahead.startOf(at + 1)) : null
 
   return (
     <section>
@@ -1802,42 +1886,8 @@ function Coverage({ coverage: c, level, pace: p, now, soonest, perLevel }) {
           )
         })}
       </div>
-      <div className="slider">
-        <input
-          id="coverage-through"
-          type="range"
-          min={level}
-          max={TOP_LEVEL}
-          step={1}
-          value={at ?? level}
-          onChange={event => setThrough(Number(event.target.value))}
-          aria-label="Coverage through level"
-          aria-valuetext={at ? `through level ${at}` : 'now'}
-        />
-        <div className="ticks" aria-hidden="true">
-          <span className="start" style={{ left: 0 }}>
-            now · level {level}
-          </span>
-          <span className="end" style={{ left: '100%' }}>
-            level 60
-          </span>
-        </div>
-      </div>
-      <p className="notes" aria-live="polite">
-        {at ? (
-          <>
-            <span className="soft">
-              Through level {at}
-              {reachedBy ? ` · ≈ ${monthYear(reachedBy)} at ${dayCount(perLevel)} days a level` : ''}
-            </span>
-            <span className="proj">Projection · once WaniKani has taught you every kanji through level {at}</span>
-          </>
-        ) : (
-          <>
-            <span className="hint">Drag the slider to see how much you will know through a later level</span>
-            <span className="hint">{MEASURES.find(([key]) => key === measure)[2]}</span>
-          </>
-        )}
+      <p className="notes">
+        <span className="hint">{MEASURES.find(([key]) => key === measure)[2]}</span>
       </p>
     </section>
   )

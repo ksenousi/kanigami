@@ -1738,3 +1738,28 @@ or more, so **the list stops at 360px and scrolls inside itself,
 vertically only** (`overflow-x: hidden`, `overscroll-behavior: contain`).
 The fake gains 45 words, three of them kana-only, and `?fake=vocab-fail`.
 Checked at 375, 820 and 1440: no sideways scroll anywhere.
+
+**One "through level" slider for taught and coverage.** Asked for: the
+level slider should move more than coverage, taught included, with licence
+to move things around. Built without a prototype:
+
+- **The slider left coverage** and sits under taught and coverage, which
+  now stand side by side in the ahead band, the slider full width beneath
+  both with its date line (`Through level 35 · ≈ Sep 2027 at 18.5 days a
+  level`, still at the dial's pace). Both heads read `through level 35`
+  while it is moved; at now, taught's head is its share of all WaniKani
+  again. Coverage keeps its JLPT/Jōyō switch and its source line.
+- **The milestones went back to column two** under the spread, where
+  taught was. They keep their own 30-day clock, so they lose nothing by
+  leaving the dial's band.
+- **Taught counts kanji ahead only.** The kanji line gains `+N`, drawn
+  faint beyond what is taught, like coverage's rows. Radicals and
+  vocabulary have no index, and the one bulk read the app allows is kanji
+  only, so those two lines stay at now and fade, and the projection line
+  says `radicals and vocabulary stay at what is taught now`. Counting them
+  ahead would mean a weekly read of every radical and vocabulary subject:
+  around 7,000 more, many megabytes. Not built, and only on the owner's
+  say-so.
+- **The dial shows the span.** The bars from the next level through the
+  slider's level are a step brighter than the rest of what is ahead, and
+  the slider's level is numbered under them.
