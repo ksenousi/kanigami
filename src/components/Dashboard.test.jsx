@@ -537,10 +537,10 @@ describe('coverage', () => {
 describe('the level line', () => {
   const line = host => host.querySelector('.level-line').textContent
 
-  it('says how many kanji to the next level, and how many are still locked', async () => {
+  it('counts the level’s kanji by state against the 90% mark', async () => {
     const host = await board()
-    expect(line(host)).toContain('2 kanji to level 6, 1 of the level’s still locked')
-    expect(line(host)).toContain('0 of 2 needed')
+    expect(host.querySelector('.level-line .head').textContent).toContain('0 of 2 needed')
+    expect(host.querySelector('.level-line .need').textContent).toBe('2 needed')
     expect(host.querySelectorAll('.level-line .states i')).toHaveLength(2)
     expect(host.querySelector('.level-line .tally').textContent).toBe('1 apprentice1 locked')
   })

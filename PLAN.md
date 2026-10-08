@@ -1817,3 +1817,10 @@ the level's radicals hold say `wait on a radical from another level`.
 Hidden when nothing is locked. `lockedBehind()` in board.js; `levelKanji`
 now carries each subject's `components`. The fake's 械 names its radical,
 the fake's fifth radical renamed 戈 spear to match.
+
+**The level line loses its sentence.** `Level 17 · day 4 of your usual 18 ·
+32 kanji to level 18, 9 of the level's still locked` went at the owner's
+word: the hairline, the counts by state and the level-up read already say
+it. The day moved into the head (`day 4 · 0 of 32 needed`); `of your usual
+18` went with the sentence, the dial having the median. A level with no
+kanji says so in a note.

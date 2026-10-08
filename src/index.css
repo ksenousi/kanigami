@@ -1760,21 +1760,10 @@ button.quiet {
 
 /* ---- 段 the level line ----
    Where the level stands, the board's second band under the figures: a
-   sentence, a hairline of every kanji with the 90% mark over it, the counts
+   hairline of every kanji with the 90% mark over it, the counts
    by state, and three short reads. */
 .board .level-line {
   gap: 16px;
-}
-
-.board .level-line .say {
-  margin: 0;
-  font-size: var(--input);
-  color: var(--text-strong);
-  text-wrap: balance;
-}
-
-.board .level-line .say .soft {
-  color: var(--text-soft);
 }
 
 /* One cell per kanji, its state in its colour: passed in guru, apprentice

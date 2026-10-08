@@ -442,11 +442,13 @@ function Figures({ board }) {
 // line"): of four places — a band, the figure growing its lines, a road of
 // soonest passes, a pinned masthead line — the band.
 //
-// One sentence says it, the kanji to the next level leading. Beneath, a
+// The head says the day and the count against the 90%. Beneath, a
 // hairline of the level's every kanji in the grid's order — passed, then
 // apprentice by stage, then lessons, then locked — with a mark where the
 // 90% WaniKani levels you up at falls, and the counts by state. Then three
 // reads: what is next, the level-up, and the next level at the dial's pace.
+// A sentence once led it — `32 kanji to level 18, 9 still locked` — and went
+// at the owner's word: the hairline, the counts and the level-up said it all.
 //
 // Every state is WaniKani's, read off an assignment. The earliest level-up
 // runs WaniKani's own intervals and the date runs the dial; both are
@@ -465,26 +467,11 @@ function LevelLine({ board, level, perLevel }) {
   const p = board.pace
   const onLevel = p?.current?.days
   const day = onLevel !== undefined ? Math.floor(onLevel) + 1 : null
-  const usual = p?.median != null ? Math.round(p.median) : null
   const top = level >= TOP_LEVEL
   const levelUp = board.levelUp
   // The level's radicals that have not passed: what the locked kanji wait on.
   const radicalsShort = Array.isArray(board.radicals) ? board.radicals.filter(r => r.state !== 'passed').length : null
   const ahead = !top && perLevel !== null && p ? project(p, level, perLevel, board.now, levelUp?.at ?? null) : null
-
-  const where = [`Level ${level}`, day !== null ? `day ${day}${usual && !top ? ` of your usual ${usual}` : ''}` : null]
-    .filter(Boolean)
-    .join(' · ')
-  let say
-  if (top) say = `${passed} of ${total} kanji passed`
-  else if (total === 0) say = 'no kanji at this level yet'
-  else if (remaining === 0) say = `ready for level ${level + 1}`
-  else {
-    say = `${remaining} kanji to level ${level + 1}`
-    // The soonest when there is one; when it hangs on locked kanji, those.
-    if (levelUp?.at) say += `, the soonest ${when(levelUp.at)}`
-    else if (tally.locked > 0) say += `, ${tally.locked} of the level’s still locked`
-  }
 
   const next = board.next
   let up = null
@@ -500,11 +487,17 @@ function LevelLine({ board, level, perLevel }) {
     <section className="level-line">
       <div className="head">
         <h2>level {level}</h2>
-        {total > 0 ? <span>{top ? `${passed} of ${total} passed` : `${passed} of ${needed} needed`}</span> : null}
+        <span>
+          {[day !== null ? `day ${day}` : null, total > 0 ? (top ? `${passed} of ${total} passed` : `${passed} of ${needed} needed`) : null]
+            .filter(Boolean)
+            .join(' · ')}
+        </span>
       </div>
-      <p className="say">
-        <span className="soft">{where} ·</span> {say}
-      </p>
+      {total === 0 ? (
+        <p className="notes">
+          <span className="soft">No kanji at this level yet</span>
+        </p>
+      ) : null}
       {total > 0 ? (
         <>
           <div className="states" aria-hidden="true">
