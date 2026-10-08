@@ -468,15 +468,36 @@ function earliestPass(kanji, system, now) {
 //
 // `waitsOnLocked` is set when there are not enough unlocked kanji left to
 // reach the threshold, so the level-up hangs on kanji whose radicals come
-// first. That has no honest time, so there is none.
-export function earliestLevelUp(kanji = [], systems = new Map(), remaining = 0, now = new Date()) {
+// first. `at` is then null, and `chained` carries the soonest anyway when the
+// level's `radicals` are given: a locked kanji unlocks the moment the last
+// of its level's radicals passes at the soonest, its lesson is taken then,
+// and it runs the apprentice stages from there. A locked kanji none of the
+// level's radicals hold waits on something unread, and gets no time; when
+// that leaves too few, `chained` is null too.
+export function earliestLevelUp(kanji = [], systems = new Map(), remaining = 0, now = new Date(), radicals = null) {
   if (remaining <= 0) return null
   const passes = kanji
     .map(k => earliestPass(k, systems.get(k.system), now.getTime()))
     .filter(time => time !== null)
     .sort((a, b) => a - b)
-  if (passes.length < remaining) return { at: null, waitsOnLocked: true }
-  return { at: new Date(passes[remaining - 1]), waitsOnLocked: false }
+  if (passes.length >= remaining) return { at: new Date(passes[remaining - 1]), waitsOnLocked: false }
+  if (!radicals) return { at: null, waitsOnLocked: true }
+
+  const radicalAt = new Map(
+    radicals.filter(r => r.state !== 'passed').map(r => [r.id, earliestPass(r, systems.get(r.system), now.getTime())])
+  )
+  const unlocks = kanji
+    .filter(k => k.state === 'locked')
+    .map(k => {
+      const holding = (k.components ?? []).filter(id => radicalAt.has(id))
+      if (holding.length === 0) return null
+      const times = holding.map(id => radicalAt.get(id))
+      if (times.some(t => t === null)) return null
+      return earliestPass({ ...k, state: 'lesson' }, systems.get(k.system), Math.max(...times))
+    })
+    .filter(time => time !== null)
+  const all = [...passes, ...unlocks].sort((a, b) => a - b)
+  return { at: null, waitsOnLocked: true, chained: all.length >= remaining ? new Date(all[remaining - 1]) : null }
 }
 
 // What keeps the level's locked kanji locked: for each of the level's

@@ -542,7 +542,7 @@ describe('the level line', () => {
     expect(host.querySelector('.level-line .head').textContent).toContain('0 of 2 needed')
     expect(host.querySelector('.level-line .need').textContent).toBe('2 needed')
     expect(host.querySelectorAll('.level-line .states i')).toHaveLength(2)
-    expect(host.querySelector('.level-line .tally').textContent).toBe('1 apprentice1 locked')
+    expect(host.querySelector('.level-line .tally').textContent).toBe('0 passed1 apprentice1 locked')
   })
 
   it('says what is up next, and what the locked kanji wait on', async () => {
@@ -568,6 +568,7 @@ describe('the level line', () => {
     const host = await board()
     await settle()
     expect(host.querySelector('.level-line .holding').textContent).toContain('工 Construction → 川')
+
     const cell = host.querySelector('.level-line .states .locked .under').textContent
     expect(cell).toBe('川工')
   })
@@ -585,6 +586,37 @@ describe('the level line', () => {
     await settle()
     const locked = [...host.querySelectorAll('.level .kanji li')].find(li => li.textContent.includes('川'))
     expect(locked.querySelector('.by').textContent).toBe('工')
+  })
+
+  it('gives the next level’s fastest through a locked kanji’s radical', async () => {
+    api.getSpacedRepetitionSystems.mockResolvedValue([
+      {
+        id: 1,
+        data: {
+          passing_stage_position: 5,
+          stages: [null, 14400, 28800, 82800, 169200, 601200, 1206000, 2588400, 10364400, null].map((interval, position) => ({
+            position,
+            interval,
+            interval_unit: 'seconds'
+          }))
+        }
+      }
+    ])
+    api.getLevelKanjiSubjects.mockResolvedValue([
+      { id: 1, data: { ...subject(1, '山', 'Mountain').data, spaced_repetition_system_id: 1 } },
+      {
+        id: 2,
+        data: { characters: '川', meanings: [{ meaning: 'River', primary: true }], lesson_position: 2, component_subject_ids: [31], spaced_repetition_system_id: 1 }
+      }
+    ])
+    api.getLevelRadicals.mockResolvedValue([
+      [{ id: 31, data: { characters: '工', meanings: [{ meaning: 'Construction', primary: true }], lesson_position: 0, spaced_repetition_system_id: 1 } }],
+      [{ data: { subject_id: 31, srs_stage: 3, started_at: new Date().toISOString(), available_at: new Date().toISOString() } }]
+    ])
+    const host = await board()
+    await settle()
+    // 山 alone is not the two needed; 川 comes through its radical.
+    expect(line(host)).toMatch(/Waits on 1 locked kanji.*level \d+Fastest /)
   })
 
   it('hands its radicals to the grid’s switch, so they are read once', async () => {

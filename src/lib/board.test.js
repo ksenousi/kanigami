@@ -406,6 +406,24 @@ describe('earliestLevelUp', () => {
     expect(up).toEqual({ at: null, waitsOnLocked: true })
   })
 
+  it('chains a locked kanji through the soonest pass of its last radical', () => {
+    const radical = { id: 31, state: 'apprentice', stage: 4, availableAt: at(5).toISOString(), system: 1 }
+    const locked = { ...kanji('locked', null, null), components: [31] }
+    const up = earliestLevelUp([kanji('apprentice', 4, at(1)), locked], systems, 2, NOW, [radical])
+    expect(up.at).toBeNull()
+    expect(up.waitsOnLocked).toBe(true)
+    // unlocked at 5h, lesson then, four right answers: 4h 8h 23h 47h, each on the hour
+    let time = at(5).getTime()
+    for (const h of [4, 8, 23, 47]) time = Math.floor((time + h * H) / H) * H
+    expect(up.chained.getTime()).toBe(time)
+  })
+
+  it('has no chained time for a locked kanji none of the level’s radicals hold', () => {
+    const locked = { ...kanji('locked', null, null), components: [99] }
+    const up = earliestLevelUp([kanji('apprentice', 4, at(1)), locked], systems, 2, NOW, [])
+    expect(up.chained).toBeNull()
+  })
+
   it('has nothing to project once the threshold is met', () => {
     expect(earliestLevelUp([], systems, 0, NOW)).toBeNull()
   })

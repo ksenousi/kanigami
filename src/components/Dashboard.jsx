@@ -178,7 +178,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             ...held,
             totals,
             milestones: milestones(started, now, totals),
-            levelUp: srs ? earliestLevelUp(kanji, srs, passed.remaining, now) : null,
+            levelUp: srs ? earliestLevelUp(kanji, srs, passed.remaining, now, radicalItems) : null,
             waitingOn: srs ? levelUpKanji(kanji, srs, passed.remaining, now) : [],
             // The level's own system — the accelerated one on levels 1–2.
             fastest: srs ? fastestLevel(srs.get(kanji.find(k => k.system)?.system)) : null,
@@ -445,25 +445,31 @@ function Figures({ board }) {
 // The head says the day and the count against the 90%. Beneath, a
 // hairline of the level's every kanji in the grid's order — passed, then
 // apprentice by stage, then lessons, then locked — with a mark where the
-// 90% WaniKani levels you up at falls, and the counts by state. Then three
-// reads: what is next, the level-up, and the next level at the dial's pace.
+// 90% WaniKani levels you up at falls, and the counts by state. Then the
+// reads: what is next, what the level-up waits on, and the next level —
+// fastest, at your median, and at the dial when it has been moved.
 // A sentence once led it — `32 kanji to level 18, 9 still locked` — and went
 // at the owner's word: the hairline, the counts and the level-up said it all.
 //
-// Every state is WaniKani's, read off an assignment. The earliest level-up
-// runs WaniKani's own intervals and the date runs the dial; both are
+// Every state is WaniKani's, read off an assignment. The fastest level-up
+// runs WaniKani's own intervals and the dates run a pace; all are
 // projections, and the line beneath says so.
+// Apprentice IV is drawn at full accent, so it keys apart from the rest of
+// apprentice. Passed keys even at none: its colour is the one being worked
+// towards, and a strip of no passes has to say what one looks like.
 const STATES = [
   ['passed', 'passed'],
+  ['four', 'apprentice IV'],
   ['apprentice', 'apprentice'],
   ['lesson', 'in lessons'],
   ['locked', 'locked']
 ]
+const stateOf = k => (k.state === 'apprentice' && k.stage === 4 ? 'four' : k.state)
 
 function LevelLine({ board, level, perLevel }) {
   const { passed, needed, remaining, total } = board.passed
   const kanji = board.kanji
-  const tally = Object.fromEntries(STATES.map(([state]) => [state, kanji.filter(k => k.state === state).length]))
+  const tally = Object.fromEntries(STATES.map(([state]) => [state, kanji.filter(k => stateOf(k) === state).length]))
   const p = board.pace
   const onLevel = p?.current?.days
   const day = onLevel !== undefined ? Math.floor(onLevel) + 1 : null
@@ -471,7 +477,16 @@ function LevelLine({ board, level, perLevel }) {
   const levelUp = board.levelUp
   // The level's radicals that have not passed: what the locked kanji wait on.
   const radicalsShort = Array.isArray(board.radicals) ? board.radicals.filter(r => r.state !== 'passed').length : null
-  const ahead = !top && perLevel !== null && p ? project(p, level, perLevel, board.now, levelUp?.at ?? null) : null
+  // The fastest the next level can come, every answer right — through the
+  // locked kanji's radicals when it waits on them — and the next level at
+  // your median and, when it has been moved off it, at the dial. Neither pace
+  // can beat the fastest.
+  const fastest = levelUp?.at ?? levelUp?.chained ?? null
+  const median = p?.median != null ? toStep(p.median) : null
+  const at = days => (!top && days !== null && p ? project(p, level, days, board.now, fastest)?.startOf(level + 1) : null)
+  const atMedian = at(median)
+  const atDial = perLevel !== median ? at(perLevel) : null
+  const ahead = Boolean(fastest || atMedian || atDial)
   const holders = holdersOf(board.behind)
 
   const next = board.next
@@ -482,7 +497,7 @@ function LevelLine({ board, level, perLevel }) {
   else if (levelUp?.waitsOnLocked) {
     up = `Waits on ${many(tally.locked)} locked kanji`
     if (radicalsShort) up += ` · ${radicalsShort} of the level’s radicals not passed yet`
-  } else if (levelUp?.at) up = `Earliest ${when(levelUp.at)}`
+  }
 
   return (
     <section className="level-line">
@@ -503,7 +518,7 @@ function LevelLine({ board, level, perLevel }) {
         <>
           <div className="states" aria-hidden="true">
             {kanji.map(k => (
-              <span key={k.id} className={k.state === 'apprentice' && k.stage === 4 ? 'apprentice four' : k.state}>
+              <span key={k.id} className={stateOf(k) === 'four' ? 'apprentice four' : k.state}>
                 <i />
                 {/* A locked kanji wears its own character, and under it the
                     radicals holding it — the strip says what the lock is. */}
@@ -526,7 +541,7 @@ function LevelLine({ board, level, perLevel }) {
             ) : null}
           </div>
           <p className="tally">
-            {STATES.filter(([state]) => tally[state] > 0).map(([state, word]) => (
+            {STATES.filter(([state]) => tally[state] > 0 || state === 'passed').map(([state, word]) => (
               <span key={state}>
                 <i className={state} aria-hidden="true" />
                 {many(tally[state])} {word}
@@ -559,19 +574,27 @@ function LevelLine({ board, level, perLevel }) {
         ) : null}
         {ahead ? (
           <div>
-            <span className="what">at your pace</span>
-            <span>
-              Level {level + 1} ≈ {dayMonth(ahead.startOf(level + 1))}, {dayCount(perLevel)} days a level
-            </span>
+            <span className="what">level {level + 1}</span>
+            {fastest ? <span>Fastest {when(fastest, board.now)}</span> : null}
+            {atMedian ? (
+              <span>
+                At your median ≈ {dayMonth(atMedian)}, {dayCount(median)} days a level
+              </span>
+            ) : null}
+            {atDial ? (
+              <span>
+                At the dial ≈ {dayMonth(atDial)}, {dayCount(perLevel)} days a level
+              </span>
+            ) : null}
           </div>
         ) : null}
       </div>
-      {levelUp?.at || ahead || board.behind?.blockers.some(b => b.at) ? (
+      {ahead || board.behind?.blockers.some(b => b.at) ? (
         <p className="notes">
           <span className="proj">
             {[
-              levelUp?.at || board.behind?.blockers.some(b => b.at) ? 'Soonest and earliest assume every answer is right' : null,
-              ahead ? '≈ at the dial’s pace' : null
+              fastest || board.behind?.blockers.some(b => b.at) ? 'Fastest and soonest assume every answer is right' : null,
+              atMedian || atDial ? '≈ at a pace, from now' : null
             ]
               .filter(Boolean)
               .join(' · ')}

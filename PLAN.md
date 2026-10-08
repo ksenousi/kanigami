@@ -1854,3 +1854,18 @@ tablet's ladder — the date under its label — is now the ladder everywhere.
 radicals over the level's grid — and the tap that lit the kanji each one
 holds — came out. The grid keeps only the radicals set small under each
 locked kanji.
+
+**The next level, three ways; the strip's key complete.** Asked for: the
+level line's `at your pace` read to show more than one possibility. The read
+is now `level 18`, with `Fastest Mon 12 Oct 01:00` (every answer right, on
+WaniKani's intervals), `At your median ≈ 23 Oct, 18.5 days a level`, and `At
+the dial ≈ …` only when the dial has been moved off the median. Neither pace
+can come before the fastest. The level-up read's `Earliest …` moved into
+`Fastest`; the level-up read stays for `Ready` and `Waits on N locked kanji`.
+When the level-up waits on locked kanji, `earliestLevelUp` now also returns
+`chained`: each locked kanji unlocks when the last of its level's radicals
+passes at the soonest, takes its lesson then, and runs the apprentice stages
+— still WaniKani's table, still a projection. A locked kanji no radical of
+the level holds gets no time. Also reported: no colour key for guru. The
+key hid `passed` at none, and apprentice IV, drawn at full accent, had no
+swatch of its own; `passed` now always keys and `apprentice IV` keys apart.

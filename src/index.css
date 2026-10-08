@@ -1837,7 +1837,8 @@ button.quiet {
   background: color-mix(in srgb, var(--accent) 55%, var(--ground));
 }
 
-.board .level-line .apprentice.four > i {
+.board .level-line .apprentice.four > i,
+.board .level-line i.four {
   background: var(--accent);
 }
 
