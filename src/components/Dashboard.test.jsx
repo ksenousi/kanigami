@@ -553,7 +553,8 @@ describe('the level line', () => {
     const host = await board()
     await settle()
     expect(line(host)).toContain('山 up at')
-    expect(line(host)).toContain('Waits on 1 locked kanji · 1 of the level’s radicals not passed yet')
+    expect(line(host)).toContain('Waits on 1 locked kanji')
+    expect(line(host)).not.toContain('radicals not passed')
   })
 
   it('says which radical holds which locked kanji', async () => {

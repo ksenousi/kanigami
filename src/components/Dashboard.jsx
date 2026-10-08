@@ -475,8 +475,6 @@ function LevelLine({ board, level, perLevel }) {
   const day = onLevel !== undefined ? Math.floor(onLevel) + 1 : null
   const top = level >= TOP_LEVEL
   const levelUp = board.levelUp
-  // The level's radicals that have not passed: what the locked kanji wait on.
-  const radicalsShort = Array.isArray(board.radicals) ? board.radicals.filter(r => r.state !== 'passed').length : null
   // The fastest the next level can come, every answer right — through the
   // locked kanji's radicals when it waits on them — and the next level at
   // your median and, when it has been moved off it, at the dial. Neither pace
@@ -494,10 +492,8 @@ function LevelLine({ board, level, perLevel }) {
   if (top || total === 0) up = null
   else if (remaining === 0) up = 'Ready — WaniKani levels you up on its next look'
   else if (levelUp === undefined) up = 'Reading…'
-  else if (levelUp?.waitsOnLocked) {
-    up = `Waits on ${many(tally.locked)} locked kanji`
-    if (radicalsShort) up += ` · ${radicalsShort} of the level’s radicals not passed yet`
-  }
+  // Which radicals hold them is the holding line's to say, radical by radical.
+  else if (levelUp?.waitsOnLocked) up = `Waits on ${many(tally.locked)} locked kanji`
 
   return (
     <section className="level-line">

@@ -1792,8 +1792,9 @@ mono line pinned under the masthead. **A was picked**; B, C and D rejected.
   apprentice the accent at 55% (full at stage 4), lessons faint, locked
   `--rule` — with a strong hairline at the 90% mark, named `32 needed` to
   its left; the counts by state; and three reads, labelled in lowercase
-  mono: `next`, `level-up` (earliest, or `Waits on 9 locked kanji · 3 of the
-  level's radicals not passed yet`), `at your pace` (`Level 18 ≈ 18 Oct, 14
+  mono: `next`, `level-up` (earliest, or `Waits on 9 locked kanji` — once
+  with a count of the level's radicals not passed, dropped as the holding
+  line under it names each one), `at your pace` (`Level 18 ≈ 18 Oct, 14
   days a level`, from the dial). A projection line under them.
 - **The level's radicals are read up front** now, in the commentary, for
   that count, on the owner's say-so; the grid's switch uses them rather than
