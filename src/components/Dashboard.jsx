@@ -3,6 +3,7 @@ import {
   getLevelAssignments,
   getLevelKanji,
   getLevelRadicals,
+  getLevelVocabulary,
   getLevelKanjiSubjects,
   getLevelProgressions,
   getReviewStatistics,
@@ -450,11 +451,17 @@ function percent(fraction) {
 // How far is the figure's job, so the notes do not say `8 to level 16`
 // again; they say how long, what is next, and the soonest it could end.
 //
-// **The heading switches the grid between the level's kanji and its
-// radicals** — two words beside `level 16`, the chosen one lit — rather
-// than a fold of radicals under the kanji, which read as one more section
-// head. The radicals are read the first time they are asked for.
-const KINDS = ['kanji', 'radicals']
+// **The heading switches the grid between the level's kanji, its radicals
+// and its vocabulary** — words beside `level 16`, the chosen one lit —
+// rather than a fold under the kanji, which read as one more section head.
+// The radicals and the vocabulary are each read the first time they are
+// asked for. Words are as long as they are, so they flow rather than sit in
+// the kanji's eight columns, a step down from the kanji's size.
+const KINDS = ['kanji', 'radicals', 'vocab']
+const OTHERS = {
+  radicals: { read: getLevelRadicals, noun: 'radicals', one: 'a radical' },
+  vocab: { read: getLevelVocabulary, noun: 'vocabulary', one: 'a word' }
+}
 
 function Level({ board, level, token }) {
   const { passed, needed } = board.passed
@@ -462,30 +469,33 @@ function Level({ board, level, token }) {
   const onLevel = board.pace?.current?.days
   const [reading, setReading] = useState(null)
   const [showing, setShowing] = useState('kanji')
-  const [radicals, setRadicals] = useState(null)
+  // Per kind: null until asked for, then 'reading', 'failed' or the items.
+  const [others, setOthers] = useState({ radicals: null, vocab: null })
 
-  function readRadicals() {
-    setRadicals('reading')
-    getLevelRadicals(token, level)
-      .then(([subjects, assignments]) => setRadicals(levelKanji(subjects, assignments)))
-      .catch(() => setRadicals('failed'))
+  function readOther(kind) {
+    setOthers(o => ({ ...o, [kind]: 'reading' }))
+    OTHERS[kind]
+      .read(token, level)
+      .then(([subjects, assignments]) => setOthers(o => ({ ...o, [kind]: levelKanji(subjects, assignments) })))
+      .catch(() => setOthers(o => ({ ...o, [kind]: 'failed' })))
   }
 
   function show(kind) {
     setShowing(kind)
     setReading(null)
-    if (kind === 'radicals' && (radicals === null || radicals === 'failed')) readRadicals()
+    if (OTHERS[kind] && (others[kind] === null || others[kind] === 'failed')) readOther(kind)
   }
 
-  const onRadicals = showing === 'radicals'
-  const radicalsPassed = Array.isArray(radicals) ? radicals.filter(r => r.state === 'passed').length : null
+  const other = OTHERS[showing]
+  const items = other ? others[showing] : board.kanji
+  const otherPassed = other && Array.isArray(items) ? items.filter(r => r.state === 'passed').length : null
   // The count leads the notes rather than sitting in the head, which the
   // switch fills. `20 of 29 passed` read as the level's size, and the grid
   // shows more cells than that: 29 is the 90% WaniKani asks for, so it says
-  // needed. The radicals have no threshold; all of them unlock the kanji.
-  const count = onRadicals
-    ? radicalsPassed !== null
-      ? `${radicalsPassed} of ${radicals.length} passed`
+  // needed. Radicals and vocabulary have no threshold, so they say of all.
+  const count = other
+    ? otherPassed !== null
+      ? `${otherPassed} of ${items.length} passed`
       : null
     : `${passed} passed · ${needed} needed`
 
@@ -506,23 +516,28 @@ function Level({ board, level, token }) {
         </h2>
       </div>
       <div className="body">
-        {!onRadicals ? (
+        {!other ? (
           <Grid items={board.kanji} label={`Level ${level} kanji`} onRead={setReading} />
-        ) : radicals === null || radicals === 'reading' ? (
+        ) : items === null || items === 'reading' ? (
           <p className="notes" role="status">
-            <span className="hint">Reading radicals…</span>
+            <span className="hint">Reading {other.noun}…</span>
           </p>
-        ) : radicals === 'failed' ? (
+        ) : items === 'failed' ? (
           <p className="notes row hot" role="alert">
-            <span>The radicals did not load</span>
-            <button className="quiet" type="button" onClick={readRadicals}>
+            <span>The {other.noun} did not load</span>
+            <button className="quiet" type="button" onClick={() => readOther(showing)}>
               Try again
             </button>
           </p>
-        ) : radicals.length === 0 ? (
-          <p className="notes">No radicals at this level</p>
+        ) : items.length === 0 ? (
+          <p className="notes">No {other.noun} at this level</p>
         ) : (
-          <Grid items={radicals} label={`Level ${level} radicals`} onRead={setReading} />
+          <Grid
+            items={items}
+            label={`Level ${level} ${other.noun}`}
+            onRead={setReading}
+            words={showing === 'vocab'}
+          />
         )}
       </div>
       <p className="notes readout" aria-live="polite">
@@ -531,7 +546,7 @@ function Level({ board, level, token }) {
           {onLevel !== undefined ? (
             <span className="soft">Day {Math.floor(onLevel) + 1} on this level</span>
           ) : null}
-          {next && !onRadicals ? (
+          {next && !other ? (
             <span className="soft">
               {/* A handful reads as characters; a batch of a dozen from one
                   lesson session is a wall of them, and the count says more. */}
@@ -544,7 +559,7 @@ function Level({ board, level, token }) {
           ) : null}
           <LevelUpLine levelUp={board.levelUp} level={level} />
           <Hint pointer="Point at" touch="Tap">
-            {onRadicals ? 'a radical' : 'a kanji'} for its next review,{' '}
+            {other ? other.one : 'a kanji'} for its next review,{' '}
             <span className="by-pointer">click</span>
             <span className="by-touch">again</span> for its WaniKani page
           </Hint>
@@ -562,7 +577,7 @@ function Level({ board, level, token }) {
   )
 }
 
-// One grid of the level's subjects, kanji or radicals. `onRead` hears the
+// One grid of the level's subjects — kanji, radicals or words. `onRead` hears the
 // item under the pointer or the keyboard, and null when both leave.
 //
 // Each cell links out to its WaniKani page. A mouse clicks through, since
@@ -570,9 +585,12 @@ function Level({ board, level, token }) {
 // so tapping for the next review never leaves the board. Enter opens the
 // cell the arrows are on. The links stay out of the tab order, which the
 // grid already walks as one stop.
+//
+// `words` lets the cells run as wide as their word, so a row holds as many
+// as fit; up and down then go to the word nearest above or below.
 const ACROSS = 8
 
-function Grid({ items, label, onRead }) {
+function Grid({ items, label, onRead, words = false }) {
   const { at, point, groupProps, itemProps } = usePointing(i => onRead(i === null ? null : items[i]))
   const opens = useRef(true)
 
@@ -580,7 +598,9 @@ function Grid({ items, label, onRead }) {
     const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -ACROSS, ArrowDown: ACROSS }[event.key]
     if (step) {
       event.preventDefault()
-      point(at === null ? 0 : Math.min(items.length - 1, Math.max(0, at + step)))
+      if (at === null) point(0)
+      else if (words && Math.abs(step) === ACROSS) point(below(event.currentTarget, at, Math.sign(step)) ?? at)
+      else point(Math.min(items.length - 1, Math.max(0, at + step)))
     }
     if (event.key === 'Escape') point(null)
     if (event.key === 'Enter' && items[at]?.url) window.open(items[at].url, '_blank', 'noreferrer')
@@ -591,7 +611,13 @@ function Grid({ items, label, onRead }) {
     // are text inside it rather than an aria-label, which a plain list item
     // is not reliably read by. `role="list"` because Safari drops the list
     // role from a list styled without bullets.
-    <ul className="kanji" role="list" aria-label={label} onKeyDown={key} {...groupProps}>
+    <ul
+      className={words ? 'kanji words' : 'kanji'}
+      role="list"
+      aria-label={label}
+      onKeyDown={key}
+      {...groupProps}
+    >
       {items.map((k, i) => (
         <li key={k.id} className={[k.state, at === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
           <a
@@ -629,6 +655,24 @@ function Grid({ items, label, onRead }) {
       ))}
     </ul>
   )
+}
+
+// In a flowing list, the cell on the next row up (`way` -1) or down (+1)
+// whose centre sits nearest the one at `at`; null at the edge.
+function below(list, at, way) {
+  const cells = [...(list?.children ?? [])].map(el => el.getBoundingClientRect())
+  const from = cells[at]
+  if (!from) return null
+  const rows = cells.map(r => r.top).filter(top => (top - from.top) * way > 1)
+  if (rows.length === 0) return null
+  const row = way > 0 ? Math.min(...rows) : Math.max(...rows)
+  const centre = r => r.left + r.width / 2
+  let best = null
+  cells.forEach((r, i) => {
+    if (Math.abs(r.top - row) > 1) return
+    if (best === null || Math.abs(centre(r) - centre(from)) < Math.abs(centre(cells[best]) - centre(from))) best = i
+  })
+  return best
 }
 
 // When WaniKani next asks for it, read off the assignment — never worked out.

@@ -158,6 +158,17 @@ export function getLevelRadicals(token, level) {
   ])
 }
 
+// The level's vocabulary, kana-only words included, and what you have
+// reached of it — the same pair again, for the third word in the level's
+// head. A level holds up to a couple of hundred words: one or two pages
+// each, and still only the subjects on screen, read only when asked for.
+export function getLevelVocabulary(token, level) {
+  return Promise.all([
+    collection(token, `/subjects?types=vocabulary,kana_vocabulary&levels=${level}&hidden=false`),
+    collection(token, `/assignments?levels=${level}&subject_types=vocabulary,kana_vocabulary&hidden=false`)
+  ])
+}
+
 // Lifetime right and wrong answers per subject — the dashboard's accuracy
 // and what keeps slipping. Paginated like the started assignments and about
 // as large, so it is read once on mount and never on a timer. Retired

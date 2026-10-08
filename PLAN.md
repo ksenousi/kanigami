@@ -1722,3 +1722,19 @@ dropped into column one, and auto-placement put the next label beside it.
 Each label is pinned to column one now. Checked for horizontal overflow at
 320, 375, 430, 600, 700, 744, 820, 1180, 1280, 1440 and 1920 against the
 fake.
+
+**The level's vocabulary is the switch's third word** (`level 15 · kanji
+radicals vocab`). Asked for by the owner directly — the earlier "no vocab
+breakdowns" ruling was about per-type splits, filters and unlock counts,
+not this. Read like the radicals, only on first asking:
+`/subjects?types=vocabulary,kana_vocabulary&levels=N` and its assignments,
+`hidden=false` on both — still only the subjects on screen. Same states,
+same `levelKanji` ordering, same readout and links; the notes say
+`11 of 45 passed`, the hint says `a word`. Words are as wide as they are,
+so they flow rather than sit in eight columns, at `--input` rather than
+`--display-lg`, the underline as wide as the word; up and down on the
+keyboard go to the nearest word on the next row. A level holds a hundred
+or more, so **the list stops at 360px and scrolls inside itself,
+vertically only** (`overflow-x: hidden`, `overscroll-behavior: contain`).
+The fake gains 45 words, three of them kana-only, and `?fake=vocab-fail`.
+Checked at 375, 820 and 1440: no sideways scroll anywhere.

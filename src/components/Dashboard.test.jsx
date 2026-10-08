@@ -15,6 +15,7 @@ vi.mock('../lib/wanikani.js', () => ({
   getLevelKanji: vi.fn(),
   getLevelKanjiSubjects: vi.fn(),
   getLevelRadicals: vi.fn(),
+  getLevelVocabulary: vi.fn(),
   getReviewStatistics: vi.fn(),
   getLevelProgressions: vi.fn(),
   getSpacedRepetitionSystems: vi.fn(),
@@ -54,6 +55,7 @@ function answer() {
   api.getSubjects.mockResolvedValue([])
   api.getSubjectTotals.mockResolvedValue({ radical: 10, kanji: 20, vocabulary: 30 })
   api.getLevelRadicals.mockResolvedValue([[], []])
+  api.getLevelVocabulary.mockResolvedValue([[], []])
   api.getAllKanjiSubjects.mockResolvedValue([])
 }
 
@@ -528,6 +530,40 @@ describe('the level’s kanji', () => {
     expect(host.querySelector('.level .kanji').textContent).toContain('山')
     await click(button(host, 'radicals'))
     expect(api.getLevelRadicals).toHaveBeenCalledOnce()
+  })
+
+  it('switches the grid to the level’s vocabulary, flowing words, reading them once', async () => {
+    api.getLevelVocabulary.mockResolvedValue([
+      [
+        { id: 41, data: { characters: '山道', meanings: [{ meaning: 'Mountain Road', primary: true }], lesson_position: 0 } },
+        { id: 42, data: { characters: 'すごい', meanings: [{ meaning: 'Amazing', primary: true }], lesson_position: 1 } }
+      ],
+      [{ data: { subject_id: 41, srs_stage: 5, started_at: new Date().toISOString(), passed_at: new Date().toISOString() } }]
+    ])
+    const host = await board()
+    await click(button(host, 'vocab'))
+    await settle()
+    const words = host.querySelector('.level .kanji.words')
+    expect(words.textContent).toContain('山道')
+    expect(words.textContent).toContain('すごい')
+    expect(host.querySelector('.level .readout').textContent).toContain('1 of 2 passed')
+    expect(host.querySelector('.level .readout').textContent).toContain('a word')
+    await click(button(host, 'kanji'))
+    expect(host.querySelector('.level .kanji.words')).toBeNull()
+    await click(button(host, 'vocab'))
+    expect(api.getLevelVocabulary).toHaveBeenCalledOnce()
+  })
+
+  it('offers to try the vocabulary again when it fails to load', async () => {
+    api.getLevelVocabulary.mockRejectedValueOnce(new TypeError('Load failed'))
+    const host = await board()
+    await click(button(host, 'vocab'))
+    await settle()
+    expect(host.querySelector('.level [role="alert"]').textContent).toContain('The vocabulary did not load')
+    await click(button(host, 'Try again'))
+    await settle()
+    expect(api.getLevelVocabulary).toHaveBeenCalledTimes(2)
+    expect(host.querySelector('.level [role="alert"]')).toBeNull()
   })
 
   it('opens a kanji’s WaniKani page on a second tap, never the first', async () => {

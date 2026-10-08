@@ -987,6 +987,30 @@ button.quiet {
   position: relative;
 }
 
+/* The level's words: each cell as wide as its word, a step down from the
+   kanji, flowing as many to a row as fit. A level holds a hundred or more,
+   so the list keeps to about the kanji grid's height and scrolls inside
+   itself, top to bottom only. */
+.board .kanji.words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 22px;
+  max-height: 360px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+}
+
+.board .kanji.words .character {
+  font-size: var(--input);
+  white-space: nowrap;
+}
+
+.board .kanji.words .underline {
+  width: 100%;
+}
+
 /* Each cell is a link out to WaniKani, drawn as nothing but the cell. */
 .board .kanji .open {
   display: flex;

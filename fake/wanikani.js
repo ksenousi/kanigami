@@ -14,6 +14,7 @@
 //   offline        every request fails as if the network were gone
 //   revoked        WaniKani refuses the token (401)
 //   radicals-fail  the level's radicals do not load when switched to
+//   vocab-fail     the level's vocabulary does not load when switched to
 ;(() => {
   const scenario = new URLSearchParams(location.search).get('fake') || 'default'
   const TOKEN = '00000000-0000-0000-0000-000000000000'
@@ -84,6 +85,27 @@
     data: { level: LEVEL, characters, meanings: [{ meaning, primary: true }], lesson_position: i, spaced_repetition_system_id: system }
   }))
   const radicalAssignments = radicalSubjects.slice(0, -1).map((s, i) => assign(s, 'radical', i < 4 ? [5, 30] : [3, 14]))
+
+  // --- the level's vocabulary: enough words to make the list scroll ---
+  const WORDS = fresh
+    ? [['大きい', 'big'], ['山', 'mountain'], ['人口', 'population'], ['入る', 'to enter']]
+    : [['工場', 'factory'], ['言葉', 'words'], ['お金', 'money'], ['竹', 'bamboo'], ['石油', 'oil'], ['耳', 'ear'],
+       ['図書館', 'library'], ['大学生', 'university student'], ['自動販売機', 'vending machine'], ['金曜日', 'Friday'],
+       ['言う', 'to say'], ['工事', 'construction'], ['石', 'stone'], ['耳鼻科', 'ENT clinic'], ['竹の子', 'bamboo shoot'],
+       ['方言', 'dialect'], ['金色', 'gold colour'], ['大工', 'carpenter'], ['人工', 'artificial'], ['石川', 'Ishikawa'],
+       ['工夫', 'device'], ['言語', 'language'], ['お金持ち', 'rich person'], ['宝石', 'gem'], ['小石', 'pebble'],
+       ['すごい', 'amazing'], ['ちょっと', 'a little'], ['いつも', 'always'], ['金魚', 'goldfish'], ['伝言', 'message'],
+       ['名言', 'famous saying'], ['工業', 'industry'], ['竹林', 'bamboo grove'], ['磁石', 'magnet'], ['耳たぶ', 'earlobe'],
+       ['加工', 'processing'], ['無言', 'silence'], ['料金', 'fee'], ['現金', 'cash'], ['税金', 'tax'],
+       ['貯金', 'savings'], ['断言', 'assertion'], ['化石', 'fossil'], ['初耳', 'news to me'], ['手工芸', 'handicraft']]
+  const vocabSubjects = WORDS.map(([characters, meaning], i) => ({
+    id: 4000 + i,
+    object: i >= 25 && i < 28 ? 'kana_vocabulary' : 'vocabulary',
+    data: { level: LEVEL, characters, meanings: [{ meaning, primary: true }], lesson_position: i, spaced_repetition_system_id: system }
+  }))
+  const vocabAssignments = vocabSubjects
+    .slice(0, Math.ceil(vocabSubjects.length * 0.7))
+    .map((s, i) => assign(s, s.object, i % 3 === 0 ? [5, 40] : [1 + (i % 4), 3 + i]))
 
   // --- everything started: the spread, taught, the week ---
   const started = [...kanjiAssignments]
@@ -279,6 +301,8 @@
     [/\/subjects\?types=kanji&levels=/, () => page(kanjiSubjects), 'core'],
     [/\/subjects\?types=radical&levels=/, () => page(radicalSubjects), 'radicals'],
     [/\/assignments\?levels=\d+&subject_types=radical/, () => page(radicalAssignments), 'radicals'],
+    [/\/subjects\?types=vocabulary,kana_vocabulary&levels=/, () => page(vocabSubjects), 'vocab'],
+    [/\/assignments\?levels=\d+&subject_types=vocabulary/, () => page(vocabAssignments), 'vocab'],
     [/\/level_progressions/, () => page(progressions), 'commentary'],
     [/\/review_statistics/, () => page(statistics), 'commentary'],
     [/\/spaced_repetition_systems/, () => page(systems), 'commentary'],
@@ -293,7 +317,7 @@
     [/\/subjects\?types=kanji&hidden/, everyKanji, 'commentary'],
     [/\/subjects\?types=vocabulary,kana_vocabulary&hidden/, () => ({ total_count: 6750, data: [] }), 'commentary']
   ]
-  const DELAY = scenario === 'slow' ? { core: 1000, commentary: 2500, radicals: 1000 } : {}
+  const DELAY = scenario === 'slow' ? { core: 1000, commentary: 2500, radicals: 1000, vocab: 1000 } : {}
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
   const real = window.fetch.bind(window)
@@ -313,6 +337,7 @@
     }
     const [, answer, kind] = route
     if (scenario === 'radicals-fail' && kind === 'radicals') throw new TypeError('Load failed')
+    if (scenario === 'vocab-fail' && kind === 'vocab') throw new TypeError('Load failed')
     if (DELAY[kind]) await wait(DELAY[kind])
     return new Response(JSON.stringify(await answer(url)), { status: 200, headers: { 'Content-Type': 'application/json' } })
   }

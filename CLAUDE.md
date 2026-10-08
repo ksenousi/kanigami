@@ -32,7 +32,7 @@ the last commit holding them is `03a7aa7` — and PLAN.md describes them.
 | What | Command |
 |---|---|
 | Dev server (:5173) | `npm run dev` |
-| Same, against a fake WaniKani — no token | `npm run dev:fake`, then `?fake=fresh` / `slow` / `offline` / `revoked` / `radicals-fail` |
+| Same, against a fake WaniKani — no token | `npm run dev:fake`, then `?fake=fresh` / `slow` / `offline` / `revoked` / `radicals-fail` / `vocab-fail` |
 | Build | `npm run build` |
 | Tests | `npm test` (only `src`; worktree copies are left out by `vite.config.js`) |
 | Lint | `npm run lint` |
@@ -47,7 +47,7 @@ the last commit holding them is `03a7aa7` — and PLAN.md describes them.
   Keep projections labelled as projections, and keep them out of anything
   that reads as WaniKani's record.
 - **Never bulk-sync the subject database — with one sanctioned exception.**
-  Fetch only the subjects on screen — the level's kanji, the ten slipping
+  Fetch only the subjects on screen — the level's kanji (and its radicals or vocabulary when switched to), the ten slipping
   items, and when their lens opens, the look-alikes and the field's sixty. A full sync is the offline feature this app deliberately does not
   have. The exception, on the owner's say-so: coverage reads every kanji
   subject (`getAllKanjiSubjects`, ~2,100, ~4 MB) at most once a week and
