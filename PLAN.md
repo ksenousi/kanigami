@@ -1758,8 +1758,20 @@ to move things around. Built without a prototype:
   only, so those two lines stay at now and fade, and the projection line
   says `radicals and vocabulary stay at what is taught now`. Counting them
   ahead would mean a weekly read of every radical and vocabulary subject:
-  around 7,000 more, many megabytes. Not built, and only on the owner's
-  say-so.
+  around 7,000 more, many megabytes. *(Built straight after — below.)*
 - **The dial shows the span.** The bars from the next level through the
   slider's level are a step brighter than the rest of what is ahead, and
   the slider's level is numbered under them.
+
+**Radicals and vocabulary ahead, too.** With the cost laid out — about
+7,200 subjects in eight pages, some 30–40 MB of JSON (the words carry their
+audio), weekly per device — the owner said to include it. The second
+exception to "never bulk-sync": `getAllRadicalAndVocabularySubjects`, kept a
+week as id, level and type only (`aheadIndex.js`, a stale copy kept if the
+refresh fails), its own phase so nothing waits on it. `aheadByLevel` counts,
+for each level, the radicals and words at or below it not yet started.
+Through a later level every taught line gains its `+N` in its own colour,
+and the head's share of all WaniKani moves with them; until the read lands,
+or if it fails, the pre-read behaviour stands — kanji only, the other two
+lines faded, and the line saying so. The fake deals a stand-in 499 radicals
+and 6,750 words.

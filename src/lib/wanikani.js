@@ -217,6 +217,17 @@ export function getAllKanjiSubjects(token) {
   return collection(token, '/subjects?types=kanji&hidden=false')
 }
 
+// Every radical and word WaniKani teaches, at every level — for taught's
+// slider, which has to know what each level ahead will add. **The second
+// read that bends "never bulk-sync"**, on the owner's say-so once its cost
+// was laid out: about 7,200 subjects in eight pages, some 30–40 MB of JSON
+// (the words carry their audio), read at most once a week and kept as id,
+// level and type only (`aheadIndex`). Nothing else from it is stored or
+// shown.
+export function getAllRadicalAndVocabularySubjects(token) {
+  return collection(token, '/subjects?types=radical,vocabulary,kana_vocabulary&hidden=false')
+}
+
 // An id filter goes in the query string, and a full review queue is enough
 // ids to make that string unreasonable. Chunk it.
 function chunked(ids, size = 500) {

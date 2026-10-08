@@ -21,7 +21,8 @@ vi.mock('../lib/wanikani.js', () => ({
   getSpacedRepetitionSystems: vi.fn(),
   getSubjects: vi.fn(),
   getSubjectTotals: vi.fn(),
-  getAllKanjiSubjects: vi.fn()
+  getAllKanjiSubjects: vi.fn(),
+  getAllRadicalAndVocabularySubjects: vi.fn()
 }))
 
 const TOKEN = '00000000-0000-0000-0000-000000000000'
@@ -57,6 +58,7 @@ function answer() {
   api.getLevelRadicals.mockResolvedValue([[], []])
   api.getLevelVocabulary.mockResolvedValue([[], []])
   api.getAllKanjiSubjects.mockResolvedValue([])
+  api.getAllRadicalAndVocabularySubjects.mockRejectedValue(new Error('not in this test'))
 }
 
 // Wait for something drawn by a later phase — coverage waits on a lazily
@@ -482,13 +484,31 @@ describe('coverage', () => {
     expect(host.querySelector('.forward .through').textContent).toContain('Through level 20')
   })
 
-  it('moves taught’s kanji line with the same slider, and only that line', async () => {
+  it('moves only taught’s kanji line when the radicals and words ahead could not be read', async () => {
     const host = await board()
     await until(host, '.cover')
     await through(host, 20)
     const fills = host.querySelector('.fills').textContent
     expect(fills).toContain('+2 3 kanji')
     expect(host.querySelectorAll('.fills .still')).toHaveLength(2)
+    expect(host.querySelector('.forward .through').textContent).toContain('radicals and vocabulary stay')
+  })
+
+  it('moves every taught line once the radicals and words ahead are read', async () => {
+    // A radical at level 10 and two words at levels 12 and 30, none started.
+    api.getAllRadicalAndVocabularySubjects.mockResolvedValue([
+      { id: 40, object: 'radical', data: { level: 10 } },
+      { id: 41, object: 'vocabulary', data: { level: 12 } },
+      { id: 42, object: 'kana_vocabulary', data: { level: 30 } }
+    ])
+    const host = await board()
+    await until(host, '.cover')
+    await settle()
+    await through(host, 20)
+    const fills = host.querySelector('.fills').textContent
+    expect(fills).toContain('+1 1 radicals')
+    expect(fills).toContain('+1 1 vocabulary')
+    expect(host.querySelectorAll('.fills .still')).toHaveLength(0)
   })
 
   it('switches to the Jōyō grades', async () => {

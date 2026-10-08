@@ -1176,20 +1176,25 @@ button.quiet {
   grid-column: 1 / -1;
 }
 
-/* Through a later level: the kanji line's gain faint beyond what is taught,
-   coverage's pattern, and the two lines the slider cannot move stepping
-   back. The kind is `display: contents`, so its cells carry the fade. */
+/* Through a later level: each line's gain faint beyond what is taught,
+   coverage's pattern, its `+N` in the line's own colour, and — until the
+   radicals and words ahead are read — those two lines stepping back. The
+   kind is `display: contents`, so its cells carry the fade. */
 .board .fills .fill {
   position: absolute;
   inset: 0 auto 0 0;
 }
 
-.board .fills .fill.gain {
+.board .fills .fill.gain.wk-radical {
+  background: color-mix(in srgb, var(--subject-radical) 32%, var(--ground));
+}
+
+.board .fills .fill.gain.wk-kanji {
   background: color-mix(in srgb, var(--subject-kanji) 32%, var(--ground));
 }
 
-.board .fills .plus {
-  color: var(--subject-kanji);
+.board .fills .fill.gain.wk-vocabulary {
+  background: color-mix(in srgb, var(--subject-vocabulary) 32%, var(--ground));
 }
 
 .board .fills .still > * {

@@ -42,6 +42,7 @@ import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
 import { kanjiIndex } from '../lib/kanjiIndex.js'
 import { coverage, taughtKanji, throughLevel } from '../lib/coverage.js'
+import { aheadByLevel, aheadIndex } from '../lib/aheadIndex.js'
 import Forecast from './Forecast.jsx'
 import Hint from './Hint.jsx'
 import useOnline from './useOnline.js'
@@ -104,6 +105,9 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
     // largest read the app makes, and the lists are a chunk of their own, so
     // nothing else on the board waits for either.
     const extra = Promise.all([optional(kanjiIndex(token)), optional(import('../lib/kanjiLists.js'))])
+    // Taught's radicals and words ahead: larger still, so it waits on nothing
+    // and nothing waits on it — without it, those two lines stay at now.
+    const later = optional(aheadIndex(token))
 
     core
       .then(([summary, started, levelAssignments, levelSubjects]) => {
@@ -128,6 +132,11 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           next: nextUp(kanji, now),
           passed
         }))
+
+        later.then(index => {
+          if (!live) return
+          setBoard(held => ({ ...held, ahead: index ? aheadByLevel(index, started, TOP_LEVEL) : null }))
+        })
 
         extra.then(([index, lists]) => {
           if (!live) return
@@ -304,6 +313,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             onPace={setChosenPace}
             learned={board.learned}
             totals={board.totals}
+            later={board.ahead}
             milestones={board.milestones}
             coverage={board.coverage}
           />
@@ -1212,12 +1222,16 @@ function paceFor(p, chosen) {
   return p?.median != null ? toStep(p.median) : null
 }
 
-function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, milestones: m, coverage: c }) {
+function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c }) {
   const [through, setThrough] = useState(null)
   // Only a level ahead is a projection; the slider at its start is now. It
   // needs the kanji index, so it waits for coverage's read.
   const at = c && through !== null && through > level ? through : null
-  const gain = at ? throughLevel(c.index, c.taught, at).size - c.taught.size : 0
+  const gains = {
+    radical: at && later ? later.radical[at] : 0,
+    kanji: at ? throughLevel(c.index, c.taught, at).size - c.taught.size : 0,
+    vocabulary: at && later ? later.vocabulary[at] : 0
+  }
 
   return (
     <div className="forward">
@@ -1233,11 +1247,11 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
       />
       <div className="through">
         <div className="pair">
-          <Taught learned={counts} totals={totals} next={m?.next} at={at} gain={gain} />
+          <Taught learned={counts} totals={totals} next={m?.next} at={at} gains={gains} counted={Boolean(later)} />
           <Coverage coverage={c} at={at} />
         </div>
         {c ? (
-          <Through level={level} at={at} onThrough={setThrough} pace={p} now={now} soonest={soonest} perLevel={perLevel} />
+          <Through level={level} at={at} onThrough={setThrough} pace={p} now={now} soonest={soonest} perLevel={perLevel} counted={Boolean(later)} />
         ) : null}
       </div>
     </div>
@@ -1246,10 +1260,10 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
 
 // The slider under taught and coverage: from now to level 60, and what it
 // says — through level L is when L+1 begins, at the dial's pace, so moving
-// the dial moves its date. It counts kanji only: the index behind it is
-// every kanji WaniKani teaches and nothing else, so radicals and vocabulary
-// stay at what is taught now, and the line says so.
-function Through({ level, at, onThrough, pace: p, now, soonest, perLevel }) {
+// the dial moves its date. Radicals and vocabulary are counted from their
+// own index; until it lands, or if it never does, they stay at what is
+// taught now, and the line says so.
+function Through({ level, at, onThrough, pace: p, now, soonest, perLevel, counted }) {
   const ahead = at ? project(p, level, perLevel, now, soonest) : null
   const reachedBy = ahead ? (at >= TOP_LEVEL ? ahead.done : ahead.startOf(at + 1)) : null
 
@@ -1284,8 +1298,8 @@ function Through({ level, at, onThrough, pace: p, now, soonest, perLevel }) {
               {reachedBy ? ` · ≈ ${monthYear(reachedBy)} at ${dayCount(perLevel)} days a level` : ''}
             </span>
             <span className="proj">
-              Projection · once WaniKani has taught you every kanji through level {at} · radicals and vocabulary
-              stay at what is taught now
+              Projection · once WaniKani has taught you everything through level {at}
+              {counted ? '' : ' · radicals and vocabulary stay at what is taught now'}
             </span>
           </>
         ) : (
@@ -1704,31 +1718,37 @@ function caption(s, ahead, perLevel) {
 // Each hairline carries a tick where its next count milestone falls, so the
 // milestones' ladder has a place on the line it counts along.
 //
-// **Through a later level** (`at`, from the slider beneath), the kanji line
-// gains what WaniKani teaches up to there, faint beyond what is taught, with
-// `+N` — coverage's pattern. Radicals and vocabulary have no index to count
-// ahead with, so they stay put and step back, and the head names the level
-// rather than a share of everything that only one line has moved.
-function Taught({ learned: counts, totals, next = [], at = null, gain = 0 }) {
+// **Through a later level** (`at`, from the slider beneath), each line gains
+// what WaniKani teaches up to there, faint beyond what is taught, with `+N` —
+// coverage's pattern — and the head's share of all WaniKani moves with them.
+// Until the radicals and words ahead are read (`counted`), only the kanji
+// line moves: the other two step back and the head names the level instead.
+function Taught({ learned: counts, totals, next = [], at = null, gains = {}, counted = false }) {
   if (counts.total === 0) return null
   const nextOf = kind => next.find(m => m.kind === kind)
 
   const all = totals ? totals.radical + totals.kanji + totals.vocabulary : null
 
   const kinds = [
-    ['radical', counts.radical, totals?.radical, 'radicals', 0],
-    ['kanji', counts.kanji, totals?.kanji, 'kanji', gain],
-    ['vocabulary', counts.vocabulary, totals?.vocabulary, 'vocabulary', 0]
+    ['radical', counts.radical, totals?.radical, 'radicals', gains.radical ?? 0],
+    ['kanji', counts.kanji, totals?.kanji, 'kanji', gains.kanji ?? 0],
+    ['vocabulary', counts.vocabulary, totals?.vocabulary, 'vocabulary', gains.vocabulary ?? 0]
   ]
+  const moved = kinds.reduce((sum, [, , , , more]) => sum + more, 0)
+  const head = !all
+    ? null
+    : at && !counted
+      ? `through level ${at}`
+      : `${share(Math.min(all, counts.total + moved), all)} of all wanikani`
 
   return (
     <section>
-      <Head right={at ? `through level ${at}` : all ? `${share(counts.total, all)} of all wanikani` : null}>taught</Head>
+      <Head right={head}>taught</Head>
       <div className="fills">
         {kinds.map(([kind, now, total, word, more]) => {
           const count = Math.min(total ?? Infinity, now + more)
           return (
-            <div key={kind} className={at && !more ? 'kind still' : 'kind'}>
+            <div key={kind} className={at && !counted && kind !== 'kanji' ? 'kind still' : 'kind'}>
               {/* Without a total there is no track or denominator, so the count
                   takes the whole row rather than one cell of three. */}
               <span className={total ? `wk-${kind}` : `wk-${kind} alone`}>

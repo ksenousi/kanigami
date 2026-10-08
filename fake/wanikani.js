@@ -292,6 +292,25 @@
     return allKanji
   }
 
+  // --- every radical and word WaniKani teaches, for taught's slider ---
+  // The same stand-in: what is started spread over the levels up to this
+  // one, and the rest of the 499 radicals and 6,750 words dealt over the
+  // levels after. Id, level and type are all the app reads.
+  function everyRadicalAndWord() {
+    const subjects = []
+    for (const [kind, total, first] of [['radical', 499, 90000], ['vocabulary', 6750, 100000]]) {
+      const own = started.filter(a => a.data.subject_type === kind)
+      own.forEach((a, i) => {
+        subjects.push({ id: a.data.subject_id, object: kind, data: { level: 1 + Math.floor((i * LEVEL) / Math.max(1, own.length)) } })
+      })
+      const rest = Math.max(0, total - own.length)
+      for (let i = 0; i < rest; i++) {
+        subjects.push({ id: first + i, object: kind, data: { level: LEVEL + 1 + Math.floor((i * (60 - LEVEL)) / rest) } })
+      }
+    }
+    return { ...page(subjects), total_count: subjects.length }
+  }
+
   // --- routing ---
   const ROUTES = [
     [/\/user$/, () => ({ object: 'user', data: { username: 'tester', level: LEVEL } }), 'core'],
@@ -311,6 +330,7 @@
       const ids = new Set(new URL(url).searchParams.get('ids').split(',').map(Number))
       return page([...slippingSubjects, ...kanjiSubjects].filter(s => ids.has(s.id)))
     }, 'commentary'],
+    [/\/subjects\?types=radical,vocabulary,kana_vocabulary&hidden/, everyRadicalAndWord, 'commentary'],
     [/\/subjects\?types=radical&hidden/, () => ({ total_count: 499, data: [] }), 'commentary'],
     // The totals read and coverage's read are the same URL: one page with
     // every kanji, and its total_count.
