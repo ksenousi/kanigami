@@ -107,6 +107,13 @@ describe('the board', () => {
     expect(figures).toContain('2lessons waiting')
   })
 
+  it('leaves the kanji to the next level and the seven days out of the figures', async () => {
+    const host = await board()
+    const figures = host.querySelector('.figures').textContent
+    expect(figures).not.toContain('to level')
+    expect(figures).not.toContain('7 days')
+  })
+
   it('says when the figures were read', async () => {
     const host = await board()
     expect(host.querySelector('.masthead').textContent).toMatch(/read \d/)
@@ -524,6 +531,36 @@ describe('coverage', () => {
     await settle()
     expect(host.querySelector('.cover')).toBeNull()
     expect(host.querySelector('.figures')).toBeTruthy()
+  })
+})
+
+describe('the level line', () => {
+  const line = host => host.querySelector('.level-line').textContent
+
+  it('says how many kanji to the next level, and how many are still locked', async () => {
+    const host = await board()
+    expect(line(host)).toContain('2 kanji to level 6, 1 of the level’s still locked')
+    expect(line(host)).toContain('0 of 2 needed')
+    expect(host.querySelectorAll('.level-line .states i')).toHaveLength(2)
+    expect(host.querySelector('.level-line .tally').textContent).toBe('1 apprentice1 locked')
+  })
+
+  it('says what is up next, and what the locked kanji wait on', async () => {
+    api.getLevelRadicals.mockResolvedValue([
+      [{ id: 31, data: { characters: '工', meanings: [{ meaning: 'Construction', primary: true }], lesson_position: 0 } }],
+      [{ data: { subject_id: 31, srs_stage: 3, started_at: new Date().toISOString() } }]
+    ])
+    const host = await board()
+    await settle()
+    expect(line(host)).toContain('山 up at')
+    expect(line(host)).toContain('Waits on 1 locked kanji · 1 of the level’s radicals not passed yet')
+  })
+
+  it('hands its radicals to the grid’s switch, so they are read once', async () => {
+    const host = await board()
+    await settle()
+    await click(button(host, 'radicals'))
+    expect(api.getLevelRadicals).toHaveBeenCalledOnce()
   })
 })
 

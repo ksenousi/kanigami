@@ -33,8 +33,7 @@ import {
   project,
   road,
   SLIPPING,
-  srsSystems,
-  week
+  srsSystems
 } from '../lib/board.js'
 import { glyphFor, pageFor } from '../lib/subject.js'
 import { clock, count as many, dayMonth, dayMonthYear, monthYear, roughly, weekday, when } from '../lib/dates.js'
@@ -99,7 +98,11 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
       optional(getLevelProgressions(token)),
       optional(subjectTotals(token)),
       optional(getSpacedRepetitionSystems(token)),
-      optional(getLevelAssignments(token, user.level))
+      optional(getLevelAssignments(token, user.level)),
+      // The level's radicals, for the level line's count of what still
+      // holds locked kanji back — read up front now, and handed to the grid's
+      // switch so it never reads them twice.
+      optional(getLevelRadicals(token, user.level))
     ])
     // Coverage's two reads, apart from the rest: the kanji index is the
     // largest read the app makes, and the lists are a chunk of their own, so
@@ -123,7 +126,6 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           ...held,
           now,
           summary,
-          days: week(started, now),
           burns: burnsAhead(started, now),
           spread: spread(started),
           moved: moved(started, now),
@@ -146,7 +148,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           }))
         })
 
-        return commentary.then(async ([statistics, progressions, totals, systems, onLevel]) => {
+        return commentary.then(async ([statistics, progressions, totals, systems, onLevel, radicals]) => {
           // Every slip, ranked; the lists take the top ten and the field
           // the top sixty. This level's, for the switch — null, and no
           // switch, if the level's assignments did not come.
@@ -183,7 +185,8 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
               all: scoped(slipping, every),
               level: everyHere && scoped(slippingHere, everyHere)
             },
-            pace: progressions ? pace(progressions, user.level, now) : null
+            pace: progressions ? pace(progressions, user.level, now) : null,
+            radicals: radicals ? levelKanji(radicals[0], radicals[1]) : null
           }))
         })
       })
@@ -283,7 +286,8 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
         </div>
       ) : (
         <>
-          <Figures board={board} level={user.level} />
+          <Figures board={board} />
+          <LevelLine board={board} level={user.level} perLevel={paceFor(board.pace, chosenPace)} />
           {/* The next 24 hours belong with the reviews due they continue —
               they were the footline, 1,400px below the figure. */}
           <Forecast
@@ -396,20 +400,14 @@ function Head({ children, right }) {
 
 // A count of nothing is dim. Only reviews take the accent, and only when
 // there are some.
-function Figures({ board, level }) {
+//
+// The kanji to the next level was a figure here; it is the level line's
+// sentence now, beside the rest of what the level says. The seven days'
+// total went at the owner's word — the 24 hours under it say what is
+// coming, and a week's sum asked nothing of anyone.
+function Figures({ board }) {
   const reviews = dueNow(board.summary)
   const lessons = lessonsWaiting(board.summary)
-  // Items whose next review falls in the coming seven days, the backlog
-  // included — a look forward, so never called "this week", which reads as
-  // reviews already done.
-  const thisWeek = board.days.reduce((sum, d) => sum + d.count, 0)
-  const { remaining, passed, total } = board.passed
-
-  let toGo
-  if (level >= TOP_LEVEL) toGo = [`${passed}/${total}`, `kanji passed · level ${level}`]
-  else if (total === 0) toGo = ['–', 'no kanji at this level yet']
-  else if (remaining === 0) toGo = ['0', `ready for level ${level + 1}`]
-  else toGo = [remaining, `kanji to level ${level + 1}`]
 
   return (
     <div className="figures">
@@ -421,14 +419,6 @@ function Figures({ board, level }) {
         <b>{lessons}</b>
         <span>lessons waiting</span>
       </div>
-      <div className={remaining > 0 || level >= TOP_LEVEL ? 'figure' : 'figure none'}>
-        <b>{toGo[0]}</b>
-        <span>{toGo[1]}</span>
-      </div>
-      <div className="figure soft">
-        <b>{many(thisWeek)}</b>
-        <span>due within 7 days</span>
-      </div>
       {board.accuracy ? (
         <div className="figure soft">
           <b>
@@ -439,6 +429,139 @@ function Figures({ board, level }) {
         </div>
       ) : null}
     </div>
+  )
+}
+
+// 段 The level line — where the level stands, straight under the figures,
+// the board's second band. Decided from a prototype (PLAN.md, "The level
+// line"): of four places — a band, the figure growing its lines, a road of
+// soonest passes, a pinned masthead line — the band.
+//
+// One sentence says it, the kanji to the next level leading. Beneath, a
+// hairline of the level's every kanji in the grid's order — passed, then
+// apprentice by stage, then lessons, then locked — with a mark where the
+// 90% WaniKani levels you up at falls, and the counts by state. Then three
+// reads: what is next, the level-up, and the next level at the dial's pace.
+//
+// Every state is WaniKani's, read off an assignment. The earliest level-up
+// runs WaniKani's own intervals and the date runs the dial; both are
+// projections, and the line beneath says so.
+const STATES = [
+  ['passed', 'passed'],
+  ['apprentice', 'apprentice'],
+  ['lesson', 'in lessons'],
+  ['locked', 'locked']
+]
+
+function LevelLine({ board, level, perLevel }) {
+  const { passed, needed, remaining, total } = board.passed
+  const kanji = board.kanji
+  const tally = Object.fromEntries(STATES.map(([state]) => [state, kanji.filter(k => k.state === state).length]))
+  const p = board.pace
+  const onLevel = p?.current?.days
+  const day = onLevel !== undefined ? Math.floor(onLevel) + 1 : null
+  const usual = p?.median != null ? Math.round(p.median) : null
+  const top = level >= TOP_LEVEL
+  const levelUp = board.levelUp
+  // The level's radicals that have not passed: what the locked kanji wait on.
+  const radicalsShort = Array.isArray(board.radicals) ? board.radicals.filter(r => r.state !== 'passed').length : null
+  const ahead = !top && perLevel !== null && p ? project(p, level, perLevel, board.now, levelUp?.at ?? null) : null
+
+  const where = [`Level ${level}`, day !== null ? `day ${day}${usual && !top ? ` of your usual ${usual}` : ''}` : null]
+    .filter(Boolean)
+    .join(' · ')
+  let say
+  if (top) say = `${passed} of ${total} kanji passed`
+  else if (total === 0) say = 'no kanji at this level yet'
+  else if (remaining === 0) say = `ready for level ${level + 1}`
+  else {
+    say = `${remaining} kanji to level ${level + 1}`
+    // The soonest when there is one; when it hangs on locked kanji, those.
+    if (levelUp?.at) say += `, the soonest ${when(levelUp.at)}`
+    else if (tally.locked > 0) say += `, ${tally.locked} of the level’s still locked`
+  }
+
+  const next = board.next
+  let up = null
+  if (top || total === 0) up = null
+  else if (remaining === 0) up = 'Ready — WaniKani levels you up on its next look'
+  else if (levelUp === undefined) up = 'Reading…'
+  else if (levelUp?.waitsOnLocked) {
+    up = `Waits on ${many(tally.locked)} locked kanji`
+    if (radicalsShort) up += ` · ${radicalsShort} of the level’s radicals not passed yet`
+  } else if (levelUp?.at) up = `Earliest ${when(levelUp.at)}`
+
+  return (
+    <section className="level-line">
+      <div className="head">
+        <h2>level {level}</h2>
+        {total > 0 ? <span>{top ? `${passed} of ${total} passed` : `${passed} of ${needed} needed`}</span> : null}
+      </div>
+      <p className="say">
+        <span className="soft">{where} ·</span> {say}
+      </p>
+      {total > 0 ? (
+        <>
+          <div className="states" aria-hidden="true">
+            {kanji.map(k => (
+              <i key={k.id} className={k.state === 'apprentice' && k.stage === 4 ? 'apprentice four' : k.state} />
+            ))}
+            {!top ? (
+              <span className="need" style={{ left: `${(needed / total) * 100}%` }}>
+                {needed} needed
+              </span>
+            ) : null}
+          </div>
+          <p className="tally">
+            {STATES.filter(([state]) => tally[state] > 0).map(([state, word]) => (
+              <span key={state}>
+                <i className={state} aria-hidden="true" />
+                {many(tally[state])} {word}
+              </span>
+            ))}
+          </p>
+        </>
+      ) : null}
+      <div className="reads">
+        {next ? (
+          <div>
+            <span className="what">next</span>
+            <span>
+              {/* A handful reads as characters; a batch of a dozen from one
+                  lesson session is a wall of them, and the count says more. */}
+              <span className="glyphs">
+                {next.kanji.length <= NAMED ? next.kanji.map(k => k.characters).join(' ') : `${next.kanji.length} kanji`}
+              </span>{' '}
+              {next.at ? `up at ${clock(next.at)}` : 'due now'}
+              {next.oneStep ? ', one step from passing' : ''}
+            </span>
+          </div>
+        ) : null}
+        {up ? (
+          <div>
+            <span className="what">level-up</span>
+            <span>{up}</span>
+          </div>
+        ) : null}
+        {ahead ? (
+          <div>
+            <span className="what">at your pace</span>
+            <span>
+              Level {level + 1} ≈ {dayMonth(ahead.startOf(level + 1))}, {dayCount(perLevel)} days a level
+            </span>
+          </div>
+        ) : null}
+      </div>
+      {levelUp?.at || ahead ? (
+        <p className="notes">
+          <span className="proj">
+            {[levelUp?.at ? 'Earliest assumes every answer is right' : null, ahead ? '≈ at the dial’s pace' : null]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        </p>
+      ) : null}
+    </section>
   )
 }
 
@@ -475,9 +598,6 @@ const OTHERS = {
 }
 
 function Level({ board, level, token }) {
-  const { passed, needed } = board.passed
-  const next = board.next
-  const onLevel = board.pace?.current?.days
   const [reading, setReading] = useState(null)
   const [showing, setShowing] = useState('kanji')
   // Per kind: null until asked for, then 'reading', 'failed' or the items.
@@ -494,21 +614,20 @@ function Level({ board, level, token }) {
   function show(kind) {
     setShowing(kind)
     setReading(null)
+    if (kind === 'radicals' && Array.isArray(board.radicals)) return
     if (OTHERS[kind] && (others[kind] === null || others[kind] === 'failed')) readOther(kind)
   }
 
   const other = OTHERS[showing]
-  const items = other ? others[showing] : board.kanji
+  // The radicals come with the board's commentary now; asked for before it
+  // lands, or if it failed, they are read as before.
+  const held = showing === 'radicals' && Array.isArray(board.radicals) ? board.radicals : others[showing]
+  const items = other ? held : board.kanji
   const otherPassed = other && Array.isArray(items) ? items.filter(r => r.state === 'passed').length : null
-  // The count leads the notes rather than sitting in the head, which the
-  // switch fills. `20 of 29 passed` read as the level's size, and the grid
-  // shows more cells than that: 29 is the 90% WaniKani asks for, so it says
-  // needed. Radicals and vocabulary have no threshold, so they say of all.
-  const count = other
-    ? otherPassed !== null
-      ? `${otherPassed} of ${items.length} passed`
-      : null
-    : `${passed} passed · ${needed} needed`
+  // The kanji's count, the day, what is next and the level-up are the level
+  // line's now, at the top of the board. Radicals and vocabulary have no
+  // threshold and no line of their own, so their count stays here.
+  const count = other && otherPassed !== null ? `${otherPassed} of ${items.length} passed` : null
 
   // On a tablet the notes stand beside the grid rather than under it (see
   // `.level` in index.css), so the level is half as tall.
@@ -554,21 +673,6 @@ function Level({ board, level, token }) {
       <p className="notes readout" aria-live="polite">
         <span className={reading ? 'usual hidden' : 'usual'}>
           {count ? <span className="soft">{count}</span> : null}
-          {onLevel !== undefined ? (
-            <span className="soft">Day {Math.floor(onLevel) + 1} on this level</span>
-          ) : null}
-          {next && !other ? (
-            <span className="soft">
-              {/* A handful reads as characters; a batch of a dozen from one
-                  lesson session is a wall of them, and the count says more. */}
-              {next.kanji.length <= NAMED
-                ? next.kanji.map(k => k.characters).join(' ')
-                : `${next.kanji.length} kanji`}{' '}
-              {next.at ? `up at ${clock(next.at)}` : 'due now'}
-              {next.oneStep ? ', one step from passing' : ''}
-            </span>
-          ) : null}
-          <LevelUpLine levelUp={board.levelUp} level={level} />
           <Hint pointer="Point at" touch="Tap">
             {other ? other.one : 'a kanji'} for its next review,{' '}
             <span className="by-pointer">click</span>
@@ -695,18 +799,6 @@ function nextReview(k, now) {
   const at = new Date(k.availableAt)
   if (at <= now) return 'Review due now'
   return `Next review ${when(at)}`
-}
-
-// A projection, and it says so in the same breath: the soonest this level
-// could end is only true if nothing is missed from here.
-function LevelUpLine({ levelUp, level }) {
-  if (!levelUp || level >= TOP_LEVEL) return null
-  if (levelUp.waitsOnLocked) return <span>Level {level + 1} waits on locked kanji</span>
-  return (
-    <span>
-      Level {level + 1} earliest {when(levelUp.at)}, if every answer is right
-    </span>
-  )
 }
 
 function describe(k) {

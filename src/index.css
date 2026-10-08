@@ -1758,6 +1758,128 @@ button.quiet {
 }
 
 
+/* ---- 段 the level line ----
+   Where the level stands, the board's second band under the figures: a
+   sentence, a hairline of every kanji with the 90% mark over it, the counts
+   by state, and three short reads. */
+.board .level-line {
+  gap: 16px;
+}
+
+.board .level-line .say {
+  margin: 0;
+  font-size: var(--input);
+  color: var(--text-strong);
+  text-wrap: balance;
+}
+
+.board .level-line .say .soft {
+  color: var(--text-soft);
+}
+
+/* One cell per kanji, its state in its colour: passed in guru, apprentice
+   in the accent — full at its last step — lessons faint, locked the rule. */
+.board .level-line .states {
+  position: relative;
+  display: flex;
+  gap: 3px;
+  padding-top: 28px;
+}
+
+.board .level-line .states i,
+.board .level-line .tally i {
+  display: block;
+  background: var(--rule);
+}
+
+.board .level-line .states i {
+  flex: 1;
+  min-width: 0;
+  height: 10px;
+}
+
+.board .level-line i.passed {
+  background: var(--srs-guru);
+}
+
+.board .level-line i.apprentice {
+  background: color-mix(in srgb, var(--accent) 55%, var(--ground));
+}
+
+.board .level-line i.apprentice.four {
+  background: var(--accent);
+}
+
+.board .level-line i.lesson {
+  background: color-mix(in srgb, var(--dim) 45%, var(--ground));
+}
+
+/* The 90% WaniKani levels you up at: a strong hairline over the cells,
+   named to its left — it sits near the end, where a name to its right runs
+   off the page. */
+.board .level-line .need {
+  position: absolute;
+  top: 0;
+  bottom: -4px;
+  border-right: 1px solid var(--text-strong);
+  padding-right: 6px;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
+  white-space: nowrap;
+  transform: translateX(-100%);
+}
+
+.board .level-line .tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .level-line .tally span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.board .level-line .tally i {
+  width: 14px;
+  height: 4px;
+}
+
+.board .level-line .reads {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px clamp(24px, 4vw, 48px);
+}
+
+.board .level-line .reads > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--small);
+  color: var(--text);
+}
+
+.board .level-line .reads .what {
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .level-line .glyphs {
+  font-family: var(--jp-sans);
+  color: var(--text-strong);
+}
+
 /* ---- 歩 the pace dial ----
    Days per level, full width: sixty slots, one per level, each a
    full-height column so there is something to point at or tap, with its
@@ -2343,6 +2465,11 @@ button.quiet {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 22px 20px;
+  }
+
+  /* The level line's three reads stack. */
+  .board .level-line .reads {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .board .columns,

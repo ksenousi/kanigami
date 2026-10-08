@@ -1775,3 +1775,32 @@ and the head's share of all WaniKani moves with them; until the read lands,
 or if it fails, the pre-read behaviour stands — kanji only, the other two
 lines faded, and the line saying so. The fake deals a stand-in 499 radicals
 and 6,750 words.
+
+**段 The level line — decided from a prototype.** Asked for: the level's
+notes (`0 passed · 32 needed`, `Day 4 on this level`, `渉 up at 16:00`,
+`Level 18 waits on locked kanji`) expanded and given a more prominent place.
+Four places were prototyped: **A** a band of its own under the figures,
+**B** the `kanji to level` figure growing those lines beside it, **C** a
+road from now to the level-up with each kanji at its soonest pass, **D** one
+mono line pinned under the masthead. **A was picked**; B, C and D rejected.
+
+- **The board's second band**, between the figures and the 24 hours: head
+  `level 17 · 0 of 32 needed`; a sentence at `--input`, `Level 17 · day 4 of
+  your usual 14 · 32 kanji to level 18`, then the soonest level-up when
+  there is one, or how many of the level's kanji are still locked; a
+  hairline of every kanji in the grid's order — passed `--srs-guru`,
+  apprentice the accent at 55% (full at stage 4), lessons faint, locked
+  `--rule` — with a strong hairline at the 90% mark, named `32 needed` to
+  its left; the counts by state; and three reads, labelled in lowercase
+  mono: `next`, `level-up` (earliest, or `Waits on 9 locked kanji · 3 of the
+  level's radicals not passed yet`), `at your pace` (`Level 18 ≈ 18 Oct, 14
+  days a level`, from the dial). A projection line under them.
+- **The level's radicals are read up front** now, in the commentary, for
+  that count, on the owner's say-so; the grid's switch uses them rather than
+  reading again.
+- **The figures lose two.** `kanji to level 18` is the line's sentence now,
+  and `due within 7 days` went at the owner's word. The figures are reviews
+  due, lessons waiting and accuracy.
+- **The level column keeps the grid**, its switch, the pointed-at readout
+  and the hint; its count, day, next and level-up lines moved up. The
+  radicals' and vocabulary's `4 of 6 passed` stays there.
