@@ -23,7 +23,7 @@ import {
   leeches,
   levelKanji,
   MIN_MISSES,
-  levelUpKanji,
+  levelUpItems,
   lockedBehind,
   milestones,
   moved,
@@ -179,7 +179,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             totals,
             milestones: milestones(started, now, totals),
             levelUp: srs ? earliestLevelUp(kanji, srs, passed.remaining, now, radicalItems) : null,
-            waitingOn: srs ? levelUpKanji(kanji, srs, passed.remaining, now) : [],
+            waitingOn: levelUpItems(kanji, radicalItems, passed.remaining),
             // The level's own system — the accelerated one on levels 1–2.
             fastest: srs ? fastestLevel(srs.get(kanji.find(k => k.system)?.system)) : null,
             accuracy: statistics ? accuracy(statistics) : null,

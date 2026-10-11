@@ -1872,3 +1872,16 @@ passes at the soonest, takes its lesson then, and runs the apprentice stages
 the level holds gets no time. Also reported: no colour key for guru. The
 key hid `passed` at none, and apprentice IV, drawn at full accent, had no
 swatch of its own; `passed` now always keys and `apprentice IV` keys apart.
+
+**The strip marks everything the level-up waits on.** Reported: not every
+kanji and radical due was over its hour. The marks were `levelUpKanji()` —
+the `remaining` soonest to pass by projection — so a kanji due in the same
+hour as two marked ones lost the tie and went unmarked, a slower one due now
+was never in the set, and the radical holding the locked kanji was on no
+list at all. `levelUpItems()` replaces it: every kanji of the level not yet
+passed, and every radical not yet passed that holds a locked kanji, each
+over the hour it comes up in (WaniKani's `available_at`, read). Any of the
+kanji can be among the ones that pass, so none is dropped for ranking. The
+key line says `the kanji and radicals level 18 waits on` once a radical is
+marked, the hour's line names it (`吉 radical to pass`), and a radical with
+no codepoint draws WaniKani's image, turned for the ground.

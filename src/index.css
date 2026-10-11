@@ -497,6 +497,17 @@ body {
   color: var(--text-soft);
 }
 
+/* A radical with no codepoint, in WaniKani's image, turned for the ground. */
+.forecast .mark img {
+  height: 1em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+.forecast .mark .quiet img {
+  opacity: 0.7;
+}
+
 .forecast .mark .more {
   font-family: var(--mono);
   font-size: var(--label);

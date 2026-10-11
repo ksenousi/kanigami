@@ -138,6 +138,22 @@ describe('Forecast', () => {
     expect(label(host)).toContain('果')
   })
 
+  it('marks the radicals holding locked kanji beside the kanji, and says so', async () => {
+    const at = new Date(START + 2 * HOUR + 30 * 60 * 1000).toISOString()
+    const waitingOn = [
+      { id: 1, characters: '警', stage: 3, availableAt: at },
+      { id: 2, characters: '吉', stage: 4, availableAt: at, radical: true },
+      { id: 3, characters: null, image: 'https://example.test/r.svg', meaning: 'Gun', stage: 2, availableAt: at, radical: true }
+    ]
+    const host = await render(<Forecast summary={summary} waitingOn={waitingOn} nextLevel={16} />)
+    const mark = host.querySelector('.mark')
+    expect(mark.textContent).toBe('吉警')
+    expect(mark.querySelector('img')).not.toBeNull()
+    await hover(hours(host)[2])
+    expect(label(host)).toContain('吉 radical to pass, 警 apprentice III, Gun radical apprentice II')
+    expect(host.querySelector('.readout').textContent).toContain('the kanji and radicals level 16 waits on')
+  })
+
   it('marks nothing without a level-up to wait on', async () => {
     const host = await render(<Forecast summary={summary} />)
     expect(host.querySelector('.mark')).toBeNull()

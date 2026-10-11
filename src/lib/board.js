@@ -584,18 +584,17 @@ export function milestones(assignments = [], now = new Date(), totals = null) {
   return { next, reached }
 }
 
-// The kanji the level-up waits on: the `remaining` soonest to pass, if every
-// answer is right — the same ranking `earliestLevelUp` takes its moment from.
-// Passed and locked kanji are not among them; a level-up that also waits on
-// locked kanji gets every kanji that can be projected.
-export function levelUpKanji(kanji = [], systems = new Map(), remaining = 0, now = new Date()) {
+// What the level-up waits on, for the 24-hour strip: every kanji of the
+// level not yet passed, and every radical not yet passed that holds one of
+// its locked kanji. Any of the kanji can be among the ones that pass, so
+// none is dropped for ranking behind another — taking only the `remaining`
+// soonest left a kanji due in the same hour as two marked ones unmarked,
+// and the radical that unlocks the rest off the strip altogether.
+export function levelUpItems(kanji = [], radicals = [], remaining = 0) {
   if (remaining <= 0) return []
-  return kanji
-    .map(k => ({ k, pass: earliestPass(k, systems.get(k.system), now.getTime()) }))
-    .filter(x => x.pass !== null)
-    .sort((a, b) => a.pass - b.pass)
-    .slice(0, remaining)
-    .map(x => x.k)
+  const locked = kanji.filter(k => k.state === 'locked')
+  const holding = (radicals ?? []).filter(r => r.state !== 'passed' && locked.some(k => k.components?.includes(r.id)))
+  return [...kanji.filter(k => k.state !== 'passed' && k.state !== 'locked'), ...holding.map(r => ({ ...r, radical: true }))]
 }
 
 // Enlightened items whose next review is the burn — answered right once more,

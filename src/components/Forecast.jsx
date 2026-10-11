@@ -15,9 +15,10 @@ import usePointing from './usePointing.js'
 //   the accent. Above, today and tomorrow are named where each begins, and
 //   the next day's hours sit on a faint tint behind a dashed line at
 //   midnight, so the day boundary reads before any label does.
-// - **Each bar carries its count**, and the kanji the level-up waits on sit
-//   above the bar of the hour they come up in — strong ink when one right
-//   answer passes them, softer otherwise — wrapped inside the hour's own
+// - **Each bar carries its count**, and what the level-up waits on — every
+//   kanji not yet passed, and the radicals holding its locked ones — sits
+//   above the bar of the hour it comes up in: strong ink when one right
+//   answer passes it, softer otherwise, wrapped inside the hour's own
 //   column, three at most and `+n` for the rest.
 // - **The backlog does not set the scale.** WaniKani's first bucket holds
 //   everything already due, which on a neglected account outweighs the rest
@@ -90,8 +91,8 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
                   {kanji ? (
                     <span className="mark" aria-hidden="true">
                       {kanji.slice(0, SHOWN).map(k => (
-                        <span key={k.characters} className={k.stage === 4 ? '' : 'quiet'}>
-                          {k.characters}
+                        <span key={k.id ?? k.characters} className={k.stage === 4 ? '' : 'quiet'}>
+                          {k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')}
                         </span>
                       ))}
                       {kanji.length > SHOWN ? <span className="more">+{kanji.length - SHOWN}</span> : null}
@@ -118,7 +119,7 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
         </span>
         <span className="hint">
           Count above each bar
-          {marks.size ? ` · the kanji level ${nextLevel} waits on above theirs, strong ink one step from passing` : ''}
+          {marks.size ? ` · the ${waited(marks)} level ${nextLevel} waits on above theirs, strong ink one step from passing` : ''}
         </span>
         <Hint pointer="Point at" touch="Tap">
           a bar for its hour
@@ -146,6 +147,16 @@ function markHours(hours, waitingOn) {
   }
   for (const kanji of marks.values()) kanji.sort((a, b) => (b.stage === 4) - (a.stage === 4))
   return marks
+}
+
+// What the marks are, for the key line: kanji, and radicals once one is up.
+function waited(marks) {
+  return [...marks.values()].flat().some(k => k.radical) ? 'kanji and radicals' : 'kanji'
+}
+
+// A mark in words: its character, or a radical's meaning when it has none.
+function named(k) {
+  return k.radical ? `${k.characters ?? k.meaning} radical` : k.characters
 }
 
 // Left and right walk an hour, Home and End go to the ends, Escape gives the
@@ -182,7 +193,7 @@ function hourLabel(hours, index, today, marked) {
     index === 0 ? 'Now' : `${clock(start)}–${clock(end)}${start.toDateString() !== today ? ` ${weekday(start)}` : ''}`
   const count = index === 0 ? `${many(hour.count)} due` : hour.count ? `${many(hour.count)} reviews` : 'none'
   const kanji = marked
-    ? ` · ${marked.map(k => `${k.characters} ${k.stage === 4 ? 'to pass' : stageName(k.stage)}`).join(', ')}`
+    ? ` · ${marked.map(k => `${named(k)} ${k.stage === 4 ? 'to pass' : stageName(k.stage)}`).join(', ')}`
     : ''
   return `${slot} · ${count}${kanji}`
 }

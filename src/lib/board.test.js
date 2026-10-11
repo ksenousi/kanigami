@@ -6,7 +6,7 @@ import {
   earliestLevelUp,
   leeches,
   levelKanji,
-  levelUpKanji,
+  levelUpItems,
   lockedBehind,
   partnerFor,
   milestones,
@@ -428,14 +428,20 @@ describe('earliestLevelUp', () => {
     expect(earliestLevelUp([], systems, 0, NOW)).toBeNull()
   })
 
-  it('names the kanji the level-up waits on, soonest to pass first', () => {
-    const fast = { ...kanji('apprentice', 4, at(1)), characters: 'A' }
-    const slow = { ...kanji('apprentice', 1, at(1)), characters: 'B' }
-    const mid = { ...kanji('apprentice', 4, at(20)), characters: 'C' }
-    const locked = { ...kanji('locked', null, null), characters: 'D' }
-    const passed = { ...kanji('passed', 5, at(1)), characters: 'E' }
-    expect(levelUpKanji([slow, locked, mid, passed, fast], systems, 2, NOW).map(k => k.characters)).toEqual(['A', 'C'])
-    expect(levelUpKanji([fast], systems, 0, NOW)).toEqual([])
+  it('names every kanji the level-up waits on, and the radicals holding its locked ones', () => {
+    const fast = { ...kanji('apprentice', 4, at(1)), id: 1, characters: 'A' }
+    const slow = { ...kanji('apprentice', 1, at(1)), id: 2, characters: 'B' }
+    const lesson = { ...kanji('lesson', 0, null), id: 3, characters: 'C' }
+    const locked = { ...kanji('locked', null, null), id: 4, characters: 'D', components: [10] }
+    const passed = { ...kanji('passed', 5, at(1)), id: 5, characters: 'E' }
+    const holding = { ...kanji('apprentice', 4, at(2)), id: 10, characters: 'R' }
+    const holdsNothing = { ...kanji('apprentice', 2, at(2)), id: 11, characters: 'S' }
+    const radicalPassed = { ...kanji('passed', 5, at(2)), id: 12, characters: 'T' }
+    locked.components.push(12)
+    const items = levelUpItems([slow, locked, passed, fast, lesson], [holding, holdsNothing, radicalPassed], 2)
+    expect(items.map(k => k.characters)).toEqual(['B', 'A', 'C', 'R'])
+    expect(levelUpItems([fast], [], 0)).toEqual([])
+    expect(levelUpItems([fast], null, 1).map(k => k.characters)).toEqual(['A'])
   })
 
   it('reads the fastest level off the table: two runs to guru', () => {
