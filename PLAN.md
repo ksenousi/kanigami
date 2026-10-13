@@ -2090,3 +2090,14 @@ iPad Air's landscape width too. At 1,180–1,210 nothing overflows, the
 level's kanji cells are 48px around a 21px character, and the bands match
 1,512 to the section. Upright (834px) keeps the tablet layout: three
 columns there leave a kanji cell narrower than its character.
+
+**An upright iPad keeps at hand two-up.** Reported: on an 11-inch iPad Pro
+held upright the board was good but wasted width — the level's grid took
+three fifths and a hint sat alone in the rest, then the spread and what
+slips each a full-width row. From 800px at hand is the laptop's: the level
+and the spread in one column, what slips beside them. At 834 the board is
+2,474px from 2,708; each kanji cell is 32px around a 21px character, and
+the vocabulary grid fits. Below 800 — an iPad mini upright, 744 — the cells
+would close to 27px, so the stacked level stays. Tried and dropped: taught
+and coverage side by side in ahead, which came out exactly as tall as the
+two rows.

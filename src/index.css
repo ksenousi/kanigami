@@ -2503,12 +2503,11 @@ button.quiet {
   color: var(--dim);
 }
 
-/* An upright iPad, or a narrow window. Below 1,180px three columns of a
-   third leave each of the level's eight kanji a cell narrower than the
-   character, and they run into one another, so the level takes the full
-   width and the other two sit side by side beneath it. An iPad on its side
-   — an 11-inch Pro is 1,194px, the M4 1,210 — keeps the laptop's layout.
-   Below 700px the phone takes over, at the end of the file. */
+/* An upright iPad, or a narrow window. Below 1,180px the level line and
+   the 24 hours stack, and so does ahead; at hand stays two-up down to
+   800px. An iPad on its side — an 11-inch Pro is 1,194px, the M4 1,210 —
+   keeps the laptop's layout. Below 700px the phone takes over, at the end
+   of the file. */
 /* ---- 盤 the board, in three bands ----
    Picked from a prototype (PLAN.md, "The regroup"): 今 now, 手元 at hand and
    先 ahead, each opened by a hairline with its name sitting on it, and every
@@ -2890,13 +2889,28 @@ button.quiet {
     margin-left: 0;
   }
 
-  /* The level takes the width, its notes beside the grid; what slips
-     goes under it. */
+
+  .board .dial .under {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .board .dial .under .flags {
+    justify-content: flex-start;
+  }
+}
+
+/* An upright 11- or 13-inch iPad (820px and up) keeps at hand two-up, as
+   on a laptop: the level and the spread beside what slips. Each kanji cell
+   is 32px around a 21px character there, and the band is about 220px
+   shorter than stacked. Narrower — an iPad mini upright is 744px — the
+   cells would close to 27px, so the level takes the width, its notes
+   beside the grid, and what slips goes under it. */
+@media (max-width: 799px) {
   .board .columns {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* The level full width: the grid on the left keeps its eight across at
+  /* The level full width: the grid on the left keeps its ten across at
      a size a finger can hit, and the notes stand beside it rather than
      under it, so the section is half as tall. The radicals, opened, run the
      full width beneath. */
@@ -2917,15 +2931,6 @@ button.quiet {
 
   .board .level > .readout {
     grid-column: 2;
-  }
-
-
-  .board .dial .under {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .board .dial .under .flags {
-    justify-content: flex-start;
   }
 }
 
