@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import {
   getLevelAssignments,
   getLevelKanji,
@@ -25,6 +25,7 @@ import {
   MIN_MISSES,
   levelUpItems,
   lockedBehind,
+  medianWorking,
   milestones,
   moved,
   nextUp,
@@ -1539,8 +1540,15 @@ function Waiting({ title }) {
 // dial still opens at the median; the goal draws a solid line across the
 // bars and a mark on the slider at the pace it asks for — the slowest that
 // gets there, from `paceToReach` — and says whether the dial's pace does.
+//
+// **Pointing at the median mark shows its working** in the bars' readout
+// on a line right under it: every level it was taken over, quickest first,
+// the middle one or two in strong ink and their bars lit — so 18 is a figure
+// you can check. Under it, not in the bars' readout above, so nothing moves
+// beneath the pointer.
 function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
+  const working = usePointing()
   const [goal, setGoal] = useState(readGoal)
   if (p === undefined) return <Waiting title="days per level" />
   if (!p || (p.levels.length === 0 && !p.current)) return null
@@ -1593,6 +1601,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   const height = days => Math.min(100, (days / tallest) * 100)
 
   const shown = reading === null ? null : slots[reading]
+  const worked = working.at !== null ? medianWorking(p) : null
   // A number right beside this level's gives way to it — 14 and 15 in
   // adjacent slots read as 1415.
   const numbered = s =>
@@ -1615,11 +1624,11 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   // end labels cannot reach them. Two marks too close to share it become one
   // label at the first.
   const marks = [
-    p.median !== null ? { label: `median ${dayCount(toStep(p.median))}`, at: at(p.median) } : null,
+    p.median !== null ? { label: `median ${dayCount(toStep(p.median))}`, at: at(p.median), median: true } : null,
     p.recent !== null ? { label: `last five ${dayCount(toStep(p.recent))}`, at: at(p.recent) } : null
   ].filter(Boolean)
   if (marks.length === 2 && Math.abs(marks[0].at - marks[1].at) < 20) {
-    marks.splice(0, 2, { label: `${marks[0].label} · ${marks[1].label}`, at: Math.min(marks[0].at, marks[1].at) })
+    marks.splice(0, 2, { label: `${marks[0].label} · ${marks[1].label}`, at: Math.min(marks[0].at, marks[1].at), median: true })
   }
 
   const weeks = ahead && atMedian ? Math.round((ahead.done - atMedian.done) / (7 * 24 * 60 * 60 * 1000)) : 0
@@ -1659,7 +1668,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
                 s.kind,
                 s.level === quickest?.level ? 'fastest' : '',
                 through && s.level > level && s.level <= through ? 'within' : '',
-                reading === i ? 'reading' : ''
+                reading === i || worked?.middle.some(l => l.level === s.level) ? 'reading' : ''
               ]
                 .join(' ')
                 .trim()}
@@ -1735,24 +1744,56 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             aria-label="Days per level, for the projection"
             aria-valuetext={`${dayCount(perLevel)} days a level`}
           />
-          <div className={['ticks', marks.length ? 'has-low' : '', need !== null ? 'has-goal' : ''].join(' ').trim()} aria-hidden="true">
-            <span className="start" style={{ left: 0 }}>
+          <div className={['ticks', marks.length ? 'has-low' : '', need !== null ? 'has-goal' : ''].join(' ').trim()}>
+            <span className="start" style={{ left: 0 }} aria-hidden="true">
               {dayCount(min)} days{fastest ? <span className="aside">, WaniKani’s fastest</span> : ''}
             </span>
-            {marks.map(m => (
-              <span key={m.label} className="mark low" style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }}>
-                {m.label}
-              </span>
-            ))}
+            {marks.map(m =>
+              m.median ? (
+                <span
+                  key={m.label}
+                  className={working.at !== null ? 'mark low working reading' : 'mark low working'}
+                  style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }}
+                  aria-label={`${m.label} — how it was taken`}
+                  {...working.groupProps}
+                  {...working.itemProps(0)}
+                  onFocus={() => working.point(0)}
+                  onKeyDown={event => event.key === 'Escape' && working.point(null)}
+                >
+                  {m.label}
+                </span>
+              ) : (
+                <span key={m.label} className="mark low" style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }} aria-hidden="true">
+                  {m.label}
+                </span>
+              )
+            )}
             {need !== null ? (
-              <span className="mark goal" style={{ left: `${Math.max(4, Math.min(96, at(need)))}%` }}>
+              <span className="mark goal" style={{ left: `${Math.max(4, Math.min(96, at(need)))}%` }} aria-hidden="true">
                 goal {dayCount(need)}
               </span>
             ) : null}
-            <span className="end" style={{ left: '100%' }}>
+            <span className="end" style={{ left: '100%' }} aria-hidden="true">
               {max} days
             </span>
           </div>
+          {worked ? (
+            <p className="notes worked" aria-live="polite">
+              <span>
+                Median of {worked.sorted.length} {worked.sorted.length === 1 ? 'level' : 'levels'}, quickest first:{' '}
+                {worked.sorted.map((l, i) => (
+                  <Fragment key={l.level}>
+                    {i ? ' · ' : ''}
+                    <span className={worked.middle.includes(l) ? 'middle' : undefined}>{dayCount(toStep(l.days))}</span>
+                  </Fragment>
+                ))}
+                {worked.middle.length === 1
+                  ? ` — level ${worked.middle[0].level} sits in the middle at ${dayCount(toStep(p.median))} days`
+                  : ` — levels ${worked.middle[0].level} and ${worked.middle[1].level} sit in the middle, averaging ${dayCount(toStep(p.median))} days`}
+                {breaks.length > 0 ? `, ${breaks.length === 1 ? 'the break' : 'breaks'} left out` : ''}
+              </span>
+            </p>
+          ) : null}
         </div>
       ) : null}
 

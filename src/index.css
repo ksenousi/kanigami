@@ -2291,6 +2291,35 @@ button.quiet {
   top: 26px;
 }
 
+/* The median mark shows its working when pointed at: a dotted hairline
+   says it can be, and lights while it does. The figures that make it stand
+   in strong ink in the readout above. */
+.board .ticks .mark.working {
+  cursor: default;
+  text-decoration: underline dotted var(--rule);
+  text-underline-offset: 4px;
+  outline: none;
+}
+
+.board .ticks .mark.working.reading {
+  color: var(--text-strong);
+  text-decoration-color: var(--text-strong);
+}
+
+@media (hover: hover) {
+  .board .ticks .mark.working:hover {
+    text-decoration-color: var(--text-soft);
+  }
+}
+
+.board .dial .worked {
+  margin: 0 0 12px;
+}
+
+.board .dial .worked .middle {
+  color: var(--text-strong);
+}
+
 /* What the dial says: the pace and the dates it gives, in the figures'
    serif a step down from the headline figures, their labels naming them. */
 .board .dial .readings {

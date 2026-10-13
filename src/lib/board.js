@@ -266,6 +266,18 @@ export function pace(progressions = [], level, now = new Date()) {
   return { levels, current, median, recent }
 }
 
+// How the median came out: the levels it was taken over, quickest first,
+// and the one or two in the middle that make it — the median mark's working,
+// shown when it is pointed at. Breaks are left out, as they are from the
+// median itself; a tie keeps level order.
+export function medianWorking(p) {
+  const sorted = (p?.levels ?? []).filter(l => !l.break).sort((a, b) => a.days - b.days || a.level - b.level)
+  if (sorted.length === 0) return null
+  const half = Math.floor(sorted.length / 2)
+  const middle = sorted.length % 2 ? [sorted[half]] : [sorted[half - 1], sorted[half]]
+  return { sorted, middle }
+}
+
 // Where the levels from here fall at `perLevel` days a level — the pace
 // dial's projection, and the road's.
 //

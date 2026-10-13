@@ -8,6 +8,7 @@ import {
   levelKanji,
   levelUpItems,
   lockedBehind,
+  medianWorking,
   partnerFor,
   milestones,
   moved,
@@ -225,6 +226,26 @@ describe('pace', () => {
     const p = pace([prog(1, 1, null)], 1, NOW)
     expect(p.median).toBeNull()
     expect(p.recent).toBeNull()
+  })
+})
+
+describe('medianWorking', () => {
+  const lv = (level, days, brk = false) => ({ level, days, break: brk })
+
+  it('sorts the levels quickest first and names the middle one', () => {
+    const w = medianWorking({ levels: [lv(3, 9), lv(4, 7), lv(5, 12)] })
+    expect(w.sorted.map(l => l.level)).toEqual([4, 3, 5])
+    expect(w.middle.map(l => l.level)).toEqual([3])
+  })
+
+  it('names the middle two of an even count, and leaves breaks out', () => {
+    const w = medianWorking({ levels: [lv(3, 9), lv(4, 7), lv(5, 12), lv(6, 10), lv(7, 60, true)] })
+    expect(w.sorted.map(l => l.level)).toEqual([4, 3, 6, 5])
+    expect(w.middle.map(l => l.level)).toEqual([3, 6])
+  })
+
+  it('has nothing to show before a level has passed', () => {
+    expect(medianWorking({ levels: [] })).toBeNull()
   })
 })
 

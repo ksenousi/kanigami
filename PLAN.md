@@ -1885,3 +1885,15 @@ kanji can be among the ones that pass, so none is dropped for ranking. The
 key line says `the kanji and radicals level 18 waits on` once a radical is
 marked, the hour's line names it (`吉 radical to pass`), and a radical with
 no codepoint draws WaniKani's image, turned for the ground.
+
+**The median shows its working.** Asked for: pointing at the median mark
+(`median 18`) to show the numbers it came from. Hover, tap or focus the
+mark and a line opens right under the slider's marks: `Median of 13 levels,
+quickest first: 8 · 9 · 11 · … — level 4 sits in the middle at 14 days`,
+the middle one or two in strong ink and their bars lit in the chart, and
+`the break left out` when one was. Under the marks rather than in the bars'
+readout above them: the readout growing a line pushed the slider down under
+the pointer, which let go of it. `medianWorking()` in `board.js` sorts the
+non-break levels and names the middle; the figures are on the dial's
+half-day step, like the mark. When the two marks merge, pointing at the
+pair shows the median's working.
