@@ -788,10 +788,10 @@ button.quiet {
 
 /* ---- 盤 The board ---- */
 
-/* The whole app now: a headline row of figures, three columns, and the
-   forecast footline. Desktop-first like everything else here — the columns
-   are three because the page is wide, and nothing tries to be clever when
-   it is not. De-boxed: each section is a hairline heading and what sits
+/* The whole app now: the figures in the masthead, then three bands — now,
+   at hand and ahead (see "the board, in three bands" below). Desktop-first
+   like everything else here, and nothing tries to be clever when the page
+   is narrow. De-boxed: each section is a hairline heading and what sits
    under it, never a card. */
 .board .masthead .eyebrow {
   margin-left: 18px;
@@ -849,13 +849,13 @@ button.quiet {
 }
 
 @media (hover: none) {
-  .board .hint .by-pointer {
+  .board .by-pointer {
     display: none;
   }
 }
 
 @media (hover: hover) {
-  .board .hint .by-touch {
+  .board .by-touch {
     display: none;
   }
 }
@@ -1227,14 +1227,6 @@ button.quiet {
 
 .board .fills .still > * {
   opacity: 0.45;
-}
-
-/* Under taught and coverage, the slider they share runs the band's full
-   width. */
-.board .forward .through {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
 }
 
 .board .counts {
@@ -1625,11 +1617,10 @@ button.quiet {
   white-space: nowrap;
 }
 
-/* In a third of the page — the milestones live in column two — the label,
-   the count to go and the date do not fit one row: `1,000 vocabulary` ran
-   into `203 to go`. So the date drops under its label, as it always did on
-   a tablet. Each label starts its own row: with the date dropped into
-   column one, auto-placement otherwise put the next label beside it. */
+/* The ladder as a list: the label, and the date under it, each label on a
+   row of its own. The milestones' row in the ahead band lays the next ones
+   out across the page instead (see "the board, in three bands"); the
+   reached ones, folded under it, keep this. */
 .board .ladder .what {
   grid-column: 1;
 }
@@ -1671,64 +1662,6 @@ button.quiet {
   border-top: 1px solid var(--rule);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-}
-
-/* Upcoming burns: a line, a bar a day for the week in the enlightened
-   colour, and each day's count over its name. */
-.board .burns {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.board .burnline {
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.03em;
-  color: var(--srs-burned);
-}
-
-.board .burnrow,
-.board .burnaxis {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.board .burnrow {
-  align-items: end;
-  height: 48px;
-}
-
-.board .burnrow span {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  height: 100%;
-}
-
-.board .burnrow i {
-  display: block;
-  width: 100%;
-  background: var(--srs-enlightened);
-}
-
-.board .burnrow .today i {
-  background: var(--text-soft);
-}
-
-.board .burnaxis {
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.03em;
-  text-align: center;
-  color: var(--dim);
-}
-
-.board .burnaxis b {
-  display: block;
-  font-weight: 400;
-  color: var(--srs-burned);
 }
 
 /* ---- coverage ----
@@ -2073,7 +2006,7 @@ button.quiet {
   background: color-mix(in srgb, var(--text-soft) 13%, var(--ground));
 }
 
-/* The levels the through-level slider reaches, a step brighter than the
+/* The levels up to the one chosen on the bars, a step brighter than the
    rest of what is ahead, so the dial shows the span taught and coverage
    are counting. */
 .board .dial .bars .within i.ahead {
@@ -2515,11 +2448,302 @@ button.quiet {
    than the character, and they run into one another, so the level takes
    the full width and the other two sit side by side beneath it. Below
    700px the phone takes over, at the end of the file. */
+/* ---- 盤 the board, in three bands ----
+   Picked from a prototype (PLAN.md, "The regroup"): 今 now, 手元 at hand and
+   先 ahead, each opened by a hairline with its name sitting on it, and every
+   section packed close — the board ran to nearly four screens at 1440px.
+   Nothing went to make it shorter: the figures moved into the masthead, the
+   level line and the 24 hours stand side by side, taught, coverage and the
+   milestones are a labelled row each, and the charts are shorter. */
+.board .band {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.board .band + .band {
+  margin-top: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+}
+
+.board .band-name {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: var(--small);
+  color: var(--dim);
+}
+
+.board .band-name .jp {
+  font-family: var(--jp-serif);
+  font-size: var(--input);
+  color: var(--text-strong);
+}
+
+/* Every band after the first wears its name on its hairline rather than on
+   a row of its own. */
+.board .band + .band > .band-name {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(-55%);
+  padding-right: 14px;
+  background: var(--ground);
+}
+
+.board section {
+  gap: 14px;
+}
+
+.board .column {
+  gap: 28px;
+}
+
+/* The figures, a line in the masthead: each count beside its name. */
+.board .masthead .figures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px clamp(20px, 3vw, 40px);
+  margin-left: 18px;
+  white-space: normal;
+}
+
+.board .masthead .figure {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.board .masthead .figure b {
+  font-size: var(--display-lg);
+}
+
+.board .masthead .figure b small {
+  font-size: var(--small);
+}
+
+/* The level line and the next 24 hours: side by side on a wide screen. */
+.board .now {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+}
+
+@media (min-width: 1280px) {
+  .board .now {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: 0 clamp(40px, 4vw, 64px);
+    align-items: start;
+  }
+
+  /* Twenty-five hours in half the page: the hour numbers close up a little
+     so two digits keep a gap between them. */
+  .board .now .forecast .at {
+    letter-spacing: -0.06em;
+  }
+}
+
+.forecast .stack {
+  height: 110px;
+}
+
+/* The level line's reads run as one line, wrapping where they must, each
+   read's parts set apart by a dot. */
+.board .level-line .reads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+}
+
+.board .level-line .reads > div {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 18px;
+}
+
+/* The level's grid: ten across, a step down from the --display-lg it was. */
+.board .kanji:not(.words) {
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 12px 4px;
+}
+
+.board .kanji:not(.words) .character {
+  font-size: var(--input);
+}
+
+/* Slipping folds all but its first five behind their count. */
+.board button.more {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  text-transform: none;
+  padding-block: 0;
+  min-height: 32px;
+}
+
+/* The dial, shorter: the bars, the strip and the readings on one line. */
+.board .dial .chart {
+  padding-top: 50px;
+}
+
+.board .dial .bars {
+  height: 84px;
+}
+
+.board .dial .strip {
+  height: 24px;
+}
+
+.board .dial .readings {
+  gap: 8px 36px;
+  align-items: baseline;
+}
+
+.board .dial .readings div {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.board .dial .readings b {
+  font-size: var(--display);
+}
+
+.board .dial .bars .choosable {
+  cursor: pointer;
+}
+
+/* Taught, coverage and the milestones: one row each, its head as a label
+   down the left and what it says flowing beside it. */
+.board .rows {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+
+.board .rows > section {
+  display: grid;
+  grid-template-columns: 13em minmax(0, 1fr);
+  gap: 10px 28px;
+  align-items: start;
+}
+
+.board .rows > section > .head {
+  grid-column: 1;
+  grid-row: 1 / span 4;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.board .rows > section > .head > span {
+  text-align: left;
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+
+.board .rows > section > :not(.head) {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.board .rows .fills,
+.board .rows .cover,
+.board .rows .ladder {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: 12px 32px;
+}
+
+.board .rows .fills .kind {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.board .rows .fills .track {
+  margin-bottom: 0;
+}
+
+.board .rows .cover {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+}
+
+.board .rows .cover .row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
+.board .rows .cover .track {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.board .rows .milestones .body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.board .rows .ladder {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: 6px 32px;
+}
+
+.board .rows .ladder li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.board .rows .ladder .togo {
+  color: var(--dim);
+}
+
+.board .rows .ladder .next .when {
+  margin-top: 0;
+}
+
+.board .milestones details summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+  color: var(--dim);
+}
+
+.board .milestones details[open] summary {
+  margin-bottom: 6px;
+}
+
 @media (max-width: 1279px) {
   /* The romaji beside 蟹紙 says the wordmark twice, and on an upright iPad
      it is the 30px that pushes Disconnect onto a line of its own. */
   .board .masthead .tag {
     display: none;
+  }
+
+  /* The figures take a line of their own under 蟹紙 and the masthead's
+     doors, rather than pushing the doors to a third. */
+  .board .masthead .figures {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: 0;
   }
 
   .board .columns {
@@ -2759,5 +2983,33 @@ button.quiet {
     flex-wrap: wrap;
     white-space: normal;
     gap: 4px 16px;
+  }
+  .board .masthead .figures {
+    gap: 4px 22px;
+  }
+
+  .board .masthead .figure b {
+    font-size: var(--display);
+  }
+
+  /* Each row's label goes above it rather than beside it. */
+  .board .rows > section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .board .rows > section > .head {
+    grid-row: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+  }
+
+  .board .rows > section > :not(.head) {
+    grid-column: 1;
+  }
+
+  .board .kanji:not(.words) {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 }

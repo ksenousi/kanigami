@@ -17,7 +17,6 @@ import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/sta
 import {
   accuracy,
   accuracyByLevel,
-  burnsAhead,
   earliestLevelUp,
   fastestLevel,
   FIELD,
@@ -56,9 +55,12 @@ import usePointing from './usePointing.js'
 // almanac) and four branches of the first, the original "everything at
 // once" was picked. See "The dashboard" in PLAN.md.
 //
-// A headline row of figures, then three columns: the level, where the
-// reviews stand, and what is slipping. Then the pace dial and the road, full
-// width, and the footline: home's forecast.
+// The figures in the masthead, then three bands, each named on its
+// hairline (PLAN.md, "The regroup"): 今 now — the level line beside the next
+// 24 hours; 手元 at hand — the level, where the reviews stand, and what is
+// slipping; 先 ahead — the pace dial, then taught, coverage and the
+// milestones a row each, the first two following a level chosen on the
+// dial's bars.
 //
 // It reads and never writes, so it wants a token with no permissions at
 // all. The four reads the screen cannot stand without fail it together and
@@ -130,7 +132,6 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           ...held,
           now,
           summary,
-          burns: burnsAhead(started, now),
           spread: spread(started),
           moved: moved(started, now),
           learned: learned(started),
@@ -261,10 +262,16 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
     <div className="surface-ink board">
       <header className="masthead">
         <span className="wordmark">蟹紙</span>
-        <span className="tag">kanigami</span>
-        <span className="eyebrow">
-          level {user.level} · {user.username}
-        </span>
+        {board && !blocking ? (
+          <Figures board={board} />
+        ) : (
+          <>
+            <span className="tag">kanigami</span>
+            <span className="eyebrow">
+              level {user.level} · {user.username}
+            </span>
+          </>
+        )}
         <span className="sp" />
         {board && !blocking ? (
           <button
@@ -303,42 +310,48 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
         </div>
       ) : (
         <>
-          <Figures board={board} />
-          <LevelLine board={board} level={user.level} perLevel={paceFor(board.pace, chosenPace)} />
-          {/* The next 24 hours belong with the reviews due they continue —
-              they were the footline, 1,400px below the figure. */}
-          <Forecast
-            summary={board.summary}
-            waitingOn={user.level < TOP_LEVEL ? (board.waitingOn ?? []) : []}
-            nextLevel={user.level + 1}
-          />
-          <div className="columns">
-            <div className="column">
-              <Level key={user.level} board={board} level={user.level} token={token} />
+          <Band kanji="今" name="Now · what’s due and when">
+            {/* The level line and the next 24 hours side by side on a wide
+                screen: both are short and wide, and stacked they were 800px. */}
+            <div className="now">
+              <LevelLine board={board} level={user.level} perLevel={paceFor(board.pace, chosenPace)} />
+              <Forecast
+                summary={board.summary}
+                waitingOn={user.level < TOP_LEVEL ? (board.waitingOn ?? []) : []}
+                nextLevel={user.level + 1}
+              />
             </div>
-            <div className="column">
-              <Srs spread={board.spread} moved={board.moved} />
-              <Milestones milestones={board.milestones} burns={board.burns} now={board.now} />
+          </Band>
+          <Band kanji="手元" name="At hand · this level and your items">
+            <div className="columns">
+              <div className="column">
+                <Level key={user.level} board={board} level={user.level} token={token} />
+              </div>
+              <div className="column">
+                <Srs spread={board.spread} moved={board.moved} />
+              </div>
+              <div className="column">
+                <Slipping slipping={board.slipping} level={user.level} now={board.now} readSubjects={ids => getSubjects(token, ids)} />
+              </div>
             </div>
-            <div className="column">
-              <Slipping slipping={board.slipping} level={user.level} now={board.now} readSubjects={ids => getSubjects(token, ids)} />
-            </div>
-          </div>
-          <Ahead
-            pace={board.pace}
-            level={user.level}
-            now={board.now}
-            soonest={board.levelUp?.at ?? null}
-            fastest={board.fastest ?? null}
-            perLevel={paceFor(board.pace, chosenPace)}
-            onPace={setChosenPace}
-            learned={board.learned}
-            totals={board.totals}
-            later={board.ahead}
-            milestones={board.milestones}
-            coverage={board.coverage}
-            byLevel={board.byLevel}
-          />
+          </Band>
+          <Band kanji="先" name="Ahead · pace, and what you’ll know">
+            <Ahead
+              pace={board.pace}
+              level={user.level}
+              now={board.now}
+              soonest={board.levelUp?.at ?? null}
+              fastest={board.fastest ?? null}
+              perLevel={paceFor(board.pace, chosenPace)}
+              onPace={setChosenPace}
+              learned={board.learned}
+              totals={board.totals}
+              later={board.ahead}
+              milestones={board.milestones}
+              coverage={board.coverage}
+              byLevel={board.byLevel}
+            />
+          </Band>
         </>
       )}
 
@@ -407,6 +420,20 @@ const NAMED = 4
 
 // A section's hairline heading: what it is on the left, its one number on
 // the right. Not a box — the rule is the only thing drawn.
+// 今 now, 手元 at hand, 先 ahead: the board's three bands, each named on the
+// hairline that opens it. The name is a sentence, not a head — the sections
+// inside keep their own.
+function Band({ kanji, name, children }) {
+  return (
+    <div className="band">
+      <p className="band-name">
+        <span className="jp">{kanji}</span> {name}
+      </p>
+      {children}
+    </div>
+  )
+}
+
 function Head({ children, right }) {
   return (
     <div className="head">
@@ -1152,8 +1179,14 @@ function Streak({ streak }) {
 // row, or tap it, or arrow to it. Like the level grid, a mouse clicks the
 // character through to WaniKani, and a finger's first tap reads and its
 // second opens. Group labels sit between rows and are not pointed at.
+// The first few show; the rest fold behind their count, so the column is no
+// taller than the level's grid beside it.
+const SLIPS_SHOWN = 5
+
 function SlipList({ groups, end, say, hint }) {
-  const items = groups.flatMap(g => g.items)
+  const [all, setAll] = useState(false)
+  const every = groups.flatMap(g => g.items)
+  const items = all ? every : every.slice(0, SLIPS_SHOWN)
   const { at, point, groupProps, itemProps } = usePointing()
   const opens = useRef(true)
   const read = at === null ? null : items[at]
@@ -1174,8 +1207,10 @@ function SlipList({ groups, end, say, hint }) {
   const rows = []
   let index = 0
   for (const group of groups) {
+    const showing = group.items.filter(l => items.includes(l))
+    if (showing.length === 0) continue
     if (group.label) rows.push({ label: group.label, count: group.items.length })
-    for (const l of group.items) rows.push({ l, index: index++ })
+    for (const l of showing) rows.push({ l, index: index++ })
   }
 
   return (
@@ -1226,6 +1261,11 @@ function SlipList({ groups, end, say, hint }) {
           )
         })}
       </ul>
+      {every.length > SLIPS_SHOWN ? (
+        <button className="quiet more" type="button" aria-expanded={all} onClick={() => setAll(shown => !shown)}>
+          {all ? 'fewer' : `${every.length - SLIPS_SHOWN} more`}
+        </button>
+      ) : null}
       <p className="notes readout" aria-live="polite">
         <span className={read ? 'usual hidden' : 'usual'}>
           <Hint pointer="Point at" touch="Tap">
@@ -1438,8 +1478,8 @@ function paceFor(p, chosen) {
 
 function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c, byLevel }) {
   const [through, setThrough] = useState(null)
-  // Only a level ahead is a projection; the slider at its start is now. It
-  // needs the kanji index, so it waits for coverage's read.
+  // Only a level ahead is a projection, and choosing one needs the kanji
+  // index, so it waits for coverage's read.
   const at = c && through !== null && through > level ? through : null
   const gains = {
     radical: at && later ? later.radical[at] : 0,
@@ -1458,70 +1498,19 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
         perLevel={perLevel}
         onPace={onPace}
         through={at}
+        onThrough={c ? setThrough : null}
+        counted={Boolean(later)}
         rightByLevel={byLevel}
       />
-      <div className="through">
-        <div className="pair">
-          <Taught learned={counts} totals={totals} next={m?.next} at={at} gains={gains} counted={Boolean(later)} />
-          <Coverage coverage={c} at={at} />
-        </div>
-        {c ? (
-          <Through level={level} at={at} onThrough={setThrough} pace={p} now={now} soonest={soonest} perLevel={perLevel} counted={Boolean(later)} />
-        ) : null}
+      {/* Taught, coverage and the milestones, one labelled row each: they
+          count the same things, and the first two follow the level chosen
+          on the bars above. The milestones keep their own clock. */}
+      <div className="rows">
+        <Taught learned={counts} totals={totals} next={m?.next} at={at} gains={gains} counted={Boolean(later)} />
+        <Coverage coverage={c} at={at} />
+        <Milestones milestones={m} now={now} />
       </div>
     </div>
-  )
-}
-
-// The slider under taught and coverage: from now to level 60, and what it
-// says — through level L is when L+1 begins, at the dial's pace, so moving
-// the dial moves its date. Radicals and vocabulary are counted from their
-// own index; until it lands, or if it never does, they stay at what is
-// taught now, and the line says so.
-function Through({ level, at, onThrough, pace: p, now, soonest, perLevel, counted }) {
-  const ahead = at ? project(p, level, perLevel, now, soonest) : null
-  const reachedBy = ahead ? (at >= TOP_LEVEL ? ahead.done : ahead.startOf(at + 1)) : null
-
-  return (
-    <>
-      <div className="slider">
-        <input
-          id="through-level"
-          type="range"
-          min={level}
-          max={TOP_LEVEL}
-          step={1}
-          value={at ?? level}
-          onChange={event => onThrough(Number(event.target.value))}
-          aria-label="Taught and coverage through level"
-          aria-valuetext={at ? `through level ${at}` : 'now'}
-        />
-        <div className="ticks" aria-hidden="true">
-          <span className="start" style={{ left: 0 }}>
-            now · level {level}
-          </span>
-          <span className="end" style={{ left: '100%' }}>
-            level 60
-          </span>
-        </div>
-      </div>
-      <p className="notes" aria-live="polite">
-        {at ? (
-          <>
-            <span className="soft">
-              Through level {at}
-              {reachedBy ? ` · ≈ ${monthYear(reachedBy)} at ${dayCount(perLevel)} days a level` : ''}
-            </span>
-            <span className="proj">
-              Projection · once WaniKani has taught you everything through level {at}
-              {counted ? '' : ' · radicals and vocabulary stay at what is taught now'}
-            </span>
-          </>
-        ) : (
-          <span className="hint">Drag the slider to see taught and coverage through a later level</span>
-        )}
-      </p>
-    </>
   )
 }
 
@@ -1574,8 +1563,11 @@ function Waiting({ title }) {
 // it). Scaled from 80%, or the tenth below the lowest, to 100%, with your
 // overall dashed across. Pointing at either row reads both in the line.
 // Undefined while it reads, keeping its room; null, and gone, if it can't.
-function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, rightByLevel }) {
+function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, onThrough = null, counted = true, rightByLevel }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
+  // A mouse chooses on its click; a finger's first tap reads the bar and
+  // the second chooses it, as a kanji's second tap opens it.
+  const chooses = useRef(true)
   const atMedianMark = usePointing()
   const atRecentMark = usePointing()
   const [goal, setGoal] = useState(readGoal)
@@ -1659,7 +1651,21 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
       event.preventDefault()
       point(reading === null ? level - 1 : Math.min(TOP_LEVEL - 1, Math.max(0, reading + step)))
     }
-    if (event.key === 'Escape') point(null)
+    if (event.key === 'Escape') {
+      if (reading !== null) point(null)
+      else onThrough?.(null)
+    }
+    if ((event.key === 'Enter' || event.key === ' ') && reading !== null) {
+      event.preventDefault()
+      chooseThrough(slots[reading])
+    }
+  }
+
+  // A level ahead, chosen: taught and coverage below say what you would know
+  // by then. Choosing it again lets go.
+  function chooseThrough(s) {
+    if (!onThrough || s.level <= level) return
+    onThrough(through === s.level ? null : s.level)
   }
 
   const at = days => ((days - min) / (max - min)) * 100
@@ -1678,7 +1684,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
 
   return (
     <section className="dial">
-      <Head right={`level ${level} of ${TOP_LEVEL}${perLevel !== null ? ` · at ${dayCount(perLevel)} days a level` : ''}`}>
+      <Head right={`level ${level} of ${TOP_LEVEL}${perLevel !== null ? ` · projected at ${dayCount(perLevel)} days a level` : ''}`}>
         days per level
       </Head>
 
@@ -1711,11 +1717,20 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
                 s.kind,
                 s.level === quickest?.level ? 'fastest' : '',
                 through && s.level > level && s.level <= through ? 'within' : '',
-                reading === i || worked?.middle.some(l => l.level === s.level) ? 'reading' : ''
+                reading === i || worked?.middle.some(l => l.level === s.level) ? 'reading' : '',
+                onThrough && s.level > level ? 'choosable' : ''
               ]
                 .join(' ')
                 .trim()}
               {...itemProps(i)}
+              onPointerDown={event => {
+                chooses.current = event.pointerType === 'mouse' || reading === i
+                itemProps(i).onPointerDown(event)
+              }}
+              onClick={() => {
+                if (chooses.current) chooseThrough(s)
+                chooses.current = true
+              }}
             >
               {s.kind === 'passed' ? <i style={{ height: `${Math.max(4, height(s.days))}%` }} /> : null}
               {s.kind === 'current' ? (
@@ -1761,15 +1776,36 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
       <div className="under">
         <p className="notes readout" aria-live="polite">
           <span className={shown ? 'usual hidden' : 'usual'}>
-            <Hint pointer="Point at" touch="Tap">
-              a bar for its level, or drag the slider to change the pace
-            </Hint>
+            {through ? (
+              <>
+                <span className="soft">
+                  <span className="strong">Through level {through}</span>
+                  {ahead ? ` ≈ ${dayMonthYear(through >= TOP_LEVEL ? ahead.done : ahead.startOf(through + 1))}` : ''} · taught and coverage below are as of then
+                </span>
+                <span className="proj">
+                  Projection · once WaniKani has taught you everything through level {through}
+                  {counted ? '' : ' · radicals and vocabulary stay at what is taught now'}
+                </span>
+              </>
+            ) : (
+              <Hint pointer="Point at" touch="Tap">
+                a bar for its level{onThrough ? ', choose one ahead for what you’d know by then,' : ''} or drag the slider to change the pace
+              </Hint>
+            )}
           </span>
           {shown ? (
             <span className="usual">
               <span className="soft">
                 {caption(shown, ahead, perLevel)}
                 {rights?.[reading] ? ` · ${percent(rights[reading].share)}% right` : ''}
+                {onThrough && shown.level > level ? (
+                  <>
+                    {' · '}
+                    <span className="by-pointer">click</span>
+                    <span className="by-touch">tap again</span>
+                    {shown.level === through ? ' to let go' : ' for what you’d know by then'}
+                  </>
+                ) : null}
               </span>
             </span>
           ) : null}
@@ -1871,6 +1907,12 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             <b>≈ {monthYear(level < TOP_LEVEL ? ahead.startOf(TOP_LEVEL) : ahead.done)}</b>
             <span>{level < TOP_LEVEL ? 'level 60' : 'level 60 done'}</span>
           </div>
+          {through ? (
+            <div>
+              <b>≈ {monthYear(through >= TOP_LEVEL ? ahead.done : ahead.startOf(through + 1))}</b>
+              <span>level {through} done</span>
+            </div>
+          ) : null}
           <div className="against">
             <span className="soft">
               {perLevel === home
@@ -1951,13 +1993,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
         </p>
       ) : null}
 
-      {ahead ? (
-        <p className="notes">
-          <span className="proj">
-            Projection · a level every {dayCount(perLevel)} days from here, this one no sooner than its earliest level-up
-          </span>
-        </p>
-      ) : null}
     </section>
   )
 }
@@ -2095,66 +2130,47 @@ function Taught({ learned: counts, totals, next = [], at = null, gains = {}, cou
 const REACHED_SHOWN = 5
 
 //
-// **Upcoming burns lead it**: the enlightened items whose next review is the
-// burn, day by day for the week — the nearest thing you can do that ends in
-// one. Hidden when there are none.
-function Milestones({ milestones: m, burns = [], now }) {
+// In the ahead band beside taught and coverage, which count the same
+// things, but on their own clock: the dial and the chosen level move neither.
+// The reached ones fold away behind their count. The week's upcoming burns
+// that once led it went at the owner's word.
+function Milestones({ milestones: m, now }) {
   if (m === undefined) return <Waiting title="milestones" />
   if (!m || (m.next.length === 0 && m.reached.length === 0)) return null
   const reached = m.reached.slice(0, REACHED_SHOWN)
-  const burning = burns.reduce((sum, d) => sum + d.count, 0)
-  const most = Math.max(1, ...burns.map(d => d.count))
 
   return (
     <section className="milestones">
       <Head>milestones</Head>
-      {burning > 0 ? (
-        <div className="burns">
-          <span className="burnline">
-            {many(burning)} up for burning this week · {many(burns[0].count)} today
-          </span>
-          <div className="burnrow" aria-hidden="true">
-            {burns.map((d, i) => (
-              <span key={d.day.getTime()} className={i === 0 ? 'today' : ''}>
-                <i style={{ height: d.count ? `${Math.max(6, (d.count / most) * 100)}%` : '2px' }} />
-              </span>
-            ))}
-          </div>
-          <div className="burnaxis">
-            {burns.map((d, i) => (
-              <span key={d.day.getTime()}>
-                <b>{many(d.count)}</b>
-                {i === 0 ? 'today' : weekday(d.day)}
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
-      <ul className="ladder">
-        {m.next.map((n, i) => (
-          <li key={n.kind} className={i === 0 ? 'next soonest' : 'next'}>
-            <span className="what">{n.label}</span>
-            <span className="togo">{many(n.togo)} to go</span>
-            <span className="when">{n.at ? `≈ ${roughly(n.at, now)}` : ''}</span>
-          </li>
-        ))}
+      <div className="body">
+        <ul className="ladder">
+          {m.next.map((n, i) => (
+            <li key={n.kind} className={i === 0 ? 'next soonest' : 'next'}>
+              <span className="what">{n.label}</span>
+              <span className="when">{n.at ? `≈ ${roughly(n.at, now)}` : ''}</span>
+              <span className="togo">{many(n.togo)} to go</span>
+            </li>
+          ))}
+        </ul>
         {reached.length > 0 ? (
-          <li className="divider" aria-hidden="true">
-            <span>reached</span>
-          </li>
+          <details className="reached">
+            <summary>reached · {reached.length}</summary>
+            <ul className="ladder">
+              {reached.map(r => (
+                <li key={r.label} className="reached">
+                  <span className="what">{r.label}</span>
+                  <span className="when">{dayMonthYear(r.at)}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
         ) : null}
-        {reached.map(r => (
-          <li key={r.label} className="reached">
-            <span className="what">{r.label}</span>
-            <span className="when">{dayMonthYear(r.at)}</span>
-          </li>
-        ))}
-      </ul>
-      {m.next.some(n => n.at) ? (
-        <p className="notes">
-          <span className="proj">≈ at your last 30 days’ pace, not the dial’s · reached dates are WaniKani’s</span>
-        </p>
-      ) : null}
+        {m.next.some(n => n.at) ? (
+          <p className="notes">
+            <span className="proj">≈ at your last 30 days’ pace, not the dial’s · reached dates are WaniKani’s</span>
+          </p>
+        ) : null}
+      </div>
     </section>
   )
 }

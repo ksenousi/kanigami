@@ -3,7 +3,6 @@ import {
   MIN_MISSES,
   accuracy,
   accuracyByLevel,
-  burnsAhead,
   earliestLevelUp,
   leeches,
   levelKanji,
@@ -632,21 +631,6 @@ describe('milestones', () => {
     expect(reached.map(m => m.at.getTime())).toEqual(reached.map(m => m.at.getTime()).sort((a, b) => b - a))
     const dated = next.filter(m => m.at)
     expect(dated.map(m => m.at.getTime())).toEqual(dated.map(m => m.at.getTime()).sort((a, b) => a - b))
-  })
-})
-
-describe('burnsAhead', () => {
-  it('counts only enlightened items, by the day their burn review comes', () => {
-    const days = burnsAhead(
-      [
-        assignment({ srs_stage: 8, available_at: local(14, 22) }), // tonight
-        assignment({ srs_stage: 8, available_at: local(16, 9) }), // in two days
-        assignment({ srs_stage: 7, available_at: local(14, 22) }), // master: not a burn
-        assignment({ srs_stage: 8, available_at: local(10, 8) }) // overdue: today
-      ],
-      NOW
-    )
-    expect(days.map(d => d.count)).toEqual([2, 0, 1, 0, 0, 0, 0])
   })
 })
 

@@ -1926,3 +1926,43 @@ last-five median, not the whole history's. The dial starts there, the level
 line says `At your last-five pace ≈ …`, and the readings compare the dial
 against it (`Your last-five pace`, `N weeks sooner than at your last-five
 pace`). The median keeps its mark, its dotted line and its working.
+
+**The regroup: three bands, packed close.** Asked for: the board to feel
+more cohesive, and then to take less scrolling — it ran to about 3,500px at
+1440px, nearly four screens. Prototyped as a private artifact with a switch
+per change and a density scale (roomy, compact, tight, ultra, max); the owner
+took every structural change and **max**, as a layout — the real board keeps
+every feature the prototype did not draw (the stage marks and readouts on
+the grid, the lenses, the goal, keyboard and touch).
+- **Three bands**, each opened by a `--rule` hairline with its name sitting
+  on it: 今 now (what's due and when), 手元 at hand (this level and your
+  items), 先 ahead (pace, and what you'll know). The name is a sentence in
+  `--small` sans with its kanji in the serif, not a new line of capitals.
+- **The figures moved into the masthead**, each count beside its label; the
+  romaji tag and `level · username` give way to them once the board is read.
+  Below 1,280px they take their own line under 蟹紙.
+- **The level line and the next 24 hours stand side by side** at 1,280px and
+  up (1 : 1.3), the forecast 110px tall, its hour numbers closed up so two
+  digits keep a gap. The level line's reads run as one line.
+- **One control for the future.** The second slider under taught and
+  coverage is gone: a level ahead is chosen by clicking its bar on the dial
+  (a finger's first tap reads it, the second chooses; Enter from the
+  keyboard), and clicked again to let go. The readout says `Through level 30
+  ≈ 15 Jul 2027` with its projection line, the readings gain `level 30
+  done`, and the bars up to it light as before.
+- **Milestones moved down** beside taught and coverage, which count the same
+  things, still saying they run on the last 30 days, not the dial. The
+  reached ones fold behind `reached · N`. **The week's upcoming burns went**,
+  at the owner's word (`burnsAhead` with it).
+- **Taught, coverage and milestones are one labelled row each**: the head as
+  a label down the left, what it says on an even grid beside it. On a phone
+  the label goes above.
+- **Shorter everything**: the grid ten across at `--input` (eight on a
+  phone), the dial's bars 84px and the accuracy strip 24px, the readings on
+  one line at `--display`, the projection named in the dial's head
+  (`projected at 18 days a level`) in place of the line under it, slipping's
+  first five with the rest behind `N more`.
+- Rejected from the prototype: hiding the `Point at…` hints (they teach the
+  touch gesture) and dropping the decades' dates (the dial moves them).
+- Measured on the fake account: 3,486px → 2,211px at 1440; nothing overflows
+  at 375, 744, 820, 1180, 1280, 1366 or 1440.

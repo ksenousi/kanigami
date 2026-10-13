@@ -635,13 +635,6 @@ export function levelUpItems(kanji = [], radicals = [], remaining = 0) {
   return [...kanji.filter(k => k.state !== 'passed' && k.state !== 'locked'), ...holding.map(r => ({ ...r, radical: true }))]
 }
 
-// Enlightened items whose next review is the burn — answered right once more,
-// they are done. One bucket per local day for `days` days, the backlog in
-// today, the same days as `week`.
-export function burnsAhead(assignments = [], now = new Date(), days = 7) {
-  return week(assignments.filter(a => a?.data?.srs_stage === BURNED - 1), now, days)
-}
-
 // The slowest pace that still reaches `target` by `by`, rounded down to
 // `step`: what a goal asks of you. Null when even `fastest` days a level
 // cannot — no pace beats WaniKani's intervals or the earliest level-up.

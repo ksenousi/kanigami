@@ -264,7 +264,7 @@ describe('the pace dial', () => {
     history()
     const host = await board()
     await tap(host.querySelectorAll('.dial .bars > span')[29])
-    expect(host.querySelector('.dial .readout .usual:not(.hidden)').textContent).toMatch(/^Level 30 ≈ .+ at 10 days a level$/)
+    expect(host.querySelector('.dial .readout .usual:not(.hidden)').textContent).toMatch(/^Level 30 ≈ .+ at 10 days a level · /)
   })
 
   it('remembers a goal of a level by a month, and says the pace it asks for', async () => {
@@ -342,21 +342,6 @@ describe('the decades on the dial', () => {
   })
 })
 
-describe('upcoming burns', () => {
-  it('counts enlightened items whose next review is the burn, this week', async () => {
-    const soon = new Date(Date.now() + 2 * HOUR).toISOString()
-    api.getStartedAssignments.mockResolvedValue([
-      { data: { subject_id: 900, subject_type: 'vocabulary', srs_stage: 8, started_at: soon, available_at: soon } },
-      { data: { subject_id: 901, subject_type: 'vocabulary', srs_stage: 8, started_at: soon, available_at: soon } },
-      { data: { subject_id: 902, subject_type: 'vocabulary', srs_stage: 7, started_at: soon, available_at: soon } }
-    ])
-    api.getSubjectTotals.mockResolvedValue({ radical: 500, kanji: 2000, vocabulary: 6000 })
-    const host = await board()
-    const line = (await until(host, '.burnline')).textContent
-    expect(line).toMatch(/^2 up for burning this week · \d+ today$/)
-  })
-})
-
 describe('keeps slipping', () => {
   const stat = (subject_id, percentage) => ({
     data: { subject_id, subject_type: 'kanji', percentage_correct: percentage, meaning_incorrect: 4 }
@@ -379,6 +364,19 @@ describe('keeps slipping', () => {
     await click(button(host, 'all levels'))
     expect(shown(host)).toEqual(['届', '山'])
     expect(api.getSubjects).toHaveBeenCalledOnce()
+  })
+
+  it('shows the first five and folds the rest behind their count', async () => {
+    const ids = [701, 702, 703, 704, 705, 706, 707]
+    api.getReviewStatistics.mockResolvedValue(ids.map((id, i) => stat(id, 30 + i)))
+    api.getSubjects.mockResolvedValue(ids.map(id => subject(id, String.fromCharCode(0x4e00 + id), 'Some')))
+    const host = await board()
+    await until(host, '.slipping')
+    expect(shown(host)).toHaveLength(5)
+    await click(button(host, '2 more'))
+    expect(shown(host)).toHaveLength(7)
+    await click(button(host, 'fewer'))
+    expect(shown(host)).toHaveLength(5)
   })
 
   it('links each character out to its WaniKani page, and names the half it is missed on', async () => {
@@ -462,10 +460,13 @@ describe('milestones', () => {
     )
     api.getSubjectTotals.mockResolvedValue({ radical: 500, kanji: 2000, vocabulary: 6000 })
     const host = await board()
-    const ladder = (await until(host, '.ladder')).textContent
+    await until(host, '.ladder')
+    const ladder = host.querySelector('.milestones').textContent
     expect(ladder).toContain('250 kanji')
     expect(ladder).toContain('130 to go')
-    expect(ladder).toContain('100 kanji')
+    // The reached ones fold away behind their count.
+    expect(host.querySelector('.milestones details summary').textContent).toMatch(/^reached · \d+$/)
+    expect(host.querySelector('.milestones details').textContent).toContain('100 kanji')
   })
 })
 
@@ -476,6 +477,14 @@ describe('coverage', () => {
     // 山 and 川 at level 5, 一 at level 20; only 山 taught. All three are N5.
     api.getAllKanjiSubjects.mockResolvedValue([kanji(1, 5, '山'), kanji(2, 5, '川'), kanji(3, 20, '一')])
     api.getStartedAssignments.mockResolvedValue([{ data: { subject_id: 1, subject_type: 'kanji', srs_stage: 3, started_at: new Date().toISOString() } }])
+    // Four levels of ten days and level 5 under way, so the pace bars draw.
+    const start = Date.now() - 44 * 86400000
+    api.getLevelProgressions.mockResolvedValue([
+      ...[0, 1, 2, 3].map(i => ({
+        data: { level: i + 1, unlocked_at: new Date(start + i * 10 * 86400000).toISOString(), passed_at: new Date(start + (i + 1) * 10 * 86400000).toISOString(), abandoned_at: null }
+      })),
+      { data: { level: 5, unlocked_at: new Date(Date.now() - 4 * 86400000).toISOString(), passed_at: null, abandoned_at: null } }
+    ])
   })
 
   const n5 = host => host.querySelector('.cover .row .pct').textContent
@@ -486,19 +495,45 @@ describe('coverage', () => {
     expect(n5(host)).toMatch(/1 of 79/)
   })
 
+  // Choosing a level ahead is a click on its bar.
   const through = async (host, level) => {
-    const input = host.querySelector('#through-level')
-    const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
-    set.call(input, String(level))
-    await act(async () => input.dispatchEvent(new Event('input', { bubbles: true })))
+    await click(host.querySelectorAll('.dial .bars > span:not(.pace-line):not(.median-line):not(.goal-line)')[level - 1])
   }
+  const readout = host => host.querySelector('.dial .readout').textContent
 
-  it('shows the gain through a later level when the slider moves', async () => {
+  it('shows the gain through a level ahead when its bar is clicked, and lets go on a second click', async () => {
     const host = await board()
     await until(host, '.cover')
     await through(host, 20)
     expect(n5(host)).toMatch(/^\+2 \d+% 3 of 79$/)
-    expect(host.querySelector('.forward .through').textContent).toContain('Through level 20')
+    expect(readout(host)).toContain('Through level 20')
+    expect(host.querySelector('.dial .readings').textContent).toContain('level 20 done')
+    await through(host, 20)
+    expect(n5(host)).toMatch(/1 of 79/)
+    expect(readout(host)).not.toContain('Through level 20')
+  })
+
+  it('reads a level ahead on a first tap and chooses it on the second', async () => {
+    const host = await board()
+    await until(host, '.cover')
+    // A finger's tap is its pointer events, then a click.
+    const bar = host.querySelectorAll('.dial .bars > span')[19]
+    const touch = async () => {
+      await tap(bar)
+      await click(bar)
+    }
+    await touch()
+    expect(host.querySelector('.dial .readout .usual:not(.hidden)').textContent).toMatch(/^Level 20 ≈ /)
+    expect(n5(host)).toMatch(/1 of 79/)
+    await touch()
+    expect(n5(host)).toMatch(/3 of 79/)
+  })
+
+  it('does not choose a level already passed', async () => {
+    const host = await board()
+    await until(host, '.cover')
+    await through(host, 3)
+    expect(n5(host)).toMatch(/1 of 79/)
   })
 
   it('moves only taught’s kanji line when the radicals and words ahead could not be read', async () => {
@@ -508,7 +543,7 @@ describe('coverage', () => {
     const fills = host.querySelector('.fills').textContent
     expect(fills).toContain('+2 3 kanji')
     expect(host.querySelectorAll('.fills .still')).toHaveLength(2)
-    expect(host.querySelector('.forward .through').textContent).toContain('radicals and vocabulary stay')
+    expect(readout(host)).toContain('radicals and vocabulary stay')
   })
 
   it('moves every taught line once the radicals and words ahead are read', async () => {
