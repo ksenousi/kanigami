@@ -2031,3 +2031,13 @@ spread left its row across the top of at hand and sits under the kanji grid
 in the left column — slipping beside it runs taller than the grid alone, so
 the column had the room. Below 1,280px the order is the level, the spread,
 then slipping.
+
+**The slider's foot, tidied.** Asked for: the marks, readings and goal under
+the slider to take less room.
+- The goal's mark joins the median and last five on one row (it had a row
+  of its own); marks within a fifth of the slider of each other merge into
+  one label, left to right. The goal's part keeps its strong ink.
+- What the goal asks sits on the goal's own line — `Goal [level 30] by
+  [Jun] [2027] 18 days a level — the dial's pace gets there` — in place of
+  a sentence beneath that named the level and the month again.
+- The milestones beside the dial are a small table: what, when, to go.

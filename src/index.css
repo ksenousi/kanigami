@@ -2107,6 +2107,26 @@ button.quiet {
   text-transform: none;
 }
 
+/* What the goal asks: a sentence, so set like the notes, on the goal's own
+   line. */
+.board .goalset .answer {
+  font-family: var(--sans);
+  font-size: var(--small);
+  letter-spacing: 0;
+}
+
+.board .goalset .soft {
+  color: var(--text-soft);
+}
+
+.board .goalset .strong {
+  color: var(--text-strong);
+}
+
+.board .goalset .hot {
+  color: var(--accent);
+}
+
 /* The level numbers, one slot per bar so each sits under its own. */
 .board .dial .levels {
   display: flex;
@@ -2257,13 +2277,9 @@ button.quiet {
   height: 54px;
 }
 
-/* The goal's mark has a row of its own under the others. */
-.board .ticks.has-goal {
-  height: 80px;
-}
-
-.board .ticks .mark.goal {
-  top: 52px;
+/* The goal shares the marks' row, in strong ink: it is the one the person
+   set. */
+.board .ticks .goal {
   color: var(--text-strong);
 }
 
@@ -2613,10 +2629,33 @@ button.quiet {
     text-align: right;
   }
 
-  .board .forward .rows .fills,
-  .board .forward .rows .ladder {
+  .board .forward .rows .fills {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
+  }
+
+  /* The milestones a small table: what, when, how many to go. */
+  .board .forward .rows .ladder {
+    grid-template-columns: minmax(0, 1fr) max-content max-content;
+    gap: 8px 16px;
+  }
+
+  .board .forward .rows .ladder li {
+    display: contents;
+  }
+
+  .board .forward .rows .ladder .next .when {
+    grid-column: auto;
+    margin-top: 0;
+    text-align: right;
+  }
+
+  .board .forward .rows .ladder .togo {
+    text-align: right;
+  }
+
+  .board .forward .rows details .ladder {
+    grid-template-columns: minmax(0, 1fr) max-content;
   }
 
   /* Coverage a list to a row: the name and share, the hairline under. */
@@ -3027,8 +3066,7 @@ button.quiet {
      printing over each other, so they become a line under it, start to
      end, wrapping where they must. */
   .board .ticks,
-  .board .ticks.has-low,
-  .board .ticks.has-goal {
+  .board .ticks.has-low {
     height: auto;
     display: flex;
     flex-wrap: wrap;
@@ -3038,8 +3076,7 @@ button.quiet {
 
   .board .ticks > span,
   .board .ticks > span.end,
-  .board .ticks > span.low,
-  .board .ticks .mark.goal {
+  .board .ticks > span.low {
     position: static;
     transform: none;
   }

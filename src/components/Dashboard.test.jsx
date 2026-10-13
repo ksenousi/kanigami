@@ -319,7 +319,8 @@ describe('the pace dial', () => {
     localStorage.setItem('kanigami-goal', JSON.stringify({ level: 40, year: new Date().getFullYear() + 3, month: 0 }))
     const host = await board()
     expect(host.querySelector('#goal-level').value).toBe('40')
-    expect(host.querySelector('.dial').textContent).toMatch(/To reach level 40 by Jan \d{4}: [\d.]+ days a level/)
+    expect(host.querySelector('#goal-month').value).toBe('0')
+    expect(host.querySelector('.goalset .answer').textContent).toMatch(/^[\d.]+ days a level — /)
   })
 
   it('stays away until a level has passed', async () => {

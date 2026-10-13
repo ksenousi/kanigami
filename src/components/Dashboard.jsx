@@ -1680,16 +1680,22 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   }
 
   const at = days => ((days - min) / (max - min)) * 100
-  // The ends label the top row; the marks sit on the row beneath, where the
-  // end labels cannot reach them. Two marks too close to share it become one
-  // label at the first.
+  // The ends label the top row; the marks — median, last five and the goal —
+  // share the row beneath, where the end labels cannot reach them. Marks too
+  // close to stand apart become one label at the first, left to right.
   const marks = [
     p.median !== null ? { parts: [{ label: `median ${dayCount(toStep(p.median))}`, pointing: atMedianMark }], at: at(p.median) } : null,
-    p.recent !== null ? { parts: [{ label: `last five ${dayCount(toStep(p.recent))}`, pointing: atRecentMark }], at: at(p.recent) } : null
-  ].filter(Boolean)
-  if (marks.length === 2 && Math.abs(marks[0].at - marks[1].at) < 20) {
-    marks.splice(0, 2, { parts: [...marks[0].parts, ...marks[1].parts], at: Math.min(marks[0].at, marks[1].at) })
-  }
+    p.recent !== null ? { parts: [{ label: `last five ${dayCount(toStep(p.recent))}`, pointing: atRecentMark }], at: at(p.recent) } : null,
+    need !== null ? { parts: [{ label: `goal ${dayCount(need)}`, goal: true }], at: at(need) } : null
+  ]
+    .filter(Boolean)
+    .sort((a, b) => a.at - b.at)
+    .reduce((merged, m) => {
+      const last = merged[merged.length - 1]
+      if (last && m.at - last.end < 20) merged[merged.length - 1] = { ...last, parts: [...last.parts, ...m.parts], end: m.at }
+      else merged.push({ ...m, end: m.at })
+      return merged
+    }, [])
 
   const weeks = ahead && atHome ? Math.round((ahead.done - atHome.done) / (7 * 24 * 60 * 60 * 1000)) : 0
 
@@ -1853,15 +1859,20 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             aria-label="Days per level, for the projection"
             aria-valuetext={`${dayCount(perLevel)} days a level`}
           />
-          <div className={['ticks', marks.length ? 'has-low' : '', need !== null ? 'has-goal' : ''].join(' ').trim()}>
+          <div className={['ticks', marks.length ? 'has-low' : ''].join(' ').trim()}>
             <span className="start" style={{ left: 0 }} aria-hidden="true">
               {dayCount(min)} days{fastest ? <span className="aside">, WaniKani’s fastest</span> : ''}
             </span>
             {marks.map(m => (
               <span key={m.parts[0].label} className="mark low" style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }}>
-                {m.parts.map(({ label, pointing }, i) => (
+                {m.parts.map(({ label, pointing, goal }, i) => (
                   <Fragment key={label}>
                     {i ? ' · ' : ''}
+                    {goal ? (
+                      <span className="goal" aria-hidden="true">
+                        {label}
+                      </span>
+                    ) : (
                     <span
                       className={pointing.at !== null ? 'working reading' : 'working'}
                       aria-label={`${label} — how it was taken`}
@@ -1872,15 +1883,11 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
                     >
                       {label}
                     </span>
+                    )}
                   </Fragment>
                 ))}
               </span>
             ))}
-            {need !== null ? (
-              <span className="mark goal" style={{ left: `${Math.max(4, Math.min(96, at(need)))}%` }} aria-hidden="true">
-                goal {dayCount(need)}
-              </span>
-            ) : null}
             <span className="end" style={{ left: '100%' }} aria-hidden="true">
               {max} days
             </span>
@@ -1978,6 +1985,20 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
                 </option>
               ))}
             </select>
+            {/* What the goal asks, on its own line rather than one beneath
+                that named the level and the month again. */}
+            <span className="answer" aria-live="polite">
+              {need === null ? (
+                <span className="hot">sooner than WaniKani’s intervals allow</span>
+              ) : (
+                <span className="soft">
+                  <span className="strong">{dayCount(need)} days a level</span> —{' '}
+                  {perLevel !== null && perLevel <= need
+                    ? 'the dial’s pace gets there'
+                    : `${dayCount(toStep(perLevel - need))} faster than the dial`}
+                </span>
+              )}
+            </span>
             {need !== null && need !== perLevel ? (
               <button className="quiet" type="button" onClick={() => onPace(need)}>
                 Set the dial to it
@@ -1986,23 +2007,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
           </>
         ) : null}
       </div>
-      {aim ? (
-        <p className="notes" aria-live="polite">
-          {need === null ? (
-            <span className="hot">
-              Level {aim.level} by {MONTH_NAMES[aim.month]} {aim.year} is sooner than WaniKani’s intervals allow
-            </span>
-          ) : (
-            <span className="soft">
-              To reach level {aim.level} by {MONTH_NAMES[aim.month]} {aim.year}:{' '}
-              <span className="strong">{dayCount(need)} days a level</span> —{' '}
-              {perLevel !== null && perLevel <= need
-                ? 'the dial’s pace gets there'
-                : `${dayCount(toStep(perLevel - need))} days a level faster than the dial`}
-            </span>
-          )}
-        </p>
-      ) : null}
 
     </section>
   )
