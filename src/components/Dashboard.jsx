@@ -1599,7 +1599,10 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
     .reduce((best, l) => (!best || l.days < best.days ? l : best), null)
 
   const min = fastest ? Math.ceil(fastest / STEP) * STEP : 1
-  const max = Math.max(40, toStep((p.median ?? 0) * 2))
+  // Up to 25 days a level, the range a pace is set in: the track was 40,
+  // and the part anyone uses was crowded into its first third. It runs
+  // further only so your own median and last five always sit on it.
+  const max = Math.max(25, Math.ceil(Math.max(p.median ?? 0, p.recent ?? 0)))
 
   // The goal, if one is set for a level still ahead: the month it names runs
   // to its last day, so `by` is the start of the month after.

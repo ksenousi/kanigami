@@ -276,6 +276,16 @@ describe('the pace dial', () => {
     expect(strip[19].querySelector('i')).toBeNull()
   })
 
+  it('runs from WaniKani’s fastest to 25 days, further only to reach your own pace', async () => {
+    history()
+    let host = await board()
+    expect(host.querySelector('#pace-dial').max).toBe('25')
+    await cleanup()
+    history([30, 30, 30, 30])
+    host = await board()
+    expect(host.querySelector('#pace-dial').max).toBe('30')
+  })
+
   it('reads a projected level when one is tapped', async () => {
     history()
     const host = await board()

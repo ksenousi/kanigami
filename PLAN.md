@@ -2073,3 +2073,8 @@ enough to merge, each at its own place.
 median 14 · last five 18 · goal 18`, one 44px row; the marks wrap under the
 slider only where the column is too narrow (a phone). The start's aside,
 `WaniKani's fastest`, became the label's tooltip to make the room.
+
+**The slider runs 7 to 25 days.** Asked for: the track ran to 40 (or twice
+the median), and the paces anyone sets were crowded into its first third.
+It now ends at 25 days a level, and runs further only so the account's own
+median and last five always sit on it.
