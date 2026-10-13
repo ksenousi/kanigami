@@ -1496,6 +1496,9 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
 
   return (
     <div className="forward">
+      {/* The dial, and the milestones laid across under its goal; taught and
+          coverage, which follow the level chosen on its bars, beside them. */}
+      <div className="pace-col">
       <PaceDial
         pace={p}
         level={level}
@@ -1509,13 +1512,11 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
         counted={Boolean(later)}
         rightByLevel={byLevel}
       />
-      {/* Taught, coverage and the milestones, one labelled row each: they
-          count the same things, and the first two follow the level chosen
-          on the bars above. The milestones keep their own clock. */}
+      <Milestones milestones={m} now={now} />
+      </div>
       <div className="rows">
         <Taught learned={counts} totals={totals} next={m?.next} at={at} gains={gains} counted={Boolean(later)} />
         <Coverage coverage={c} at={at} />
-        <Milestones milestones={m} now={now} />
       </div>
     </div>
   )
@@ -1582,8 +1583,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   if (!p || (p.levels.length === 0 && !p.current)) return null
 
   const ahead = project(p, level, perLevel, now, soonest)
-  const home = homePace(p)
-  const atHome = project(p, level, home, now, soonest)
   const decades = road(p, level, now, perLevel, soonest)
   const byLevel = new Map(p.levels.map(l => [l.level, l]))
   const slots = Array.from({ length: TOP_LEVEL }, (_, i) => {
@@ -1697,7 +1696,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
       return merged
     }, [])
 
-  const weeks = ahead && atHome ? Math.round((ahead.done - atHome.done) / (7 * 24 * 60 * 60 * 1000)) : 0
 
   return (
     <section className="dial">
@@ -1859,12 +1857,18 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             aria-label="Days per level, for the projection"
             aria-valuetext={`${dayCount(perLevel)} days a level`}
           />
-          <div className={['ticks', marks.length ? 'has-low' : ''].join(' ').trim()}>
-            <span className="start" style={{ left: 0 }} aria-hidden="true">
-              {dayCount(min)} days{fastest ? <span className="aside">, WaniKani’s fastest</span> : ''}
-            </span>
+          {/* The ends on the slider's own line, the marks on one thin row
+              under it: the slider takes two rows, not four. */}
+          <span className="edge start" aria-hidden="true">
+            {dayCount(min)} days{fastest ? <span className="aside">, WaniKani’s fastest</span> : ''}
+          </span>
+          <span className="edge end" aria-hidden="true">
+            {max} days
+          </span>
+          {marks.length ? (
+          <div className="ticks">
             {marks.map(m => (
-              <span key={m.parts[0].label} className="mark low" style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }}>
+              <span key={m.parts[0].label} className="mark" style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }}>
                 {m.parts.map(({ label, pointing, goal }, i) => (
                   <Fragment key={label}>
                     {i ? ' · ' : ''}
@@ -1888,10 +1892,8 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
                 ))}
               </span>
             ))}
-            <span className="end" style={{ left: '100%' }} aria-hidden="true">
-              {max} days
-            </span>
           </div>
+          ) : null}
           {worked ? (
             <p className="notes worked" aria-live="polite">
               <span>
@@ -1911,35 +1913,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
               </span>
             </p>
           ) : null}
-        </div>
-      ) : null}
-
-      {ahead ? (
-        <div className="readings" aria-live="polite">
-          <div>
-            <b>{dayCount(perLevel)}</b>
-            <span>days a level</span>
-          </div>
-          {/* Reaching 60 is the date people mean; at 60, finishing it. */}
-          <div>
-            <b>≈ {monthYear(level < TOP_LEVEL ? ahead.startOf(TOP_LEVEL) : ahead.done)}</b>
-            <span>{level < TOP_LEVEL ? 'level 60' : 'level 60 done'}</span>
-          </div>
-          {through ? (
-            <div>
-              <b>≈ {monthYear(through >= TOP_LEVEL ? ahead.done : ahead.startOf(through + 1))}</b>
-              <span>level {through} done</span>
-            </div>
-          ) : null}
-          <div className="against">
-            <span className="soft">
-              {perLevel === home
-                ? 'Your last-five pace'
-                : weeks === 0
-                  ? 'About the same as your last-five pace'
-                  : `${Math.abs(weeks)} ${Math.abs(weeks) === 1 ? 'week' : 'weeks'} ${weeks < 0 ? 'sooner' : 'later'} than at your last-five pace`}
-            </span>
-          </div>
         </div>
       ) : null}
 

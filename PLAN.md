@@ -2041,3 +2041,17 @@ the slider to take less room.
   [Jun] [2027] 18 days a level — the dial's pace gets there` — in place of
   a sentence beneath that named the level and the month again.
 - The milestones beside the dial are a small table: what, when, to go.
+
+**The dial's foot: no readings, a one-line slider, the milestones under the
+goal.** Asked for, to save height:
+- **The readings went** (`11.5 days a level`, `≈ Feb 2028 level 60`, `Your
+  last-five pace`): the pace is in the dial's head (`projected at 11.5 days
+  a level`), the decades carry the dates, and a chosen level's date is in
+  the readout. The comparison to the last-five pace went with them.
+- **The slider is one line with its ends** — `7 days, WaniKani's fastest
+  ━━━●━━━ 40 days` — and the marks (median, last five, goal) one thin row
+  under the track at their places. Two rows where there were four. On a
+  phone the marks run as a line under it and the aside goes.
+- **The milestones sit under the goal**, laid across — what, when and how
+  many to go, as many to a row as fit — in the dial's column; taught and
+  coverage keep the column beside it.

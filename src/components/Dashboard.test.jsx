@@ -220,15 +220,15 @@ describe('the pace dial', () => {
     await act(async () => input.dispatchEvent(new Event('input', { bubbles: true })))
   }
 
-  const readings = host => host.querySelector('.dial .readings').textContent
+  const head = host => host.querySelector('.dial .head').textContent
   const decadeDates = host => [...host.querySelectorAll('.dial .decades .when')].map(w => w.textContent)
 
   it('starts at your last-five pace, and says so', async () => {
     history()
     const host = await board()
     expect(host.querySelector('#pace-dial').value).toBe('10')
-    expect(readings(host)).toContain('10days a level')
-    expect(host.querySelector('.dial .readings').textContent).toContain('Your last-five pace')
+    expect(head(host)).toContain('projected at 10 days a level')
+    expect(host.querySelector('.level-line').textContent).toContain('At your last-five pace')
   })
 
   it('starts at the last five even when the median is slower', async () => {
@@ -239,16 +239,13 @@ describe('the pace dial', () => {
     expect(host.querySelector('.dial .ticks').textContent).toContain('median 14')
   })
 
-  it('moves level 60 and the road with it, and says by how much', async () => {
+  it('moves the decades’ dates with it', async () => {
     history()
     const host = await board()
-    const before = [readings(host), decadeDates(host)]
+    const before = decadeDates(host)
     await slide(host, 7)
-    expect(readings(host)).toContain('7days a level')
-    expect(readings(host)).not.toBe(before[0])
-    expect(decadeDates(host)).not.toEqual(before[1])
-    expect(host.querySelector('.dial .readings').textContent).toMatch(/\d+ weeks sooner than at your last-five pace/)
-    expect(host.querySelector('.dial .head').textContent).toContain('7 days a level')
+    expect(head(host)).toContain('projected at 7 days a level')
+    expect(decadeDates(host)).not.toEqual(before)
   })
 
   it('draws a slot for every level, the ones ahead as projections', async () => {
@@ -527,7 +524,6 @@ describe('coverage', () => {
     await through(host, 20)
     expect(n5(host)).toMatch(/^\+2 \d+% 3 of 79$/)
     expect(readout(host)).toContain('Through level 20')
-    expect(host.querySelector('.dial .readings').textContent).toContain('level 20 done')
     await through(host, 20)
     expect(n5(host)).toMatch(/1 of 79/)
     expect(readout(host)).not.toContain('Through level 20')
