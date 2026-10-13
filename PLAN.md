@@ -1925,6 +1925,4 @@ though the readout does gain `· 91% right` as part of B.
 last-five median, not the whole history's. The dial starts there, the level
 line says `At your last-five pace ≈ …`, and the readings compare the dial
 against it (`Your last-five pace`, `N weeks sooner than at your last-five
-pace`). The median keeps its mark, its dotted line and its working. With
-no level timed in the last five — that is, none at all — it falls back to
-the median, which is then also null.
+pace`). The median keeps its mark, its dotted line and its working.
