@@ -1850,10 +1850,10 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             aria-label="Days per level, for the projection"
             aria-valuetext={`${dayCount(perLevel)} days a level`}
           />
-          {/* The ends on the slider's own line, the marks on one thin row
-              under it: the slider takes two rows, not four. */}
-          <span className="edge start" aria-hidden="true">
-            {dayCount(min)} days{fastest ? <span className="aside">, WaniKani’s fastest</span> : ''}
+          {/* The ends and the marks on the slider's own line: the marks wrap
+              under it only where the column is too narrow for them. */}
+          <span className="edge start" aria-hidden="true" title={fastest ? 'WaniKani’s fastest' : undefined}>
+            {dayCount(min)} days
           </span>
           <span className="edge end" aria-hidden="true">
             {max} days

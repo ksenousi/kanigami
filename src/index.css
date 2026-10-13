@@ -2260,22 +2260,23 @@ button.quiet {
   background: var(--accent);
 }
 
-/* The slider on one line with its two ends, and the marks — median, last
-   five, the goal — on a thin row under the track, each at its place. */
+/* The slider on one line with its two ends and the marks — median, last
+   five, the goal — after them; the marks wrap under it where the column is
+   too narrow. */
 .board .dial .slider {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
-  column-gap: 14px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  column-gap: 14px;
 }
 
 .board .dial .slider input {
-  grid-column: 2;
-  grid-row: 1;
+  order: 2;
+  flex: 1 1 160px;
+  min-width: 120px;
 }
 
 .board .dial .slider .edge {
-  grid-row: 1;
   font-family: var(--mono);
   font-size: var(--label);
   letter-spacing: 0.03em;
@@ -2284,20 +2285,20 @@ button.quiet {
 }
 
 .board .dial .slider .edge.start {
-  grid-column: 1;
+  order: 1;
 }
 
 .board .dial .slider .edge.end {
-  grid-column: 3;
+  order: 3;
 }
 
 .board .dial .slider .worked {
-  grid-column: 1 / -1;
+  order: 5;
+  flex-basis: 100%;
 }
 
 .board .ticks {
-  grid-column: 2;
-  margin-top: -8px;
+  order: 4;
   white-space: nowrap;
   font-family: var(--mono);
   font-size: var(--label);
@@ -3021,20 +3022,17 @@ button.quiet {
 
   /* The marks cannot stand at their places in a phone's width without
      printing over each other, so they become a line under the slider,
-     wrapping where they must; the start loses its aside. */
+     wrapping where they must. */
   .board .dial .slider {
     column-gap: 10px;
   }
 
   .board .ticks {
-    grid-column: 1 / -1;
-    margin-top: 0;
+    flex-basis: 100%;
     white-space: normal;
   }
 
-  .board .dial .slider .aside {
-    display: none;
-  }
+
 
   /* Coverage: the share and counts beside the name, the hairline the full
      width under both — dense packing pulls the share back up beside it. */

@@ -2068,3 +2068,8 @@ enough to merge, each at its own place.
   fit. The dial's column and taught and coverage's then end near each other
   (on the fake account 503px beside 443; on the owner's about 640 beside
   610).
+
+**The slider and its marks on one line.** Asked for: `7 days ━━●━━ 40 days
+median 14 · last five 18 · goal 18`, one 44px row; the marks wrap under the
+slider only where the column is too narrow (a phone). The start's aside,
+`WaniKani's fastest`, became the label's tooltip to make the room.
