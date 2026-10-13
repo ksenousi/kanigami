@@ -62,10 +62,16 @@
      --rule measured 1.28:1 and simply could not be read. Guru, master and
      enlightened were chosen as bar colours and sat at 4.09, 3.40 and 3.08:1
      carrying 17px counts; each was lifted in lightness only, hue and
-     saturation kept, to clear 4.5:1. */
-  --srs-guru: #977a51;        /* 4.79:1 */
-  --srs-master: #618494;      /* 4.80:1 */
-  --srs-enlightened: #777c9a; /* 4.71:1 */
+     saturation kept, to clear 4.5:1.
+
+     Then they were reported as hard to tell apart: four muted colours at
+     one lightness, three of them near-grey, read as one band. Each now
+     owns a hue — gold, jade, periwinkle — far enough round the wheel from
+     its neighbours, and from the vermilion before them, to name its
+     segment at a glance. Burned stays ash: draining out is its meaning. */
+  --srs-guru: #d6a23c;        /* 8.34:1 */
+  --srs-master: #4fae86;      /* 7.09:1 */
+  --srs-enlightened: #6f95dc; /* 6.43:1 */
   --srs-burned: #8b8275;      /* 5.09:1 */
 
   /* ---- type scale ----
