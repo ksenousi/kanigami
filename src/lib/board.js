@@ -72,6 +72,31 @@ export function accuracy(statistics = []) {
   }
 }
 
+// Right answers by level: every answer ever given on a level's items, meaning
+// and reading together, summed the way `accuracy` sums them. **Not how you
+// did while on the level** — WaniKani keeps lifetime totals per subject and
+// no dated history, so level 7's figure counts every review of level 7's
+// items to today. `levelOf` maps subject id to level, from the kanji and
+// ahead indexes; a statistic it cannot place is left out. `levels[n]` is null
+// for a level with no answers. `overall` is over the same answers.
+export function accuracyByLevel(statistics = [], levelOf = new Map(), top = 60) {
+  const right = Array.from({ length: top + 1 }, () => 0)
+  const all = Array.from({ length: top + 1 }, () => 0)
+  for (const stat of statistics) {
+    const d = stat?.data
+    const level = d && levelOf.get(d.subject_id)
+    if (!level || level > top) continue
+    const r = (d.meaning_correct ?? 0) + (d.reading_correct ?? 0)
+    right[level] += r
+    all[level] += r + (d.meaning_incorrect ?? 0) + (d.reading_incorrect ?? 0)
+  }
+  const sum = list => list.reduce((a, b) => a + b, 0)
+  return {
+    levels: all.map((n, l) => (n ? { share: right[l] / n, answers: n } : null)),
+    overall: sum(all) ? sum(right) / sum(all) : null
+  }
+}
+
 // An item has to have been missed this many times before it counts as
 // slipping. Below it, one bad day on a new item reads as a leech.
 export const MIN_MISSES = 3

@@ -1899,3 +1899,32 @@ half-day step, like the mark. The `last five` mark does the same over its
 five levels (`Your last five levels (10–14), quickest first: …`), naming
 each level when a break among them was skipped. When the two marks merge,
 each half of the label is pointed at on its own.
+
+**Right answers by level, a strip under the days.** Asked for: accuracy by
+level, since it cannot be had by time (`/reviews` is disabled, and
+`review_statistics` keeps lifetime totals per subject, undated). So the
+figure is **every answer ever given on a level's items, to today** — not how
+you did while on the level — and the label says `to date`. Prototyped three
+ways (a private artifact): A, the figure only in the bars' readout when a bar
+is pointed at; B, its own row of sixty bars; C, A plus a flag naming the
+hardest and easiest levels. **B was picked**; A and C were not built,
+though the readout does gain `· 91% right` as part of B.
+- Under the level numbers, a row of sixty bars 44px tall in `--text-soft` at
+  0.45, this level's in the accent, each as tall as its share right — meaning
+  and reading answers together, summed like the overall figure. Scaled from
+  80%, or the tenth below the lowest level, to 100%, with your overall
+  dashed in `--dim`. The label is the ticks' lowercase mono: `right answers
+  on each level's items, to date` and `80–100% · dashed at your 91%`.
+- Pointing at either row lights both and reads both in the line.
+- **No new read.** The statistics are already read; the level of each comes
+  from the two sanctioned indexes (`kanjiIndex`, `aheadIndex`) — so the strip
+  waits on the slower of them, keeps its room while it does (`reading…`),
+  and is gone if any of the three fails. `accuracyByLevel()` in `board.js`.
+
+**The dial opens at your last five.** Asked for: the default pace to be the
+last-five median, not the whole history's. The dial starts there, the level
+line says `At your last-five pace ≈ …`, and the readings compare the dial
+against it (`Your last-five pace`, `N weeks sooner than at your last-five
+pace`). The median keeps its mark, its dotted line and its working. With
+no level timed in the last five — that is, none at all — it falls back to
+the median, which is then also null.

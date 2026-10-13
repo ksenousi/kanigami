@@ -200,14 +200,16 @@ describe('reading again', () => {
 describe('the pace dial', () => {
   const DAY = 24 * HOUR
   // Levels 1–4 at 10 days each, level 5 unlocked 4 days ago. Fake dates.
-  function history() {
+  // Each passed level's days, then the one under way, four days in.
+  function history(took = [10, 10, 10, 10]) {
     const now = Date.now()
-    const start = now - 44 * DAY
+    const ends = took.reduce((at, days) => [...at, at[at.length - 1] + days], [0])
+    const start = now - (ends[ends.length - 1] + 4) * DAY
     api.getLevelProgressions.mockResolvedValue([
-      ...[0, 1, 2, 3].map(i => ({
-        data: { level: i + 1, unlocked_at: new Date(start + i * 10 * DAY).toISOString(), passed_at: new Date(start + (i + 1) * 10 * DAY).toISOString(), abandoned_at: null }
+      ...took.map((_, i) => ({
+        data: { level: i + 1, unlocked_at: new Date(start + ends[i] * DAY).toISOString(), passed_at: new Date(start + ends[i + 1] * DAY).toISOString(), abandoned_at: null }
       })),
-      { data: { level: 5, unlocked_at: new Date(now - 4 * DAY).toISOString(), passed_at: null, abandoned_at: null } }
+      { data: { level: took.length + 1, unlocked_at: new Date(now - 4 * DAY).toISOString(), passed_at: null, abandoned_at: null } }
     ])
   }
 
@@ -221,12 +223,20 @@ describe('the pace dial', () => {
   const readings = host => host.querySelector('.dial .readings').textContent
   const decadeDates = host => [...host.querySelectorAll('.dial .decades .when')].map(w => w.textContent)
 
-  it('starts at the median, and says so', async () => {
+  it('starts at your last-five pace, and says so', async () => {
     history()
     const host = await board()
     expect(host.querySelector('#pace-dial').value).toBe('10')
     expect(readings(host)).toContain('10days a level')
-    expect(host.querySelector('.dial .readings').textContent).toContain('Your median pace')
+    expect(host.querySelector('.dial .readings').textContent).toContain('Your last-five pace')
+  })
+
+  it('starts at the last five even when the median is slower', async () => {
+    // median of all ten is 14; the last five took 8 each
+    history([20, 20, 20, 20, 20, 8, 8, 8, 8, 8])
+    const host = await board({ user: { ...USER, level: 11 } })
+    expect(host.querySelector('#pace-dial').value).toBe('8')
+    expect(host.querySelector('.dial .ticks').textContent).toContain('median 14')
   })
 
   it('moves level 60 and the road with it, and says by how much', async () => {
@@ -237,7 +247,7 @@ describe('the pace dial', () => {
     expect(readings(host)).toContain('7days a level')
     expect(readings(host)).not.toBe(before[0])
     expect(decadeDates(host)).not.toEqual(before[1])
-    expect(host.querySelector('.dial .readings').textContent).toMatch(/\d+ weeks sooner than at your median/)
+    expect(host.querySelector('.dial .readings').textContent).toMatch(/\d+ weeks sooner than at your last-five pace/)
     expect(host.querySelector('.dial .head').textContent).toContain('7 days a level')
   })
 

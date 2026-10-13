@@ -229,6 +229,18 @@
           meaning_correct: 4100, meaning_incorrect: 380, reading_correct: 3700, reading_incorrect: 560,
           meaning_current_streak: 40, meaning_max_streak: 40, reading_current_streak: 40, reading_max_streak: 40 } }
       ]
+  // Every kanji started on an earlier level, answered more or less well by
+  // level, for accuracy by level. Levels as everyKanji deals them.
+  if (!fresh) {
+    const earlier = started.filter(a => a.data.subject_type === 'kanji' && a.data.subject_id >= 20000)
+    earlier.forEach((a, i) => {
+      const level = 1 + Math.floor((i * (LEVEL - 1)) / Math.max(1, earlier.length)) || 1
+      const right = 30 + ((level * 7) % 11) - (i % 4)
+      const wrong = 1 + ((level * 5) % 6)
+      statistics.push({ data: { subject_id: a.data.subject_id, subject_type: 'kanji', percentage_correct: Math.round((right / (right + wrong)) * 100),
+        meaning_correct: right, meaning_incorrect: wrong, reading_correct: right, reading_incorrect: wrong } })
+    })
+  }
   if (!fresh) {
     SLIPPING.forEach(([, , , type, , , , , stage, hours], i) => {
       started.push({

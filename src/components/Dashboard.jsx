@@ -16,6 +16,7 @@ import {
 import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
 import {
   accuracy,
+  accuracyByLevel,
   burnsAhead,
   earliestLevelUp,
   fastestLevel,
@@ -141,6 +142,15 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
         later.then(index => {
           if (!live) return
           setBoard(held => ({ ...held, ahead: index ? aheadByLevel(index, started, TOP_LEVEL) : null }))
+        })
+
+        // Right answers by level: the statistics, placed by the two indexes.
+        // Waits on all three, the slowest being the ahead index; without any
+        // of them, no strip.
+        Promise.all([commentary, extra, later]).then(([[statistics], [kanjiIdx], aheadIdx]) => {
+          if (!live) return
+          const levelOf = statistics && kanjiIdx && aheadIdx ? new Map([...kanjiIdx, ...aheadIdx].map(([id, n]) => [id, n])) : null
+          setBoard(held => ({ ...held, byLevel: levelOf ? accuracyByLevel(statistics, levelOf, TOP_LEVEL) : null }))
         })
 
         extra.then(([index, lists]) => {
@@ -327,6 +337,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             later={board.ahead}
             milestones={board.milestones}
             coverage={board.coverage}
+            byLevel={board.byLevel}
           />
         </>
       )}
@@ -479,14 +490,14 @@ function LevelLine({ board, level, perLevel }) {
   const levelUp = board.levelUp
   // The fastest the next level can come, every answer right — through the
   // locked kanji's radicals when it waits on them — and the next level at
-  // your median and, when it has been moved off it, at the dial. Neither pace
-  // can beat the fastest.
+  // your last-five pace and, when it has been moved off it, at the dial.
+  // Neither pace can beat the fastest.
   const fastest = levelUp?.at ?? levelUp?.chained ?? null
-  const median = p?.median != null ? toStep(p.median) : null
+  const home = homePace(p)
   const at = days => (!top && days !== null && p ? project(p, level, days, board.now, fastest)?.startOf(level + 1) : null)
-  const atMedian = at(median)
-  const atDial = perLevel !== median ? at(perLevel) : null
-  const ahead = Boolean(fastest || atMedian || atDial)
+  const atHome = at(home)
+  const atDial = perLevel !== home ? at(perLevel) : null
+  const ahead = Boolean(fastest || atHome || atDial)
   const holders = holdersOf(board.behind)
 
   const next = board.next
@@ -574,9 +585,9 @@ function LevelLine({ board, level, perLevel }) {
           <div>
             <span className="what">level {level + 1}</span>
             {fastest ? <span>Fastest {when(fastest, board.now)}</span> : null}
-            {atMedian ? (
+            {atHome ? (
               <span>
-                At your median ≈ {dayMonth(atMedian)}, {dayCount(median)} days a level
+                At your last-five pace ≈ {dayMonth(atHome)}, {dayCount(home)} days a level
               </span>
             ) : null}
             {atDial ? (
@@ -592,7 +603,7 @@ function LevelLine({ board, level, perLevel }) {
           <span className="proj">
             {[
               fastest || board.behind?.blockers.some(b => b.at) ? 'Fastest and soonest assume every answer is right' : null,
-              atMedian || atDial ? '≈ at a pace, from now' : null
+              atHome || atDial ? '≈ at a pace, from now' : null
             ]
               .filter(Boolean)
               .join(' · ')}
@@ -1392,7 +1403,9 @@ function slipLine(l) {
 // decade marks 400px below them. The milestones went back to column two
 // when the slider took taught along: they keep their own clock.
 //
-// The dial starts at the median and is never saved: the board opens on
+// The dial starts at your last five levels' median — the pace you are on now,
+// which the whole history's median can hide — falling back to the median
+// with fewer than one level timed. It is never saved: the board opens on
 // your own pace every time, and the dial is for asking "and if faster?".
 // Its pace runs the decade dates, level 60 and coverage's dates. The
 // milestones keep their own clock — the last 30 days' rate of lessons and
@@ -1411,13 +1424,19 @@ const dayCount = days => (days % 1 ? days.toFixed(1) : String(days))
 // picked from the levels after.
 const ACCELERATED = 2
 
-// The dial's pace: what it was set to, or the median rounded to its step.
-function paceFor(p, chosen) {
-  if (chosen !== null) return chosen
-  return p?.median != null ? toStep(p.median) : null
+// Your pace as the board opens on it: the last five levels', rounded to the
+// dial's step.
+function homePace(p) {
+  const days = p?.recent ?? p?.median ?? null
+  return days !== null ? toStep(days) : null
 }
 
-function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c }) {
+// The dial's pace: what it was set to, or your last-five pace.
+function paceFor(p, chosen) {
+  return chosen !== null ? chosen : homePace(p)
+}
+
+function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c, byLevel }) {
   const [through, setThrough] = useState(null)
   // Only a level ahead is a projection; the slider at its start is now. It
   // needs the kanji index, so it waits for coverage's read.
@@ -1439,6 +1458,7 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
         perLevel={perLevel}
         onPace={onPace}
         through={at}
+        rightByLevel={byLevel}
       />
       <div className="through">
         <div className="pair">
@@ -1547,7 +1567,14 @@ function Waiting({ title }) {
 // middle one or two in strong ink and their bars lit — so 18 is a figure you
 // can check. Under them, not in the bars' readout above, so nothing moves
 // beneath the pointer.
-function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null }) {
+//
+// **Under the level numbers, right answers by level** — a second row of
+// sixty bars, each as tall as the share of answers right on that level's
+// items, every review to date (`accuracyByLevel`; not how you did while on
+// it). Scaled from 80%, or the tenth below the lowest, to 100%, with your
+// overall dashed across. Pointing at either row reads both in the line.
+// Undefined while it reads, keeping its room; null, and gone, if it can't.
+function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, rightByLevel }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   const atMedianMark = usePointing()
   const atRecentMark = usePointing()
@@ -1556,7 +1583,8 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   if (!p || (p.levels.length === 0 && !p.current)) return null
 
   const ahead = project(p, level, perLevel, now, soonest)
-  const atMedian = project(p, level, p.median, now, soonest)
+  const home = homePace(p)
+  const atHome = project(p, level, home, now, soonest)
   const decades = road(p, level, now, perLevel, soonest)
   const byLevel = new Map(p.levels.map(l => [l.level, l]))
   const slots = Array.from({ length: TOP_LEVEL }, (_, i) => {
@@ -1603,6 +1631,10 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   const height = days => Math.min(100, (days / tallest) * 100)
 
   const shown = reading === null ? null : slots[reading]
+  const rights = rightByLevel ? slots.map(s => rightByLevel.levels[s.level]) : null
+  const lowest = rights ? Math.min(1, ...rights.filter(Boolean).map(r => r.share)) : 1
+  const floor = Math.min(0.8, Math.floor(lowest * 10) / 10)
+  const rightHeight = share => Math.max(4, ((share - floor) / (1 - floor)) * 100)
   // The median's working, or the last five's: their levels, without breaks.
   const kept = p.levels.filter(l => !l.break)
   const recentLevels = kept.slice(-RECENT)
@@ -1642,7 +1674,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
     marks.splice(0, 2, { parts: [...marks[0].parts, ...marks[1].parts], at: Math.min(marks[0].at, marks[1].at) })
   }
 
-  const weeks = ahead && atMedian ? Math.round((ahead.done - atMedian.done) / (7 * 24 * 60 * 60 * 1000)) : 0
+  const weeks = ahead && atHome ? Math.round((ahead.done - atHome.done) / (7 * 24 * 60 * 60 * 1000)) : 0
 
   return (
     <section className="dial">
@@ -1709,6 +1741,22 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
           </span>
         ))}
       </div>
+      {rightByLevel !== null ? (
+        <div className="rights">
+          <p className="label">
+            <span>right answers on each level’s items, to date</span>
+            <span>{rightByLevel ? `${percent(floor)}–100%${rightByLevel.overall !== null ? ` · dashed at your ${percent(rightByLevel.overall)}%` : ''}` : 'reading…'}</span>
+          </p>
+          <div className="strip" aria-hidden="true" onPointerLeave={event => event.pointerType === 'mouse' && point(null)}>
+            {slots.map((s, i) => (
+              <span key={s.level} className={[s.kind === 'current' ? 'current' : '', reading === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
+                {rights?.[i] ? <i style={{ height: `${rightHeight(rights[i].share)}%` }} /> : null}
+              </span>
+            ))}
+            {rightByLevel?.overall != null ? <span className="overall" style={{ bottom: `${rightHeight(rightByLevel.overall)}%` }} /> : null}
+          </div>
+        </div>
+      ) : null}
 
       <div className="under">
         <p className="notes readout" aria-live="polite">
@@ -1719,7 +1767,10 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
           </span>
           {shown ? (
             <span className="usual">
-              <span className="soft">{caption(shown, ahead, perLevel)}</span>
+              <span className="soft">
+                {caption(shown, ahead, perLevel)}
+                {rights?.[reading] ? ` · ${percent(rights[reading].share)}% right` : ''}
+              </span>
             </span>
           ) : null}
         </p>
@@ -1822,11 +1873,11 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
           </div>
           <div className="against">
             <span className="soft">
-              {perLevel === toStep(p.median)
-                ? 'Your median pace'
+              {perLevel === home
+                ? 'Your last-five pace'
                 : weeks === 0
-                  ? 'About the same as your median pace'
-                  : `${Math.abs(weeks)} ${Math.abs(weeks) === 1 ? 'week' : 'weeks'} ${weeks < 0 ? 'sooner' : 'later'} than at your median`}
+                  ? 'About the same as your last-five pace'
+                  : `${Math.abs(weeks)} ${Math.abs(weeks) === 1 ? 'week' : 'weeks'} ${weeks < 0 ? 'sooner' : 'later'} than at your last-five pace`}
             </span>
           </div>
         </div>

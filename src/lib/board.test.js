@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   MIN_MISSES,
   accuracy,
+  accuracyByLevel,
   burnsAhead,
   earliestLevelUp,
   leeches,
@@ -226,6 +227,32 @@ describe('pace', () => {
     const p = pace([prog(1, 1, null)], 1, NOW)
     expect(p.median).toBeNull()
     expect(p.recent).toBeNull()
+  })
+})
+
+describe('accuracyByLevel', () => {
+  const levelOf = new Map([[1, 3], [2, 3], [3, 4]])
+
+  it('sums meaning and reading answers by the level of each subject', () => {
+    const a = accuracyByLevel(
+      [
+        stat({ subject_id: 1, meaning_correct: 8, meaning_incorrect: 2, reading_correct: 9, reading_incorrect: 1 }),
+        stat({ subject_id: 2, meaning_correct: 10, meaning_incorrect: 0 }),
+        stat({ subject_id: 3, meaning_correct: 1, meaning_incorrect: 1 })
+      ],
+      levelOf,
+      5
+    )
+    expect(a.levels[3]).toEqual({ share: 27 / 30, answers: 30 })
+    expect(a.levels[4]).toEqual({ share: 0.5, answers: 2 })
+    expect(a.levels[5]).toBeNull()
+    expect(a.overall).toBeCloseTo(28 / 32, 5)
+  })
+
+  it('leaves out a subject it cannot place', () => {
+    const a = accuracyByLevel([stat({ subject_id: 99, meaning_correct: 5 })], levelOf, 5)
+    expect(a.levels.every(l => l === null)).toBe(true)
+    expect(a.overall).toBeNull()
   })
 })
 
