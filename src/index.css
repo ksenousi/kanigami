@@ -68,11 +68,13 @@
      one lightness, three of them near-grey, read as one band. Each now
      owns a hue — gold, jade, periwinkle — far enough round the wheel from
      its neighbours, and from the vermilion before them, to name its
-     segment at a glance. Burned stays ash: draining out is its meaning. */
+     segment at a glance. Burned was ash, draining out, until the owner
+     asked for something more fun: it is the finish line, so it gets the
+     one bright colour, a lime outside the warm-to-cool walk. */
   --srs-guru: #d6a23c;        /* 8.34:1 */
   --srs-master: #4fae86;      /* 7.09:1 */
   --srs-enlightened: #6f95dc; /* 6.43:1 */
-  --srs-burned: #8b8275;      /* 5.09:1 */
+  --srs-burned: #a6c43c;      /* 9.71:1 */
 
   /* ---- type scale ----
      Not part of the palette and not themeable: this is how big the app is,
