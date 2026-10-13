@@ -2297,9 +2297,8 @@ button.quiet {
 
 .board .ticks {
   grid-column: 2;
-  position: relative;
-  height: 22px;
   margin-top: -8px;
+  white-space: nowrap;
   font-family: var(--mono);
   font-size: var(--label);
   letter-spacing: 0.03em;
@@ -2314,13 +2313,6 @@ button.quiet {
 
 .board .ticks .mark {
   color: var(--text-soft);
-}
-
-.board .ticks > span {
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
-  white-space: nowrap;
 }
 
 /* The median and last-five marks show their working when pointed at: a dotted hairline
@@ -2431,40 +2423,33 @@ button.quiet {
   gap: 40px;
 }
 
-/* The dial with the milestones under its goal, laid across: each one what,
-   when and how many to go, as many to a row as fit. */
-.board .forward .pace-col {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  min-width: 0;
-}
-
-.board .pace-col .milestones .body {
+/* The milestones laid across under the dial and its column: each one what,
+   when and how many to go on a line of its own, as many to a row as fit. */
+.board .forward > .milestones .body {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.board .pace-col .ladder {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
-  gap: 8px 28px;
-}
-
-.board .pace-col .ladder li {
+.board .forward > .milestones .body > .ladder {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 8px;
+  gap: 8px 40px;
 }
 
-.board .pace-col .ladder .what,
-.board .pace-col .ladder .next .when {
+.board .forward > .milestones .body > .ladder li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.board .forward > .milestones .ladder .next .when {
   grid-column: auto;
   margin-top: 0;
 }
 
-.board .pace-col .ladder .togo {
+.board .forward > .milestones .ladder .togo {
   color: var(--dim);
 }
 
@@ -2611,8 +2596,12 @@ button.quiet {
   .board .forward {
     display: grid;
     grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-    gap: 0 clamp(40px, 4vw, 64px);
+    gap: 32px clamp(40px, 4vw, 64px);
     align-items: start;
+  }
+
+  .board .forward > .milestones {
+    grid-column: 1 / -1;
   }
 
   .board .forward .rows {
@@ -3039,16 +3028,8 @@ button.quiet {
 
   .board .ticks {
     grid-column: 1 / -1;
-    height: auto;
     margin-top: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px 16px;
-  }
-
-  .board .ticks > span {
-    position: static;
-    transform: none;
+    white-space: normal;
   }
 
   .board .dial .slider .aside {

@@ -1496,9 +1496,8 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
 
   return (
     <div className="forward">
-      {/* The dial, and the milestones laid across under its goal; taught and
-          coverage, which follow the level chosen on its bars, beside them. */}
-      <div className="pace-col">
+      {/* The dial, and beside it taught and coverage, which follow the level
+          chosen on its bars; the milestones laid across under both. */}
       <PaceDial
         pace={p}
         level={level}
@@ -1512,12 +1511,11 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
         counted={Boolean(later)}
         rightByLevel={byLevel}
       />
-      <Milestones milestones={m} now={now} />
-      </div>
       <div className="rows">
         <Taught learned={counts} totals={totals} next={m?.next} at={at} gains={gains} counted={Boolean(later)} />
         <Coverage coverage={c} at={at} />
       </div>
+      <Milestones milestones={m} now={now} />
     </div>
   )
 }
@@ -1679,9 +1677,10 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   }
 
   const at = days => ((days - min) / (max - min)) * 100
-  // The ends label the top row; the marks — median, last five and the goal —
-  // share the row beneath, where the end labels cannot reach them. Marks too
-  // close to stand apart become one label at the first, left to right.
+  // The marks — median, last five and the goal — as one line under the
+  // track, in the order they fall on it. Each once stood at its own place,
+  // and two near each other but not near enough to merge printed over each
+  // other; a line in order never can.
   const marks = [
     p.median !== null ? { parts: [{ label: `median ${dayCount(toStep(p.median))}`, pointing: atMedianMark }], at: at(p.median) } : null,
     p.recent !== null ? { parts: [{ label: `last five ${dayCount(toStep(p.recent))}`, pointing: atRecentMark }], at: at(p.recent) } : null,
@@ -1689,12 +1688,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   ]
     .filter(Boolean)
     .sort((a, b) => a.at - b.at)
-    .reduce((merged, m) => {
-      const last = merged[merged.length - 1]
-      if (last && m.at - last.end < 20) merged[merged.length - 1] = { ...last, parts: [...last.parts, ...m.parts], end: m.at }
-      else merged.push({ ...m, end: m.at })
-      return merged
-    }, [])
 
 
   return (
@@ -1867,11 +1860,11 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
           </span>
           {marks.length ? (
           <div className="ticks">
-            {marks.map(m => (
-              <span key={m.parts[0].label} className="mark" style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }}>
+            {marks.map((m, n) => (
+              <span key={m.parts[0].label} className="mark">
                 {m.parts.map(({ label, pointing, goal }, i) => (
                   <Fragment key={label}>
-                    {i ? ' · ' : ''}
+                    {i || n ? ' · ' : ''}
                     {goal ? (
                       <span className="goal" aria-hidden="true">
                         {label}

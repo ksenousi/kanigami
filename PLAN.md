@@ -2055,3 +2055,16 @@ goal.** Asked for, to save height:
 - **The milestones sit under the goal**, laid across — what, when and how
   many to go, as many to a row as fit — in the dial's column; taught and
   coverage keep the column beside it.
+
+**Ahead balanced, and the marks fixed.** Reported: the two columns of ahead
+ended far apart, and the marks under the slider printed over each other
+(`goal 11.5` over `median 18`) — two marks near each other but not near
+enough to merge, each at its own place.
+- **The marks are one line under the track**, in the order they fall on it
+  (`last five 11.5 · goal 11.5 · median 18`), no longer each at its place:
+  a line in order cannot collide, at any data.
+- **The milestones are a row across the band**, under both columns, each
+  milestone what, when and how many to go on one line, as many to a row as
+  fit. The dial's column and taught and coverage's then end near each other
+  (on the fake account 503px beside 443; on the owner's about 640 beside
+  610).
