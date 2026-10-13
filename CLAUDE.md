@@ -142,7 +142,9 @@ removes. Assume every commit is permanent and public.
   either way up (820–1366px) and by touch alone, with no mouse: anything a
   mouse reads by hover has to read by tap too (`usePointing`), and `:hover`
   styles sit under `@media (hover: hover)` so a tap doesn't leave them lit.
-  Below 1,280px the board drops to the tablet layout; below 700px to the
+  From 1,180px up the board is the laptop's layout, so an 11-inch iPad Pro
+  on its side (1,194–1,210px) matches a MacBook; below that it drops to the
+  tablet layout; below 700px to the
   phone's single column, where the whole type scale steps down together and
   the 24-hour strip scrolls sideways. A phone was once ruled out; the owner
   reversed that — check new work at 375px as well as 820 and 1440.

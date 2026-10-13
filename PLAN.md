@@ -2081,3 +2081,12 @@ slider only where the column is too narrow (a phone). The start's aside,
 the median), and the paces anyone sets were crowded into its first third.
 It now ends at 25 days a level, and runs further only so the account's own
 median and last five always sit on it.
+
+**An iPad on its side is the laptop.** Asked for: the board on an 11-inch
+iPad Pro should look as it does on the MacBook. In landscape it is 1,194px
+wide (1,210 on the M4), under the 1,280px where the laptop layout began, so
+it got the tablet's stacked one. The breakpoint moved to 1,180px — the
+iPad Air's landscape width too. At 1,180–1,210 nothing overflows, the
+level's kanji cells are 48px around a 21px character, and the bands match
+1,512 to the section. Upright (834px) keeps the tablet layout: three
+columns there leave a kanji cell narrower than its character.

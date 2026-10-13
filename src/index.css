@@ -2488,11 +2488,12 @@ button.quiet {
   color: var(--dim);
 }
 
-/* An iPad, either way up, or a narrow window. Below about 1,280px three
-   columns of a third leave each of the level's eight kanji a cell narrower
-   than the character, and they run into one another, so the level takes
-   the full width and the other two sit side by side beneath it. Below
-   700px the phone takes over, at the end of the file. */
+/* An upright iPad, or a narrow window. Below 1,180px three columns of a
+   third leave each of the level's eight kanji a cell narrower than the
+   character, and they run into one another, so the level takes the full
+   width and the other two sit side by side beneath it. An iPad on its side
+   — an 11-inch Pro is 1,194px, the M4 1,210 — keeps the laptop's layout.
+   Below 700px the phone takes over, at the end of the file. */
 /* ---- 盤 the board, in three bands ----
    Picked from a prototype (PLAN.md, "The regroup"): 今 now, 手元 at hand and
    先 ahead, each opened by a hairline with its name sitting on it, and every
@@ -2603,7 +2604,7 @@ button.quiet {
   gap: 28px;
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1180px) {
   .board .now-pair {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0 clamp(40px, 4vw, 64px);
@@ -2859,7 +2860,7 @@ button.quiet {
   margin-bottom: 6px;
 }
 
-@media (max-width: 1279px) {
+@media (max-width: 1179px) {
   /* The romaji beside 蟹紙 says the wordmark twice, and on an upright iPad
      it is the 30px that pushes Disconnect onto a line of its own. */
   .board .masthead .tag {
