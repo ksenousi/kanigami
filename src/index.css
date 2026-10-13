@@ -2291,23 +2291,23 @@ button.quiet {
   top: 26px;
 }
 
-/* The median mark shows its working when pointed at: a dotted hairline
+/* The median and last-five marks show their working when pointed at: a dotted hairline
    says it can be, and lights while it does. The figures that make it stand
    in strong ink in the readout above. */
-.board .ticks .mark.working {
+.board .ticks .working {
   cursor: default;
   text-decoration: underline dotted var(--rule);
   text-underline-offset: 4px;
   outline: none;
 }
 
-.board .ticks .mark.working.reading {
+.board .ticks .working.reading {
   color: var(--text-strong);
   text-decoration-color: var(--text-strong);
 }
 
 @media (hover: hover) {
-  .board .ticks .mark.working:hover {
+  .board .ticks .working:hover {
     text-decoration-color: var(--text-soft);
   }
 }

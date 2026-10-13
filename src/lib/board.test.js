@@ -233,19 +233,19 @@ describe('medianWorking', () => {
   const lv = (level, days, brk = false) => ({ level, days, break: brk })
 
   it('sorts the levels quickest first and names the middle one', () => {
-    const w = medianWorking({ levels: [lv(3, 9), lv(4, 7), lv(5, 12)] })
+    const w = medianWorking([lv(3, 9), lv(4, 7), lv(5, 12)])
     expect(w.sorted.map(l => l.level)).toEqual([4, 3, 5])
     expect(w.middle.map(l => l.level)).toEqual([3])
   })
 
   it('names the middle two of an even count, and leaves breaks out', () => {
-    const w = medianWorking({ levels: [lv(3, 9), lv(4, 7), lv(5, 12), lv(6, 10), lv(7, 60, true)] })
+    const w = medianWorking([lv(3, 9), lv(4, 7), lv(5, 12), lv(6, 10), lv(7, 60, true)])
     expect(w.sorted.map(l => l.level)).toEqual([4, 3, 6, 5])
     expect(w.middle.map(l => l.level)).toEqual([3, 6])
   })
 
   it('has nothing to show before a level has passed', () => {
-    expect(medianWorking({ levels: [] })).toBeNull()
+    expect(medianWorking([])).toBeNull()
   })
 })
 

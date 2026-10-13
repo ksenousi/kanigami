@@ -27,6 +27,7 @@ import {
   lockedBehind,
   medianWorking,
   milestones,
+  RECENT,
   moved,
   nextUp,
   pace,
@@ -1541,14 +1542,15 @@ function Waiting({ title }) {
 // bars and a mark on the slider at the pace it asks for — the slowest that
 // gets there, from `paceToReach` — and says whether the dial's pace does.
 //
-// **Pointing at the median mark shows its working** in the bars' readout
-// on a line right under it: every level it was taken over, quickest first,
-// the middle one or two in strong ink and their bars lit — so 18 is a figure
-// you can check. Under it, not in the bars' readout above, so nothing moves
+// **Pointing at the median or last-five mark shows its working** on a line
+// right under the marks: every level it was taken over, quickest first, the
+// middle one or two in strong ink and their bars lit — so 18 is a figure you
+// can check. Under them, not in the bars' readout above, so nothing moves
 // beneath the pointer.
 function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
-  const working = usePointing()
+  const atMedianMark = usePointing()
+  const atRecentMark = usePointing()
   const [goal, setGoal] = useState(readGoal)
   if (p === undefined) return <Waiting title="days per level" />
   if (!p || (p.levels.length === 0 && !p.current)) return null
@@ -1601,7 +1603,16 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   const height = days => Math.min(100, (days / tallest) * 100)
 
   const shown = reading === null ? null : slots[reading]
-  const worked = working.at !== null ? medianWorking(p) : null
+  // The median's working, or the last five's: their levels, without breaks.
+  const kept = p.levels.filter(l => !l.break)
+  const recentLevels = kept.slice(-RECENT)
+  const worked =
+    atMedianMark.at !== null
+      ? { ...medianWorking(kept), value: p.median, recent: false }
+      : atRecentMark.at !== null
+        ? { ...medianWorking(recentLevels), value: p.recent, recent: true }
+        : null
+  const leftOut = worked?.recent ? breaks.filter(b => b.level > recentLevels[0].level) : breaks
   // A number right beside this level's gives way to it — 14 and 15 in
   // adjacent slots read as 1415.
   const numbered = s =>
@@ -1624,11 +1635,11 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   // end labels cannot reach them. Two marks too close to share it become one
   // label at the first.
   const marks = [
-    p.median !== null ? { label: `median ${dayCount(toStep(p.median))}`, at: at(p.median), median: true } : null,
-    p.recent !== null ? { label: `last five ${dayCount(toStep(p.recent))}`, at: at(p.recent) } : null
+    p.median !== null ? { parts: [{ label: `median ${dayCount(toStep(p.median))}`, pointing: atMedianMark }], at: at(p.median) } : null,
+    p.recent !== null ? { parts: [{ label: `last five ${dayCount(toStep(p.recent))}`, pointing: atRecentMark }], at: at(p.recent) } : null
   ].filter(Boolean)
   if (marks.length === 2 && Math.abs(marks[0].at - marks[1].at) < 20) {
-    marks.splice(0, 2, { label: `${marks[0].label} · ${marks[1].label}`, at: Math.min(marks[0].at, marks[1].at), median: true })
+    marks.splice(0, 2, { parts: [...marks[0].parts, ...marks[1].parts], at: Math.min(marks[0].at, marks[1].at) })
   }
 
   const weeks = ahead && atMedian ? Math.round((ahead.done - atMedian.done) / (7 * 24 * 60 * 60 * 1000)) : 0
@@ -1748,26 +1759,25 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             <span className="start" style={{ left: 0 }} aria-hidden="true">
               {dayCount(min)} days{fastest ? <span className="aside">, WaniKani’s fastest</span> : ''}
             </span>
-            {marks.map(m =>
-              m.median ? (
-                <span
-                  key={m.label}
-                  className={working.at !== null ? 'mark low working reading' : 'mark low working'}
-                  style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }}
-                  aria-label={`${m.label} — how it was taken`}
-                  {...working.groupProps}
-                  {...working.itemProps(0)}
-                  onFocus={() => working.point(0)}
-                  onKeyDown={event => event.key === 'Escape' && working.point(null)}
-                >
-                  {m.label}
-                </span>
-              ) : (
-                <span key={m.label} className="mark low" style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }} aria-hidden="true">
-                  {m.label}
-                </span>
-              )
-            )}
+            {marks.map(m => (
+              <span key={m.parts[0].label} className="mark low" style={{ left: `${Math.max(8, Math.min(92, m.at))}%` }}>
+                {m.parts.map(({ label, pointing }, i) => (
+                  <Fragment key={label}>
+                    {i ? ' · ' : ''}
+                    <span
+                      className={pointing.at !== null ? 'working reading' : 'working'}
+                      aria-label={`${label} — how it was taken`}
+                      {...pointing.groupProps}
+                      {...pointing.itemProps(0)}
+                      onFocus={() => pointing.point(0)}
+                      onKeyDown={event => event.key === 'Escape' && pointing.point(null)}
+                    >
+                      {label}
+                    </span>
+                  </Fragment>
+                ))}
+              </span>
+            ))}
             {need !== null ? (
               <span className="mark goal" style={{ left: `${Math.max(4, Math.min(96, at(need)))}%` }} aria-hidden="true">
                 goal {dayCount(need)}
@@ -1780,7 +1790,9 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
           {worked ? (
             <p className="notes worked" aria-live="polite">
               <span>
-                Median of {worked.sorted.length} {worked.sorted.length === 1 ? 'level' : 'levels'}, quickest first:{' '}
+                {worked.recent
+                  ? `Your last ${worked.sorted.length === RECENT ? 'five' : worked.sorted.length} levels (${levelSpan(recentLevels)}), quickest first: `
+                  : `Median of ${worked.sorted.length} ${worked.sorted.length === 1 ? 'level' : 'levels'}, quickest first: `}
                 {worked.sorted.map((l, i) => (
                   <Fragment key={l.level}>
                     {i ? ' · ' : ''}
@@ -1788,9 +1800,9 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
                   </Fragment>
                 ))}
                 {worked.middle.length === 1
-                  ? ` — level ${worked.middle[0].level} sits in the middle at ${dayCount(toStep(p.median))} days`
-                  : ` — levels ${worked.middle[0].level} and ${worked.middle[1].level} sit in the middle, averaging ${dayCount(toStep(p.median))} days`}
-                {breaks.length > 0 ? `, ${breaks.length === 1 ? 'the break' : 'breaks'} left out` : ''}
+                  ? ` — level ${worked.middle[0].level} sits in the middle at ${dayCount(toStep(worked.value))} days`
+                  : ` — levels ${worked.middle[0].level} and ${worked.middle[1].level} sit in the middle, averaging ${dayCount(toStep(worked.value))} days`}
+                {leftOut.length > 0 ? `, ${leftOut.length === 1 ? 'the break' : 'breaks'} left out` : ''}
               </span>
             </p>
           ) : null}
@@ -1933,6 +1945,15 @@ function goalYears(now, held) {
 }
 
 // What a pointed-at slot says.
+// The levels the last five ran over: `13–17`, or each named when a break
+// between them was left out.
+function levelSpan(levels) {
+  const first = levels[0].level
+  const last = levels[levels.length - 1].level
+  if (levels.length === 1) return String(first)
+  return last - first === levels.length - 1 ? `${first}–${last}` : levels.map(l => l.level).join(', ')
+}
+
 function caption(s, ahead, perLevel) {
   const began = s.began ? ` · began ${dayMonthYear(s.began)}` : ''
   if (s.kind === 'passed') return `Level ${s.level} · ${Math.round(s.days)} days${began}`

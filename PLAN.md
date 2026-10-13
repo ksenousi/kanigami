@@ -1895,5 +1895,7 @@ the middle one or two in strong ink and their bars lit in the chart, and
 readout above them: the readout growing a line pushed the slider down under
 the pointer, which let go of it. `medianWorking()` in `board.js` sorts the
 non-break levels and names the middle; the figures are on the dial's
-half-day step, like the mark. When the two marks merge, pointing at the
-pair shows the median's working.
+half-day step, like the mark. The `last five` mark does the same over its
+five levels (`Your last five levels (10–14), quickest first: …`), naming
+each level when a break among them was skipped. When the two marks merge,
+each half of the label is pointed at on its own.
