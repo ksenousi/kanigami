@@ -1988,3 +1988,23 @@ it.
 - Fixed with it: the band's `.now` container shared a class with the
   forecast's current hour, so `.board .now` laid that hour out as a grid —
   its bar vanished and its count floated. The container is `.now-pair`.
+
+**The board at the prototype's scale, and no stretching.** Reported, with a
+screenshot: the dimensions and type did not look right — the type larger and
+heavier than the approved prototype, the forecast stretched to ~290px of bars
+beside the level line, and blank space under the kanji grid where it was
+stretched to slipping's height.
+- **The board takes the tablet scale on every screen**: `.board` sets
+  `--label` 14px through `--figure` 44px, the steps the prototype was drawn
+  at (and the phone already had). The whole scale moves, so the hierarchy
+  holds; 14px is the floor the mono capitals read at. The token gate keeps
+  the full scale.
+- **Nothing stretches.** The forecast keeps its own height and the columns
+  at hand align to their tops. Heights come out near each other by content
+  instead: the level line and the forecast take equal halves, beside the
+  level line the forecast's tallest bar is 140px (`--tallest`, its stack
+  194px), and the level line's gaps are 12px. On the fake account at 1280px:
+  381px beside 365, and 255 beside 292 at hand. Superseded: the container-
+  query stretch and the pinned resting lines of the entry before.
+- 2,058px at 1440 (from 3,486 before the regroup); nothing overflows at 375,
+  820, 1180, 1280 or 1440.
