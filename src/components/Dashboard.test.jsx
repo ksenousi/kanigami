@@ -260,6 +260,25 @@ describe('the pace dial', () => {
     expect(slots[5].classList.contains('ahead')).toBe(true)
   })
 
+  it('draws right answers only on the levels reached', async () => {
+    history()
+    // Kanji 1 at level 3; kanji 2 moved by WaniKani to level 20, ahead.
+    api.getAllKanjiSubjects.mockResolvedValue([
+      { id: 1, data: { level: 3, characters: '山' } },
+      { id: 2, data: { level: 20, characters: '川' } }
+    ])
+    api.getAllRadicalAndVocabularySubjects.mockResolvedValue([{ id: 40, object: 'radical', data: { level: 1 } }])
+    api.getReviewStatistics.mockResolvedValue([
+      { data: { subject_id: 1, meaning_correct: 9, meaning_incorrect: 1 } },
+      { data: { subject_id: 2, meaning_correct: 5, meaning_incorrect: 5 } }
+    ])
+    const host = await board()
+    await until(host, '.dial .strip i')
+    const strip = [...host.querySelectorAll('.dial .strip > span:not(.overall)')]
+    expect(strip[2].querySelector('i')).not.toBeNull()
+    expect(strip[19].querySelector('i')).toBeNull()
+  })
+
   it('reads a projected level when one is tapped', async () => {
     history()
     const host = await board()
@@ -465,7 +484,7 @@ describe('milestones', () => {
     expect(ladder).toContain('250 kanji')
     expect(ladder).toContain('130 to go')
     // The reached ones fold away behind their count.
-    expect(host.querySelector('.milestones details summary').textContent).toMatch(/^reached · \d+$/)
+    expect(host.querySelector('.milestones details summary').textContent).toMatch(/^reached · \d+ · WaniKani’s dates$/)
     expect(host.querySelector('.milestones details').textContent).toContain('100 kanji')
   })
 })

@@ -1633,7 +1633,11 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
   const height = days => Math.min(100, (days / tallest) * 100)
 
   const shown = reading === null ? null : slots[reading]
-  const rights = rightByLevel ? slots.map(s => rightByLevel.levels[s.level]) : null
+  // Only the levels reached: WaniKani moves the odd subject to a later level
+  // in its content updates, and its answers then land on a level ahead —
+  // real, but on this chart a stray block in the future. They still count in
+  // the overall figure.
+  const rights = rightByLevel ? slots.map(s => (s.level <= level ? rightByLevel.levels[s.level] : null)) : null
   const lowest = rights ? Math.min(1, ...rights.filter(Boolean).map(r => r.share)) : 1
   const floor = Math.min(0.8, Math.floor(lowest * 10) / 10)
   const rightHeight = share => Math.max(4, ((share - floor) / (1 - floor)) * 100)
@@ -2151,7 +2155,9 @@ function Milestones({ milestones: m, now }) {
 
   return (
     <section className="milestones">
-      <Head>milestones</Head>
+      {/* The projection is named in the head — its own clock, not the dial's —
+          and the reached dates say whose they are in their fold. */}
+      <Head right={m.next.some(n => n.at) ? '≈ last 30 days’ rate' : null}>milestones</Head>
       <div className="body">
         <ul className="ladder">
           {m.next.map((n, i) => (
@@ -2164,7 +2170,7 @@ function Milestones({ milestones: m, now }) {
         </ul>
         {reached.length > 0 ? (
           <details className="reached">
-            <summary>reached · {reached.length}</summary>
+            <summary>reached · {reached.length} · WaniKani’s dates</summary>
             <ul className="ladder">
               {reached.map(r => (
                 <li key={r.label} className="reached">
@@ -2174,11 +2180,6 @@ function Milestones({ milestones: m, now }) {
               ))}
             </ul>
           </details>
-        ) : null}
-        {m.next.some(n => n.at) ? (
-          <p className="notes">
-            <span className="proj">≈ at your last 30 days’ pace, not the dial’s · reached dates are WaniKani’s</span>
-          </p>
         ) : null}
       </div>
     </section>
@@ -2212,14 +2213,18 @@ function Coverage({ coverage: c, at }) {
 
   return (
     <section>
-      <Head right={at ? `through level ${at}` : null}>coverage</Head>
-      <div className="switch" role="group" aria-label="Measure coverage against">
-        {MEASURES.map(([key, label]) => (
-          <button key={key} type="button" aria-pressed={key === measure} onClick={() => setMeasure(key)}>
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* The measure switch sits in the head, as the level's kinds do, rather
+          than taking a row of its own. */}
+      <Head right={at ? `through level ${at}` : null}>
+        coverage
+        <span className="kinds" role="group" aria-label="Measure coverage against">
+          {MEASURES.map(([key, label]) => (
+            <button key={key} type="button" aria-pressed={key === measure} onClick={() => setMeasure(key)}>
+              {label}
+            </button>
+          ))}
+        </span>
+      </Head>
       <div className="cover" style={{ '--share-width': `${widest + 1}ch` }}>
         {thenRows.map((row, i) => {
           const before = nowRows[i].have

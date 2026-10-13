@@ -2008,3 +2008,20 @@ stretched to slipping's height.
   query stretch and the pinned resting lines of the entry before.
 - 2,058px at 1440 (from 3,486 before the regroup); nothing overflows at 375,
   820, 1180, 1280 or 1440.
+
+**Ahead, two-up like the bands above it.** Reported: now and at hand were
+compact, ahead was not — the dial, then taught, coverage and the milestones
+a full-width row each, ~900px against ~430.
+- At 1,280px and up the dial takes 1.7 parts and taught, coverage and the
+  milestones stand beside it as ordinary sections (head over content, each
+  a list to a line). Below that they stack as before.
+- Inside: the dial's hint runs the width with the legend under it; the
+  decades keep their kanji and date, as on a tablet; coverage's JLPT/Jōyō
+  switch moved into its head, as the level's kinds are; the milestones' note
+  became the head's `≈ last 30 days' rate`, and the reached fold says
+  `WaniKani's dates`.
+- Measured at 1440: the bands 423, 431, 690px; the board 1,763px.
+- **Right answers are drawn only up to the current level.** WaniKani moves
+  the odd subject to a later level in its content updates; its answers then
+  landed on a level ahead and drew stray blocks in the future. They still
+  count in the overall figure.

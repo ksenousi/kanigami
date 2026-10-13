@@ -2443,13 +2443,6 @@ button.quiet {
   gap: 40px;
 }
 
-.board .forward .pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(40px, 5vw, 72px);
-  align-items: start;
-}
-
 /* An iPad, either way up, or a narrow window. Below about 1,280px three
    columns of a third leave each of the level's eight kanji a cell narrower
    than the character, and they run into one another, so the level takes
@@ -2590,6 +2583,66 @@ button.quiet {
 
   .board .now-pair .level-line {
     gap: 12px;
+  }
+
+  /* Ahead, like the bands above it: the dial takes two thirds, and taught,
+     coverage and the milestones stand in a column beside it as ordinary
+     sections — a row each across the page left the band twice the height of
+     the others. */
+  .board .forward {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    gap: 0 clamp(40px, 4vw, 64px);
+    align-items: start;
+  }
+
+  .board .forward .rows {
+    gap: 28px;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .board .forward .rows > section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .board .forward .rows > section > .head {
+    flex-direction: row;
+    align-items: baseline;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .board .forward .rows > section > .head > span {
+    text-align: right;
+  }
+
+  .board .forward .rows .fills,
+  .board .forward .rows .ladder {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  /* Coverage a list to a row: the name and share, the hairline under. */
+  .board .forward .rows .cover {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  /* Two thirds of the page is narrower than the decades' names and dates
+     side by side: as on a tablet, each keeps its kanji and its date. */
+  .board .forward .dial .decades .en,
+  .board .forward .dial .decades .pre {
+    display: none;
+  }
+
+  /* In two thirds of the page the hint and the legend no longer fit side
+     by side: the hint runs the width and the legend goes under it. */
+  .board .forward .dial .under {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* Twenty-five hours in half the page: the hour numbers close up a little
@@ -2906,8 +2959,7 @@ button.quiet {
     display: none;
   }
 
-  .board .columns,
-  .board .forward .pair {
+  .board .columns {
     grid-template-columns: minmax(0, 1fr);
     gap: 36px;
   }
