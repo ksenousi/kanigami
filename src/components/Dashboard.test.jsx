@@ -614,9 +614,33 @@ describe('the level line', () => {
     const host = await board()
     await settle()
     expect(host.querySelector('.level-line .holding').textContent).toContain('工 Construction → 川')
+    expect(host.querySelector('.level-line .holding').textContent).not.toContain('each soonest')
 
     const cell = host.querySelector('.level-line .states .locked .under').textContent
     expect(cell).toBe('川工')
+  })
+
+  it('says the soonest day once when every radical shares it', async () => {
+    const stages = [null, 14400, 28800, 82800, 169200, 601200, 1206000, 2588400, 10364400, null]
+    api.getSpacedRepetitionSystems.mockResolvedValue([
+      { id: 1, data: { passing_stage_position: 5, stages: stages.map((interval, position) => ({ position, interval, interval_unit: 'seconds' })) } }
+    ])
+    const kanji = (id, characters, radical) => ({
+      id,
+      data: { characters, meanings: [{ meaning: characters, primary: true }], lesson_position: id, component_subject_ids: [radical], spaced_repetition_system_id: 1 }
+    })
+    const radical = (id, characters, meaning) => ({
+      id,
+      data: { characters, meanings: [{ meaning, primary: true }], lesson_position: 0, spaced_repetition_system_id: 1 }
+    })
+    const started = id => ({ data: { subject_id: id, srs_stage: 3, started_at: new Date().toISOString(), available_at: new Date().toISOString() } })
+    api.getLevelKanjiSubjects.mockResolvedValue([subject(1, '山', 'Mountain'), kanji(2, '川', 31), kanji(3, '田', 32)])
+    api.getLevelRadicals.mockResolvedValue([[radical(31, '工', 'Construction'), radical(32, '口', 'Mouth')], [started(31), started(32)]])
+    const host = await board()
+    await settle()
+    const holding = host.querySelector('.level-line .holding').textContent
+    expect(holding).toMatch(/each soonest \d+ \w+$/)
+    expect(holding.match(/soonest/g)).toHaveLength(1)
   })
 
   it('sets the radicals holding a locked kanji under it in the level’s grid', async () => {

@@ -313,7 +313,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           <Band kanji="今" name="Now · what’s due and when">
             {/* The level line and the next 24 hours side by side on a wide
                 screen: both are short and wide, and stacked they were 800px. */}
-            <div className="now">
+            <div className="now-pair">
               <LevelLine board={board} level={user.level} perLevel={paceFor(board.pace, chosenPace)} />
               <Forecast
                 summary={board.summary}
@@ -323,12 +323,15 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             </div>
           </Band>
           <Band kanji="手元" name="At hand · this level and your items">
+            {/* The spread is short and wide, so it is a row across the band; the
+                level and what slips stand side by side under it, the same
+                height. */}
+            <div className="rows lead">
+              <Srs spread={board.spread} moved={board.moved} />
+            </div>
             <div className="columns">
               <div className="column">
                 <Level key={user.level} board={board} level={user.level} token={token} />
-              </div>
-              <div className="column">
-                <Srs spread={board.spread} moved={board.moved} />
               </div>
               <div className="column">
                 <Slipping slipping={board.slipping} level={user.level} now={board.now} readSubjects={ids => getSubjects(token, ids)} />
@@ -647,8 +650,14 @@ function LevelLine({ board, level, perLevel }) {
 // kanji. Decided from a prototype (PLAN.md, "Locked behind"): the strip
 // saying it was picked over rows, the grid and a map. Hidden when nothing on
 // the level is locked.
+//
+// A level's radicals are usually taught together and so pass together: when
+// every one of them has the same soonest day, it is said once at the end
+// rather than eight times — the list was the tallest thing on the board.
 function Holding({ behind }) {
   if (!behind || (behind.blockers.length === 0 && behind.others.length === 0)) return null
+  const days = behind.blockers.map(b => (b.at ? dayMonth(b.at) : null))
+  const shared = days.length > 1 && days[0] !== null && days.every(d => d === days[0]) ? days[0] : null
 
   return (
     <p className="holding">
@@ -660,9 +669,10 @@ function Holding({ behind }) {
               <span key={k.id}>{glyph(k)}</span>
             ))}
           </span>
-          {at ? <span className="dim"> · soonest {dayMonth(at)}</span> : null}
+          {at && !shared ? <span className="dim"> · soonest {dayMonth(at)}</span> : null}
         </span>
       ))}
+      {shared ? <span className="dim">each soonest {shared}</span> : null}
       {behind.others.length > 0 ? (
         <span>
           <span className="kanji-held">

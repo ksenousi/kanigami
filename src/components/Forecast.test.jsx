@@ -58,7 +58,9 @@ describe('Forecast', () => {
     // 38 due now is more than the busiest hour after it (31), so it is capped
     expect(counts[0]).toBe('38↑')
     expect(counts).toContain('31')
-    expect(hours(host)[0].querySelector('i').style.height).toBe(hours(host)[15].querySelector('i').style.height)
+    const share = i => hours(host)[i].querySelector('i').style.getPropertyValue('--h')
+    expect(share(0)).toBe('1')
+    expect(share(0)).toBe(share(15))
   })
 
   it('rests on what is due now and the day’s total, and says the bars can be read', async () => {

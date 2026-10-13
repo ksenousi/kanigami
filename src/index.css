@@ -435,12 +435,21 @@ body {
   border-bottom: 1px solid var(--rule);
 }
 
+.forecast {
+  --tallest: 96px;
+}
+
 .forecast .hour i {
   display: block;
   width: 100%;
+  height: calc(var(--h, 0) * var(--tallest));
   border-radius: 1px 1px 0 0;
   background: var(--text-soft);
   opacity: 0.55;
+}
+
+.forecast .hour.busy i {
+  min-height: 3px;
 }
 
 .forecast .hour.marked i {
@@ -894,9 +903,7 @@ button.quiet {
 
 .board .columns {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(40px, 5vw, 72px);
-  align-items: start;
 }
 
 .board .column {
@@ -2502,6 +2509,28 @@ button.quiet {
   gap: 28px;
 }
 
+/* At hand: the level and what slips, side by side and the same height, each
+   one's resting line at its foot. */
+.board .columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.board .columns > .column > section {
+  flex: 1;
+}
+
+.board .columns > .column > section > .readout:last-child {
+  margin-top: auto;
+}
+
+/* The spread leads the band as a row like taught's, with no rule of its
+   own: the band's hairline is just above it. */
+.board .rows.lead {
+  padding-top: 0;
+  border-top: 0;
+}
+
 /* The figures, a line in the masthead: each count beside its name. */
 .board .masthead .figures {
   display: flex;
@@ -2528,28 +2557,51 @@ button.quiet {
 }
 
 /* The level line and the next 24 hours: side by side on a wide screen. */
-.board .now {
+.board .now-pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 28px;
 }
 
 @media (min-width: 1280px) {
-  .board .now {
+  /* Side by side and the same height: the forecast stretches to the level
+     line, its bars growing into the room (the stack is their container —
+     what the marks and counts above the tallest bar need is held back), and
+     the level line's projection note sits at its foot. */
+  .board .now-pair {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
     gap: 0 clamp(40px, 4vw, 64px);
-    align-items: start;
+  }
+
+  .board .now-pair .level-line > :last-child {
+    margin-top: auto;
+  }
+
+  .board .now-pair .forecast .strip,
+  .board .now-pair .forecast .hours {
+    flex: 1;
+  }
+
+  .board .now-pair .forecast .hour {
+    height: 100%;
+  }
+
+  .board .now-pair .forecast .stack {
+    flex: 1;
+    height: auto;
+    min-height: 150px;
+    container-type: size;
+  }
+
+  .board .now-pair .forecast .hour i {
+    height: calc(var(--h, 0) * max(96px, 100cqh - 100px));
   }
 
   /* Twenty-five hours in half the page: the hour numbers close up a little
      so two digits keep a gap between them. */
-  .board .now .forecast .at {
+  .board .now-pair .forecast .at {
     letter-spacing: -0.06em;
   }
-}
-
-.forecast .stack {
-  height: 110px;
 }
 
 /* The level line's reads run as one line, wrapping where they must, each
@@ -2700,7 +2752,7 @@ button.quiet {
 }
 
 .board .rows .ladder {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
   gap: 6px 32px;
 }
 
@@ -2746,12 +2798,10 @@ button.quiet {
     margin-left: 0;
   }
 
+  /* The level takes the width, its notes beside the grid; what slips
+     goes under it. */
   .board .columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .board .column:first-child {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* The level full width: the grid on the left keeps its eight across at

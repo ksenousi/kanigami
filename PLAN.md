@@ -1966,3 +1966,25 @@ the grid, the lenses, the goal, keyboard and touch).
   touch gesture) and dropping the decades' dates (the dial moves them).
 - Measured on the fake account: 3,486px → 2,211px at 1440; nothing overflows
   at 375, 744, 820, 1180, 1280, 1366 or 1440.
+
+**Modules in a band are the same height.** Asked for: side-by-side modules
+not to run longer than their neighbours. On a level with eight radicals
+holding nine kanji, the level line ran 600px beside a 290px forecast, and the
+spread's column at hand was half the height of the grid and slipping beside
+it.
+- **Now:** at 1,280px and up the forecast stretches to the level line's
+  height and its bars grow into the room — each bar is now a share of the
+  tallest (`--h`) and the CSS sets how tall that is (96px alone; the stack's
+  height less what its marks and counts need, as a container query, beside
+  the level line). The level line's projection note sits at its foot. And
+  **the holding list says a shared soonest day once** (`each soonest 16 Oct`)
+  instead of on every radical — a level's radicals are taught together and
+  usually pass together.
+- **At hand:** the SRS spread is a row across the band, labelled like
+  taught's; the level and slipping stand two-up beneath it, stretched to one
+  height, each one's resting line at its foot. Below 1,280px they stack.
+- **Milestones** get columns wide enough that an entry no longer breaks
+  across two lines.
+- Fixed with it: the band's `.now` container shared a class with the
+  forecast's current hour, so `.board .now` laid that hour out as a grid —
+  its bar vanished and its count floated. The container is `.now-pair`.

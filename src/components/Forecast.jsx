@@ -28,7 +28,9 @@ import usePointing from './usePointing.js'
 // - **Pointing at a bar, or tapping it, re-points the line beneath** to that
 //   hour in words — its slot, its count, the kanji in it. The arrows walk the
 //   hours from the keyboard; the line is the live region.
-const TALLEST = 96 // px, the busiest hour after this one
+//
+// Each bar is a share of the tallest (`--h`, 0–1); the CSS says how tall the
+// tallest is — 96px on its own, the column's height beside the level line.
 
 // The most kanji drawn over one hour. A dozen on one line ran across the
 // hours either side and into the next hour's own; the rest are a count, and
@@ -66,9 +68,7 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
         >
           {hours.map((hour, index) => {
             const capped = index === 0 && hour.count > busiest
-            const height = hour.count
-              ? Math.max(3, Math.round(((capped ? busiest : hour.count) / busiest) * TALLEST))
-              : 0
+            const height = hour.count ? Math.round(((capped ? busiest : hour.count) / busiest) * 1000) / 1000 : 0
             const kanji = marks.get(index)
             return (
               <span
@@ -104,7 +104,7 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
                       {capped ? '↑' : ''}
                     </span>
                   ) : null}
-                  <i style={{ height: `${height}px` }} />
+                  <i style={{ '--h': height }} />
                 </span>
                 <span className="at">{String(new Date(hour.at).getHours()).padStart(2, '0')}</span>
               </span>
