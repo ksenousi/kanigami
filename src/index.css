@@ -447,6 +447,21 @@ body {
   white-space: nowrap;
 }
 
+/* Today's name is held to the hours before midnight. Behind an empty
+   inline-block it wraps to a second line when it does not fit, and the
+   second line is clipped: the word shows whole or not at all, never under
+   the next day's. */
+.forecast .days .today {
+  height: 1lh;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.forecast .days .today::before {
+  content: '';
+  display: inline-block;
+}
+
 .forecast .hours {
   display: grid;
   cursor: default;

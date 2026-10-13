@@ -54,7 +54,9 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
           scrolls sideways, rather than squeezing 25 hours into 335px. */}
       <div className="strip">
         <div className="days" aria-hidden="true">
-          <span style={{ left: 0 }}>today</span>
+          {/* Today's name has only until midnight: when midnight is an hour
+              or two off, it would run into the next day's, so it goes. */}
+          <span className="today" style={{ left: 0, width: midnight > 0 ? `calc(${share(midnight)} - 6px)` : undefined }}>today</span>
           {midnight > 0 ? <span style={{ left: share(midnight) }}>{weekday(hours[midnight].at)}</span> : null}
         </div>
 
