@@ -323,15 +323,12 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             </div>
           </Band>
           <Band kanji="手元" name="At hand · this level and your items">
-            {/* The spread is short and wide, so it is a row across the band; the
-                level and what slips stand side by side under it, the same
-                height. */}
-            <div className="rows lead">
-              <Srs spread={board.spread} moved={board.moved} />
-            </div>
+            {/* The spread sits under the level's grid: slipping beside them runs
+                taller than the grid alone, and the column has the room. */}
             <div className="columns">
               <div className="column">
                 <Level key={user.level} board={board} level={user.level} token={token} />
+                <Srs spread={board.spread} moved={board.moved} />
               </div>
               <div className="column">
                 <Slipping slipping={board.slipping} level={user.level} now={board.now} readSubjects={ids => getSubjects(token, ids)} />

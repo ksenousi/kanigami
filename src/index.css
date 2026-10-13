@@ -2525,12 +2525,6 @@ button.quiet {
   align-items: start;
 }
 
-/* The spread leads the band as a row like taught's, with no rule of its
-   own: the band's hairline is just above it. */
-.board .rows.lead {
-  padding-top: 0;
-  border-top: 0;
-}
 
 /* The figures, a line in the masthead: each count beside its name. */
 .board .masthead .figures {

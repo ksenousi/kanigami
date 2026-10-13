@@ -2025,3 +2025,9 @@ a full-width row each, ~900px against ~430.
   the odd subject to a later level in its content updates; its answers then
   landed on a level ahead and drew stray blocks in the future. They still
   count in the overall figure.
+
+**The spread under the level's grid.** Asked for, to save height: the SRS
+spread left its row across the top of at hand and sits under the kanji grid
+in the left column — slipping beside it runs taller than the grid alone, so
+the column had the room. Below 1,280px the order is the level, the spread,
+then slipping.
