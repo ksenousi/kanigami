@@ -293,7 +293,10 @@ It is the ink surface. Masthead, then the middle carries **position**:
   beside it.
 - The SRS spread as **one segmented hairline** 2px tall, with the counts as
   one line of letter-spaced mono beneath. Never five cards with five numbers
-  in them, which is the thing being replaced. Apprentice takes `--accent`;
+  in them, which is the thing being replaced. Pointing at the spread —
+  hover, a tap that holds, or keyboard focus — turns every count into its
+  share of the total at once; each figure stacks count and share in one
+  cell as wide as the wider, so the swap moves nothing. Apprentice takes `--accent`;
   the other four are palette entries of their own — `--srs-guru #8a6f4a`,
   `--srs-master #4f6b78`, `--srs-enlightened #5a5f7a`, `--srs-burned
   #8b8275` — themeable, unlike WaniKani's subject colours, because they are

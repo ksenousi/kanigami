@@ -367,6 +367,32 @@ body {
   color: var(--dim);
 }
 
+/* The count and its share in one cell: the cell takes the wider, and only
+   one shows, so the swap moves nothing. */
+.counts .figure {
+  display: inline-grid;
+}
+
+.counts .figure > span {
+  grid-area: 1 / 1;
+}
+
+/* Keyboard focus reads the shares too — that is its focus mark. */
+.counts .share,
+.spreadline.shares .counts .count,
+.spreadline:focus-visible .counts .count {
+  visibility: hidden;
+}
+
+.spreadline.shares .counts .share,
+.spreadline:focus-visible .counts .share {
+  visibility: visible;
+}
+
+.spreadline:focus-visible {
+  outline: none;
+}
+
 .counts .srs-apprentice {
   color: var(--accent);
 }

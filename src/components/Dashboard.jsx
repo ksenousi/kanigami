@@ -2232,11 +2232,17 @@ function share(count, total) {
 // One segmented hairline, and the counts as one line of type beneath it,
 // each in its band's colour — the colour is what ties a number to its
 // segment. Never five cards with five numbers in them.
+//
+// Pointing anywhere on it — hover, or a tap that holds — turns every count
+// into its share of the total at once. Each figure stacks its count and its
+// share in one cell, as wide as the wider of the two, so the swap moves
+// nothing on the line.
 function Spread({ spread: bands }) {
+  const { at, groupProps, itemProps } = usePointing()
   if (bands.total === 0) return null
 
   return (
-    <div className="spreadline">
+    <div className={at === null ? 'spreadline' : 'spreadline shares'} {...groupProps} {...itemProps(0)}>
       <div className="segments" aria-hidden="true">
         {bands.bands
           .filter(band => band.count > 0)
@@ -2247,7 +2253,11 @@ function Spread({ spread: bands }) {
       <p className="counts">
         {bands.bands.map(band => (
           <span key={band.key} className={`srs-${band.key}`}>
-            {band.key} {many(band.count)}
+            {band.key}{' '}
+            <span className="figure">
+              <span className="count">{many(band.count)}</span>
+              <span className="share">{share(band.count, bands.total)}</span>
+            </span>
           </span>
         ))}
       </p>
