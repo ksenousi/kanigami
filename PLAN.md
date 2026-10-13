@@ -2078,13 +2078,3 @@ slider only where the column is too narrow (a phone). The start's aside,
 the median), and the paces anyone sets were crowded into its first third.
 It now ends at 25 days a level, and runs further only so the account's own
 median and last five always sit on it.
-
-**No row for a band's name, or for the milestones' head.** Asked for, to
-save height:
-- Wider than a phone, a band's name stands down its left edge, written
-  vertically (`writing-mode: vertical-rl`) — its kanji alone shown, 今 手元
-  先, the words kept for a screen reader. The hairline between bands stays.
-  On a phone the name keeps its place on the hairline.
-- The milestones' head sits at the start of its entries' line, which wrap
-  after it.
-- 1,640px at 1440 on the fake account.

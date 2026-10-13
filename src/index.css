@@ -2426,28 +2426,7 @@ button.quiet {
 
 /* The milestones laid across under the dial and its column: each one what,
    when and how many to go on a line of its own, as many to a row as fit. */
-/* The head at the start of the entries' line rather than a line of its
-   own; the entries flow after it and wrap beneath. */
-.board .forward > .milestones {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 28px;
-}
-
-.board .forward > .milestones > .head {
-  padding-bottom: 0;
-  border-bottom: 0;
-  gap: 12px;
-}
-
-.board .forward > .milestones > .head h2 {
-  flex: none;
-}
-
 .board .forward > .milestones .body {
-  flex: 1 1 0;
-  min-width: min(100%, 18rem);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -2508,14 +2487,7 @@ button.quiet {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.board .band-body {
-  display: flex;
-  flex-direction: column;
   gap: 24px;
-  min-width: 0;
 }
 
 .board .band + .band {
@@ -2539,43 +2511,15 @@ button.quiet {
   color: var(--text-strong);
 }
 
-/* Wider than a phone, the name stands down the band's left edge, written
-   vertically, its kanji alone shown and the words left to a screen reader:
-   no row of its own. */
-@media (min-width: 700px) {
-  .board .band {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    column-gap: 18px;
-  }
-
-  .board .band-name {
-    writing-mode: vertical-rl;
-    align-self: start;
-    gap: 0;
-  }
-
-  .board .band-name .words {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
-
-/* On a phone every band after the first wears its name on its hairline
-   rather than on a row of its own. */
-@media (max-width: 699px) {
-  .board .band + .band > .band-name {
-    position: absolute;
-    top: 0;
-    left: 0;
-    transform: translateY(-55%);
-    padding-right: 14px;
-    background: var(--ground);
-  }
+/* Every band after the first wears its name on its hairline rather than on
+   a row of its own. */
+.board .band + .band > .band-name {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(-55%);
+  padding-right: 14px;
+  background: var(--ground);
 }
 
 .board section {

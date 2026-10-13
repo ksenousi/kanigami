@@ -423,17 +423,13 @@ const NAMED = 4
 // 今 now, 手元 at hand, 先 ahead: the board's three bands, each named on the
 // hairline that opens it. The name is a sentence, not a head — the sections
 // inside keep their own.
-//
-// On a screen wider than a phone the name stands down the band's left edge,
-// written vertically, its kanji alone shown: a row of its own cost the
-// height of a line in every band.
 function Band({ kanji, name, children }) {
   return (
     <div className="band">
       <p className="band-name">
-        <span className="jp">{kanji}</span> <span className="words">{name}</span>
+        <span className="jp">{kanji}</span> {name}
       </p>
-      <div className="band-body">{children}</div>
+      {children}
     </div>
   )
 }
