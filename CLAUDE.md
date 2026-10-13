@@ -26,6 +26,11 @@ the last commit holding them is `03a7aa7` — and PLAN.md describes them.
 - **Deploy** — push to `main` runs `.github/workflows/deploy.yml`, building
   to `dist` and publishing to Pages. `vite.config.js` sets
   `base: '/kanigami/'` to match the Pages URL.
+- **`mods/` is not the app.** `mods/done-pill` is a Claude Code mod (the
+  status pill above the prompt), kept here so it installs anywhere with
+  `/plugin install done-pill --marketplace ksenousi/kanigami`; the root
+  `.claude-plugin/marketplace.json` lists it. Vite, Vitest and oxlint never
+  read it; `claude plugin validate` and `claude plugin test` do.
 
 ## Commands
 

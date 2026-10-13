@@ -1,0 +1,5 @@
+{
+  "name": "kanigami",
+  "owner": { "name": "ksenousi" },
+  "plugins": [{ "name": "done-pill", "source": "./mods/done-pill" }]
+}

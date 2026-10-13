@@ -1,0 +1,6 @@
+{
+  "name": "done-pill",
+  "version": "0.1.0",
+  "description": "A pill above the prompt that says whether Claude is working, done, or waiting on you.",
+  "types": "./types/index.d.ts"
+}

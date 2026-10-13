@@ -5,3 +5,5 @@ dist
 .DS_Store
 *.local
 .vite
+# Claude Code writes a mod's API types beside it on load; they are generated.
+mods/*/.claude-plugin/types
