@@ -2122,3 +2122,10 @@ to just pick fun colours. So no walk: `--srs-apprentice-1` bubblegum
 The tally names the stages, so the order needs no hue logic. Don't re-impose
 a warm-to-gold ramp. The strip and the tally key wear these tokens; the tally names each stage (`3 apprentice II`), shown only when
 it holds a kanji. The counts stay `--dim`, so the hues carry no type.
+
+**Passed leaves guru's gold.** Asked for: a different colour for passed.
+With apprentice in fun hues, passed in the level line's strip and tally, and
+the passed underline in the level's kanji grid, take `--text-strong`, the
+strong ink: done reads as solid and stays clear of whichever apprentice
+set is in. Guru's gold stays on the SRS spread, where it names the guru
+band.
