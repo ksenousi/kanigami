@@ -568,7 +568,7 @@ function LevelLine({ board, level, perLevel }) {
         <>
           <div className="states" aria-hidden="true">
             {kanji.map(k => (
-              <span key={k.id} className={k.state === 'apprentice' ? `apprentice a${k.stage}` : k.state}>
+              <span key={k.id} className={standing(k)}>
                 <i />
                 {/* A locked kanji wears its own character, and under it the
                     radicals holding it — the strip says what the lock is. */}
@@ -576,7 +576,7 @@ function LevelLine({ board, level, perLevel }) {
                   <span className="under">
                     <span className="held">{glyph(k)}</span>
                     {(holders.get(k.id) ?? []).map(r => (
-                      <span key={r.id} className="holder">
+                      <span key={r.id} className={`holder ${standing(r)}`}>
                         {glyph(r)}
                       </span>
                     ))}
@@ -674,7 +674,7 @@ function Holding({ behind }) {
     <p className="holding">
       {behind.blockers.map(({ radical: r, holds, at }) => (
         <span key={r.id}>
-          <span className="radical">{glyph(r)}</span> <span className="soft">{r.meaning}</span> →{' '}
+          <span className={`radical ${standing(r)}`}>{glyph(r)}</span> <span className="soft">{r.meaning}</span> →{' '}
           <span className="kanji-held">
             {holds.map(k => (
               <span key={k.id}>{glyph(k)}</span>
@@ -706,6 +706,12 @@ function holdersOf(behind) {
     for (const k of holds) holders.set(k.id, [...(holders.get(k.id) ?? []), radical])
   }
   return holders
+}
+
+// Where a kanji or radical stands, as the level line's class: its state,
+// and for apprentice its stage, so it wears that stage's hue.
+function standing(item) {
+  return item.state === 'apprentice' ? `apprentice a${item.stage}` : item.state
 }
 
 // A subject's character, or WaniKani's image for a radical without one.

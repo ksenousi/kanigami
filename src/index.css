@@ -79,9 +79,9 @@
   /* Apprentice stage by stage, for the level line's strip — a hue a stage,
      picked for fun rather than any walk: bubblegum, grape, sky, mint. Only
      the level line wears them, beside guru's gold and the greys of lessons
-     and locks, so they need only differ from those and each other. Only
-     cells and keys wear them; the counts beside them are --dim, so they
-     carry no type. */
+     and locks, so they need only differ from those and each other. Cells
+     and keys wear them, and so do the radicals holding a locked kanji —
+     a character in its stage's hue; the counts beside the keys stay --dim. */
   --srs-apprentice-1: #ff5fa2;
   --srs-apprentice-2: #a66bff;
   --srs-apprentice-3: #3fb8ff;
@@ -1892,6 +1892,39 @@ button.quiet {
 .board .level-line .holder {
   font-size: 13px;
   color: var(--subject-radical);
+}
+
+/* A radical holding a lock wears where it stands, in the strip's hues:
+   apprentice its stage's, a lesson waiting and a radical still locked
+   dimmed. */
+.board .level-line .holder.a1,
+.board .level-line .holding .radical.a1 {
+  color: var(--srs-apprentice-1);
+}
+
+.board .level-line .holder.a2,
+.board .level-line .holding .radical.a2 {
+  color: var(--srs-apprentice-2);
+}
+
+.board .level-line .holder.a3,
+.board .level-line .holding .radical.a3 {
+  color: var(--srs-apprentice-3);
+}
+
+.board .level-line .holder.a4,
+.board .level-line .holding .radical.a4 {
+  color: var(--srs-apprentice-4);
+}
+
+.board .level-line .holder.lesson,
+.board .level-line .holding .radical.lesson {
+  color: var(--text-soft);
+}
+
+.board .level-line .holder.locked,
+.board .level-line .holding .radical.locked {
+  color: var(--dim);
 }
 
 /* The same, radical by radical, as one line under the strip. */
