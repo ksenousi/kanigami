@@ -1799,7 +1799,8 @@ button.quiet {
 }
 
 /* One cell per kanji, its state in its colour: passed in guru, apprentice
-   in the accent — full at its last step — lessons faint, locked the rule. */
+   in the accent, deepening stage by stage to full at IV, lessons faint,
+   locked the rule. */
 .board .level-line .states {
   position: relative;
   display: flex;
@@ -1832,13 +1833,23 @@ button.quiet {
   background: var(--srs-guru);
 }
 
-.board .level-line .apprentice > i,
-.board .level-line i.apprentice {
-  background: color-mix(in srgb, var(--accent) 55%, var(--ground));
+.board .level-line .a1 > i,
+.board .level-line i.a1 {
+  background: color-mix(in srgb, var(--accent) 30%, var(--ground));
 }
 
-.board .level-line .apprentice.four > i,
-.board .level-line i.four {
+.board .level-line .a2 > i,
+.board .level-line i.a2 {
+  background: color-mix(in srgb, var(--accent) 50%, var(--ground));
+}
+
+.board .level-line .a3 > i,
+.board .level-line i.a3 {
+  background: color-mix(in srgb, var(--accent) 72%, var(--ground));
+}
+
+.board .level-line .a4 > i,
+.board .level-line i.a4 {
   background: var(--accent);
 }
 

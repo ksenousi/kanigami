@@ -494,17 +494,20 @@ function Figures({ board }) {
 // Every state is WaniKani's, read off an assignment. The fastest level-up
 // runs WaniKani's own intervals and the dates run a pace; all are
 // projections, and the line beneath says so.
-// Apprentice IV is drawn at full accent, so it keys apart from the rest of
-// apprentice. Passed keys even at none: its colour is the one being worked
-// towards, and a strip of no passes has to say what one looks like.
+// Apprentice is drawn stage by stage, the accent deepening from I to full at
+// IV, so the strip says how far each kanji has to go. Passed keys even at
+// none: its colour is the one being worked towards, and a strip of no passes
+// has to say what one looks like.
 const STATES = [
   ['passed', 'passed'],
-  ['four', 'apprentice IV'],
-  ['apprentice', 'apprentice'],
+  ['a4', 'apprentice IV'],
+  ['a3', 'apprentice III'],
+  ['a2', 'apprentice II'],
+  ['a1', 'apprentice I'],
   ['lesson', 'in lessons'],
   ['locked', 'locked']
 ]
-const stateOf = k => (k.state === 'apprentice' && k.stage === 4 ? 'four' : k.state)
+const stateOf = k => (k.state === 'apprentice' ? `a${k.stage}` : k.state)
 
 function LevelLine({ board, level, perLevel }) {
   const { passed, needed, remaining, total } = board.passed
@@ -554,7 +557,7 @@ function LevelLine({ board, level, perLevel }) {
         <>
           <div className="states" aria-hidden="true">
             {kanji.map(k => (
-              <span key={k.id} className={stateOf(k) === 'four' ? 'apprentice four' : k.state}>
+              <span key={k.id} className={k.state === 'apprentice' ? `apprentice a${k.stage}` : k.state}>
                 <i />
                 {/* A locked kanji wears its own character, and under it the
                     radicals holding it — the strip says what the lock is. */}

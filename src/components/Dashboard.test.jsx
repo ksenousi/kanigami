@@ -613,7 +613,7 @@ describe('the level line', () => {
     expect(host.querySelector('.level-line .head').textContent).toContain('0 of 2 needed')
     expect(host.querySelector('.level-line .need').textContent).toBe('2 needed')
     expect(host.querySelectorAll('.level-line .states i')).toHaveLength(2)
-    expect(host.querySelector('.level-line .tally').textContent).toBe('0 passed1 apprentice1 locked')
+    expect(host.querySelector('.level-line .tally').textContent).toBe('0 passed1 apprentice II1 locked')
   })
 
   it('says what is up next, and leaves the locked kanji to the tally', async () => {
