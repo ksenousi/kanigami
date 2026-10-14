@@ -2114,9 +2114,11 @@ The first four hues (plum `#9a4f9a`, rose `#c84a6e`, the vermilion,
 persimmon `#df7f36`) shipped and were found unsatisfying — dark, dull plum
 and rose, then a jump to bright. Two rounds of four-hue sets followed: Ember
 (dark red to amber), Jewel, Candy (pastels) and Pop, then — asked for more
-colour — Sunset, Neon, Spectrum, Tropical and Fire opal. **Tropical was
-picked**, over Sunset as the recommendation, knowing its cyan sits near
-`--srs-enlightened`. The strip and the tally key wear palette tokens
-`--srs-apprentice-1` cyan `#22d3ee`, `-2` violet `#9d6bff`, `-3` pink
-`#ff4fa3`, `-4` mango `#ffa62b`; the tally names each stage (`3 apprentice II`), shown only when
+colour — Sunset, Neon, Spectrum, Tropical and Fire opal. Tropical shipped
+briefly. Every set had been built as a walk from cool or dark towards
+guru's warm gold; the owner asked why everything was about warmth and said
+to just pick fun colours. So no walk: `--srs-apprentice-1` bubblegum
+`#ff5fa2`, `-2` grape `#a66bff`, `-3` sky `#3fb8ff`, `-4` mint `#2ee6c0`.
+The tally names the stages, so the order needs no hue logic. Don't re-impose
+a warm-to-gold ramp. The strip and the tally key wear these tokens; the tally names each stage (`3 apprentice II`), shown only when
 it holds a kanji. The counts stay `--dim`, so the hues carry no type.

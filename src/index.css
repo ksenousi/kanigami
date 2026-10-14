@@ -76,16 +76,16 @@
   --srs-enlightened: #6f95dc; /* 6.43:1 */
   --srs-burned: #a6c43c;      /* 9.71:1 */
 
-  /* Apprentice stage by stage, for the level line's strip — four hues, one
-     a stage. Picked from a prototype over a lightness ramp, a walk to gold,
-     a rising cell, pips, and two rounds of four-hue sets: 熱帯 tropical,
-     cyan, violet, pink, mango. The cyan sits near --srs-enlightened; the
-     owner took that for the colour. Only cells and keys wear them; the
-     counts beside them are --dim, so they carry no type. */
-  --srs-apprentice-1: #22d3ee;
-  --srs-apprentice-2: #9d6bff;
-  --srs-apprentice-3: #ff4fa3;
-  --srs-apprentice-4: #ffa62b;
+  /* Apprentice stage by stage, for the level line's strip — a hue a stage,
+     picked for fun rather than any walk: bubblegum, grape, sky, mint. Only
+     the level line wears them, beside guru's gold and the greys of lessons
+     and locks, so they need only differ from those and each other. Only
+     cells and keys wear them; the counts beside them are --dim, so they
+     carry no type. */
+  --srs-apprentice-1: #ff5fa2;
+  --srs-apprentice-2: #a66bff;
+  --srs-apprentice-3: #3fb8ff;
+  --srs-apprentice-4: #2ee6c0;
 
   /* ---- type scale ----
      Not part of the palette and not themeable: this is how big the app is,
@@ -1812,8 +1812,8 @@ button.quiet {
 }
 
 /* One cell per kanji, its state in its colour: passed in guru, apprentice
-   a hue a stage — cyan, violet, pink, mango — lessons faint, locked the
-   rule. */
+   a hue a stage — bubblegum, grape, sky, mint — lessons faint, locked
+   the rule. */
 .board .level-line .states {
   position: relative;
   display: flex;
