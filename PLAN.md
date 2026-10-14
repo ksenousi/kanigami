@@ -2110,7 +2110,13 @@ the accent at 55% and only IV stood out at full. Five were prototyped:
 accent with the cell rising in height by stage, **E** each cell four pips
 lit to its stage, as at hand draws it. **C was picked**; the rest rejected —
 A's first two steps sat too close on the ink, and E was the recommendation.
-The strip and the tally key wear palette tokens `--srs-apprentice-1` plum
-`#9a4f9a`, `-2` rose `#c84a6e`, `-3` the vermilion, `-4` persimmon
-`#df7f36`; the tally names each stage (`3 apprentice II`), shown only when
+The first four hues (plum `#9a4f9a`, rose `#c84a6e`, the vermilion,
+persimmon `#df7f36`) shipped and were found unsatisfying — dark, dull plum
+and rose, then a jump to bright. Two rounds of four-hue sets followed: Ember
+(dark red to amber), Jewel, Candy (pastels) and Pop, then — asked for more
+colour — Sunset, Neon, Spectrum, Tropical and Fire opal. **Tropical was
+picked**, over Sunset as the recommendation, knowing its cyan sits near
+`--srs-enlightened`. The strip and the tally key wear palette tokens
+`--srs-apprentice-1` cyan `#22d3ee`, `-2` violet `#9d6bff`, `-3` pink
+`#ff4fa3`, `-4` mango `#ffa62b`; the tally names each stage (`3 apprentice II`), shown only when
 it holds a kanji. The counts stay `--dim`, so the hues carry no type.

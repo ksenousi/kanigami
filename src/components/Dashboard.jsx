@@ -494,8 +494,8 @@ function Figures({ board }) {
 // Every state is WaniKani's, read off an assignment. The fastest level-up
 // runs WaniKani's own intervals and the dates run a pace; all are
 // projections, and the line beneath says so.
-// Apprentice is drawn stage by stage, a hue to each — plum, rose, vermilion,
-// persimmon — so the strip says how far each kanji has to go. Passed keys even at
+// Apprentice is drawn stage by stage, a hue to each — cyan, violet, pink,
+// mango — so the strip says how far each kanji has to go. Passed keys even at
 // none: its colour is the one being worked towards, and a strip of no passes
 // has to say what one looks like.
 const STATES = [
