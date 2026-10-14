@@ -709,7 +709,7 @@ function percent(fraction) {
 // Every kanji of the level, locked ones included, so the level's size is
 // on screen rather than implied. Brightness says where each stands; the
 // hairline beneath says it again for anyone not reading brightness —
-// apprentice as four pips lit to its stage, passed as one strong-ink
+// apprentice as four pips lit to its stage, passed as one tangerine
 // rule. Each cell's label carries all of it in words.
 //
 // **Pointing at a character re-points the notes** to it — what it is, its

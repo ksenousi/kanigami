@@ -2128,4 +2128,5 @@ With apprentice in fun hues, passed in the level line's strip and tally, and
 the passed underline in the level's kanji grid, take `--text-strong`, the
 strong ink: done reads as solid and stays clear of whichever apprentice
 set is in. Guru's gold stays on the SRS spread, where it names the guru
-band.
+band. The strong ink was then found too plain — "something more fun" — and
+passed took its own palette token, `--srs-passed` tangerine `#ff8c42`.

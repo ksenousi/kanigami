@@ -86,6 +86,9 @@
   --srs-apprentice-2: #a66bff;
   --srs-apprentice-3: #3fb8ff;
   --srs-apprentice-4: #2ee6c0;
+  /* Passed, in the level line and the level grid's underline: tangerine,
+     asked for as something more fun than the strong ink it briefly was. */
+  --srs-passed: #ff8c42;
 
   /* ---- type scale ----
      Not part of the palette and not themeable: this is how big the app is,
@@ -144,7 +147,7 @@
      --ink-strokes: …;
      --srs-guru: …; --srs-master: …; --srs-enlightened: …; --srs-burned: …;
      --srs-apprentice-1: …; --srs-apprentice-2: …;
-     --srs-apprentice-3: …; --srs-apprentice-4: …;
+     --srs-apprentice-3: …; --srs-apprentice-4: …; --srs-passed: …;
    }
 
    A theme with a *light* ground has one trap: it must set --ink-strokes
@@ -1202,7 +1205,7 @@ button.quiet {
 }
 
 .board .kanji .passed .underline {
-  background: var(--text-strong);
+  background: var(--srs-passed);
 }
 
 .board .pips {
@@ -1811,8 +1814,8 @@ button.quiet {
   gap: 16px;
 }
 
-/* One cell per kanji, its state in its colour: passed in strong ink, done
-   and clear of the apprentice hues; apprentice a hue a stage; lessons
+/* One cell per kanji, its state in its colour: passed in tangerine,
+   clear of the apprentice hues; apprentice a hue a stage; lessons
    faint; locked the rule. */
 .board .level-line .states {
   position: relative;
@@ -1843,7 +1846,7 @@ button.quiet {
 
 .board .level-line .passed > i,
 .board .level-line i.passed {
-  background: var(--text-strong);
+  background: var(--srs-passed);
 }
 
 .board .level-line .a1 > i,
