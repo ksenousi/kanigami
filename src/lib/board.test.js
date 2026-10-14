@@ -14,6 +14,7 @@ import {
   moved,
   nextUp,
   fastestLevel,
+  guruedLevels,
   pace,
   paceToReach,
   project,
@@ -226,6 +227,28 @@ describe('pace', () => {
     const p = pace([prog(1, 1, null)], 1, NOW)
     expect(p.median).toBeNull()
     expect(p.recent).toBeNull()
+  })
+})
+
+describe('guruedLevels', () => {
+  const levelOf = new Map([[1, 3], [2, 3], [3, 4], [4, 4], [5, 5]])
+
+  it('names a level only when every subject on it is at guru or above', () => {
+    const gurued = guruedLevels(levelOf, [
+      assignment({ subject_id: 1, srs_stage: 5 }),
+      assignment({ subject_id: 2, srs_stage: 9 }),
+      assignment({ subject_id: 3, srs_stage: 7 }),
+      assignment({ subject_id: 4, srs_stage: 4 })
+    ])
+    expect([...gurued]).toEqual([3])
+  })
+
+  it('counts a subject never started against its level', () => {
+    expect(guruedLevels(levelOf, [assignment({ subject_id: 1, srs_stage: 6 })]).size).toBe(0)
+  })
+
+  it('names no level the indexes hold nothing for', () => {
+    expect(guruedLevels(new Map(), []).size).toBe(0)
   })
 })
 

@@ -2075,8 +2075,14 @@ button.quiet {
   background: var(--accent);
 }
 
-.board .dial .bars .fastest i {
+/* A level with every item at guru or above, in guru's gold. */
+.board .dial .bars .gurued i {
   background: var(--srs-guru);
+}
+
+/* The fastest gave guru's gold to the levels fully guru'd: strong ink now. */
+.board .dial .bars .fastest i {
+  background: var(--text-strong);
   opacity: 1;
 }
 
@@ -2465,7 +2471,12 @@ button.quiet {
 }
 
 .board .swatch.fastest {
+  background: var(--text-strong);
+}
+
+.board .swatch.gurued {
   background: var(--srs-guru);
+  opacity: 0.7;
 }
 
 .board .swatch.break {

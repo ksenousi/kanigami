@@ -97,6 +97,26 @@ export function accuracyByLevel(statistics = [], levelOf = new Map(), top = 60) 
   }
 }
 
+// Guru I, the first stage `srs.js` names guru — read off each assignment.
+export const GURU = 5
+
+// The levels fully guru'd: every radical, kanji and word WaniKani has on the
+// level sits at guru or above right now, as its assignment says. `levelOf`
+// maps subject id to level, from the kanji and ahead indexes, so a subject
+// never started counts against its level. A level that has lost an item back
+// to apprentice drops out until it climbs again.
+export function guruedLevels(levelOf = new Map(), assignments = [], top = 60) {
+  const stage = new Map(assignments.map(a => [a?.data?.subject_id, a?.data?.srs_stage]))
+  const held = Array.from({ length: top + 1 }, () => true)
+  const any = Array.from({ length: top + 1 }, () => false)
+  for (const [id, level] of levelOf) {
+    if (!level || level > top) continue
+    any[level] = true
+    if (!(stage.get(id) >= GURU)) held[level] = false
+  }
+  return new Set(held.flatMap((ok, level) => (ok && any[level] ? [level] : [])))
+}
+
 // An item has to have been missed this many times before it counts as
 // slipping. Below it, one bad day on a new item reads as a leech.
 export const MIN_MISSES = 3

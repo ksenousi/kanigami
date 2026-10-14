@@ -19,6 +19,7 @@ import {
   accuracyByLevel,
   earliestLevelUp,
   fastestLevel,
+  guruedLevels,
   FIELD,
   leeches,
   levelKanji,
@@ -143,6 +144,13 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
         later.then(index => {
           if (!live) return
           setBoard(held => ({ ...held, ahead: index ? aheadByLevel(index, started, TOP_LEVEL) : null }))
+        })
+
+        // The levels fully guru'd, placed by the two indexes; waits on both.
+        Promise.all([extra, later]).then(([[kanjiIdx], aheadIdx]) => {
+          if (!live) return
+          const levelOf = kanjiIdx && aheadIdx ? new Map([...kanjiIdx, ...aheadIdx].map(([id, n]) => [id, n])) : null
+          setBoard(held => ({ ...held, gurued: levelOf ? guruedLevels(levelOf, started, TOP_LEVEL) : null }))
         })
 
         // Right answers by level: the statistics, placed by the two indexes.
@@ -350,6 +358,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
               milestones={board.milestones}
               coverage={board.coverage}
               byLevel={board.byLevel}
+              gurued={board.gurued}
             />
           </Band>
         </>
@@ -1486,7 +1495,7 @@ function paceFor(p, chosen) {
   return chosen !== null ? chosen : homePace(p)
 }
 
-function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c, byLevel }) {
+function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c, byLevel, gurued }) {
   const [through, setThrough] = useState(null)
   // Only a level ahead is a projection, and choosing one needs the kanji
   // index, so it waits for coverage's read.
@@ -1513,6 +1522,7 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
         onThrough={c ? setThrough : null}
         counted={Boolean(later)}
         rightByLevel={byLevel}
+        gurued={gurued}
       />
       <div className="rows">
         <Taught learned={counts} totals={totals} next={m?.next} at={at} gains={gains} counted={Boolean(later)} />
@@ -1572,7 +1582,7 @@ function Waiting({ title }) {
 // it). Scaled from 80%, or the tenth below the lowest, to 100%, with your
 // overall dashed across. Pointing at either row reads both in the line.
 // Undefined while it reads, keeping its room; null, and gone, if it can't.
-function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, onThrough = null, counted = true, rightByLevel }) {
+function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, onThrough = null, counted = true, rightByLevel, gurued = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   // A mouse chooses on its click; a finger's first tap reads the bar and
   // the second chooses it, as a kanji's second tap opens it.
@@ -1592,7 +1602,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
     if (n < level) {
       const held = byLevel.get(n)
       if (!held) return { level: n, kind: 'missing' }
-      return { level: n, kind: held.break ? 'break' : 'passed', days: held.days, began: held.unlockedAt }
+      return { level: n, kind: held.break ? 'break' : 'passed', days: held.days, began: held.unlockedAt, gurued: Boolean(gurued?.has(n)) }
     }
     return { level: n, kind: ahead ? 'ahead' : 'empty' }
   })
@@ -1730,6 +1740,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
               className={[
                 s.kind,
                 s.level === quickest?.level ? 'fastest' : '',
+                s.gurued ? 'gurued' : '',
                 through && s.level > level && s.level <= through ? 'within' : '',
                 reading === i || worked?.middle.some(l => l.level === s.level) ? 'reading' : '',
                 onThrough && s.level > level ? 'choosable' : ''
@@ -1824,8 +1835,14 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             </span>
           ) : null}
         </p>
-        {quickest || breaks.length > 0 ? (
+        {quickest || breaks.length > 0 || gurued?.size ? (
           <p className="notes flags">
+            {gurued?.size ? (
+              <span>
+                <i className="swatch gurued" aria-hidden="true" />
+                Every item at guru or above · {gurued.size === 1 ? 'level' : 'levels'} {runs([...gurued].sort((a, b) => a - b))}
+              </span>
+            ) : null}
             {quickest ? (
               <span>
                 <i className="swatch fastest" aria-hidden="true" />
@@ -2027,9 +2044,20 @@ function levelSpan(levels) {
   return last - first === levels.length - 1 ? `${first}–${last}` : levels.map(l => l.level).join(', ')
 }
 
+// Levels as runs: 1–9, 11, 14–15.
+function runs(levels) {
+  const out = []
+  for (const n of levels) {
+    const last = out[out.length - 1]
+    if (last && n === last[1] + 1) last[1] = n
+    else out.push([n, n])
+  }
+  return out.map(([a, b]) => (a === b ? `${a}` : `${a}–${b}`)).join(', ')
+}
+
 function caption(s, ahead, perLevel) {
   const began = s.began ? ` · began ${dayMonthYear(s.began)}` : ''
-  if (s.kind === 'passed') return `Level ${s.level} · ${Math.round(s.days)} days${began}`
+  if (s.kind === 'passed') return `Level ${s.level} · ${Math.round(s.days)} days${began}${s.gurued ? ' · all guru’d' : ''}`
   if (s.kind === 'break') return `Level ${s.level} · ${Math.round(s.days)} days · break${began}`
   if (s.kind === 'current') return `Level ${s.level} · day ${Math.floor(s.days) + 1} so far${began}`
   if (s.kind === 'missing') return `Level ${s.level} · no record`
