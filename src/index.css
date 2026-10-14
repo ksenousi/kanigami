@@ -2075,12 +2075,28 @@ button.quiet {
   background: var(--accent);
 }
 
-/* A level with every item at guru or above, in guru's gold. */
-.board .dial .bars .gurued i {
+/* A level by its least-advanced item, from guru up, in that stage's hue. */
+.board .dial .bars .all-guru i,
+.board .swatch.all-guru {
   background: var(--srs-guru);
 }
 
-/* The fastest gave guru's gold to the levels fully guru'd: strong ink now. */
+.board .dial .bars .all-master i,
+.board .swatch.all-master {
+  background: var(--srs-master);
+}
+
+.board .dial .bars .all-enlightened i,
+.board .swatch.all-enlightened {
+  background: var(--srs-enlightened);
+}
+
+.board .dial .bars .all-burned i,
+.board .swatch.all-burned {
+  background: var(--srs-burned);
+}
+
+/* The fastest gave guru's gold to the levels' standings: strong ink now. */
 .board .dial .bars .fastest i {
   background: var(--text-strong);
   opacity: 1;
@@ -2474,10 +2490,6 @@ button.quiet {
   background: var(--text-strong);
 }
 
-.board .swatch.gurued {
-  background: var(--srs-guru);
-  opacity: 0.7;
-}
 
 .board .swatch.break {
   background: repeating-linear-gradient(90deg, var(--dim) 0 2px, transparent 2px 4px);

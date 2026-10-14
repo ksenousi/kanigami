@@ -97,24 +97,35 @@ export function accuracyByLevel(statistics = [], levelOf = new Map(), top = 60) 
   }
 }
 
-// Guru I, the first stage `srs.js` names guru — read off each assignment.
-export const GURU = 5
+// The stages a whole level can stand at, from the first `srs.js` names
+// guru: guru I and II, master, enlightened, burned — read off assignments.
+export const LEVEL_STANDINGS = [
+  { key: 'guru', from: 5 },
+  { key: 'master', from: 7 },
+  { key: 'enlightened', from: 8 },
+  { key: 'burned', from: 9 }
+]
 
-// The levels fully guru'd: every radical, kanji and word WaniKani has on the
-// level sits at guru or above right now, as its assignment says. `levelOf`
-// maps subject id to level, from the kanji and ahead indexes, so a subject
-// never started counts against its level. A level that has lost an item back
-// to apprentice drops out until it climbs again.
-export function guruedLevels(levelOf = new Map(), assignments = [], top = 60) {
+// How far each level has come as a whole: the stage of its least-advanced
+// radical, kanji or word, as its assignment says, named by the highest
+// standing that stage reaches — so a level is burned only when every item on
+// it is. `levelOf` maps subject id to level, from the kanji and ahead
+// indexes, so a subject never started holds its level back. A level with
+// anything below guru is left out, and drops back out if an item falls.
+export function levelStandings(levelOf = new Map(), assignments = [], top = 60) {
   const stage = new Map(assignments.map(a => [a?.data?.subject_id, a?.data?.srs_stage]))
-  const held = Array.from({ length: top + 1 }, () => true)
-  const any = Array.from({ length: top + 1 }, () => false)
+  const lowest = new Map()
   for (const [id, level] of levelOf) {
     if (!level || level > top) continue
-    any[level] = true
-    if (!(stage.get(id) >= GURU)) held[level] = false
+    const at = typeof stage.get(id) === 'number' ? stage.get(id) : -1
+    lowest.set(level, Math.min(lowest.get(level) ?? Infinity, at))
   }
-  return new Set(held.flatMap((ok, level) => (ok && any[level] ? [level] : [])))
+  const standings = new Map()
+  for (const [level, at] of lowest) {
+    const reached = LEVEL_STANDINGS.filter(s => at >= s.from).pop()
+    if (reached) standings.set(level, reached.key)
+  }
+  return standings
 }
 
 // An item has to have been missed this many times before it counts as
