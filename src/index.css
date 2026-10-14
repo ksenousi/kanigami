@@ -76,6 +76,16 @@
   --srs-enlightened: #6f95dc; /* 6.43:1 */
   --srs-burned: #a6c43c;      /* 9.71:1 */
 
+  /* Apprentice stage by stage, for the level line's strip — four hues, one
+     a stage, picked from a prototype over a lightness ramp, a walk to gold,
+     a rising cell and pips: plum, rose, the vermilion, persimmon. Only cells
+     and keys wear them; the counts beside them are --dim, so they carry no
+     type and need no contrast floor. */
+  --srs-apprentice-1: #9a4f9a;
+  --srs-apprentice-2: #c84a6e;
+  --srs-apprentice-3: var(--vermilion);
+  --srs-apprentice-4: #df7f36;
+
   /* ---- type scale ----
      Not part of the palette and not themeable: this is how big the app is,
      and every size in the file comes from here. The mono labels used to sit
@@ -132,6 +142,7 @@
      --ink-strong: …; --ink-soft: …; --ink-dim: …; --vermilion: …;
      --ink-strokes: …;
      --srs-guru: …; --srs-master: …; --srs-enlightened: …; --srs-burned: …;
+     --srs-apprentice-1: …; --srs-apprentice-2: …; --srs-apprentice-4: …;
    }
 
    A theme with a *light* ground has one trap: it must set --ink-strokes
@@ -1799,8 +1810,8 @@ button.quiet {
 }
 
 /* One cell per kanji, its state in its colour: passed in guru, apprentice
-   in the accent, deepening stage by stage to full at IV, lessons faint,
-   locked the rule. */
+   a hue a stage — plum, rose, vermilion, persimmon — lessons faint, locked
+   the rule. */
 .board .level-line .states {
   position: relative;
   display: flex;
@@ -1835,22 +1846,22 @@ button.quiet {
 
 .board .level-line .a1 > i,
 .board .level-line i.a1 {
-  background: color-mix(in srgb, var(--accent) 30%, var(--ground));
+  background: var(--srs-apprentice-1);
 }
 
 .board .level-line .a2 > i,
 .board .level-line i.a2 {
-  background: color-mix(in srgb, var(--accent) 50%, var(--ground));
+  background: var(--srs-apprentice-2);
 }
 
 .board .level-line .a3 > i,
 .board .level-line i.a3 {
-  background: color-mix(in srgb, var(--accent) 72%, var(--ground));
+  background: var(--srs-apprentice-3);
 }
 
 .board .level-line .a4 > i,
 .board .level-line i.a4 {
-  background: var(--accent);
+  background: var(--srs-apprentice-4);
 }
 
 .board .level-line .lesson > i,

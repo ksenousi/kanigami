@@ -2101,3 +2101,16 @@ the vocabulary grid fits. Below 800 — an iPad mini upright, 744 — the cells
 would close to 27px, so the stacked level stays. Tried and dropped: taught
 and coverage side by side in ahead, which came out exactly as tall as the
 two rows.
+
+**Apprentice, stage by stage — decided from a prototype.** Asked for: a
+colour for each apprentice stage in the level line, where I–III had shared
+the accent at 55% and only IV stood out at full. Five were prototyped:
+**A** one vermilion in four lightness steps (30/50/72/100% on the ground),
+**B** vermilion walking towards guru's gold, **C** four hues, **D** one
+accent with the cell rising in height by stage, **E** each cell four pips
+lit to its stage, as at hand draws it. **C was picked**; the rest rejected —
+A's first two steps sat too close on the ink, and E was the recommendation.
+The strip and the tally key wear palette tokens `--srs-apprentice-1` plum
+`#9a4f9a`, `-2` rose `#c84a6e`, `-3` the vermilion, `-4` persimmon
+`#df7f36`; the tally names each stage (`3 apprentice II`), shown only when
+it holds a kanji. The counts stay `--dim`, so the hues carry no type.
