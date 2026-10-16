@@ -4,17 +4,19 @@ import { stageName } from '../lib/srs.js'
 import Hint from './Hint.jsx'
 import usePointing from './usePointing.js'
 
-// 刻 The next 24 hours, every hour named — decided from a prototype (see
+// 刻 The week ahead, every hour named — decided from a prototype (see
 // "The next 24 hours" in PLAN.md). It was a 24px strip with no times on it:
 // you pointed at an hour to learn when it was. Now it is a small bar chart
 // that reads without pointing.
 //
-// - **One column per bucket** of the summary — the current hour and the 24
-//   after it — each with its two-digit hour beneath the baseline: bright when
-//   reviews arrive then, `--dim` when the hour is empty, the current hour in
-//   the accent. Above, today and tomorrow are named where each begins, and
-//   the next day's hours sit on a faint tint behind a dashed line at
-//   midnight, so the day boundary reads before any label does.
+// - **One column per hour, a week of them** — the summary's 25 buckets, then
+//   the hours after counted from the assignments' own `available_at` (see
+//   `forecastAhead`). The first 25 fill the strip's width as they always did;
+//   the rest scroll sideways into view. Each has its two-digit hour beneath
+//   the baseline: bright when reviews arrive then, `--dim` when the hour is
+//   empty, the current hour in the accent. Above, each day is named where it
+//   begins, a dashed line runs down at every midnight, and every other day
+//   sits on a faint tint, so the day boundaries read before any label does.
 // - **Each bar carries its count**, and what the level-up waits on — every
 //   kanji not yet passed, and the radicals holding its locked ones — sits
 //   above the bar of the hour it comes up in: strong ink when one right
@@ -38,33 +40,46 @@ import usePointing from './usePointing.js'
 // first.
 const SHOWN = 3
 
-export default function Forecast({ summary, waitingOn = [], nextLevel = null }) {
+export default function Forecast({ summary, hours: given = null, waitingOn = [], nextLevel = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
-  // Unclipped: WaniKani sends now plus 24 hours, and all of them are drawn.
-  const hours = forecast(summary)
+  // A week when the board hands one over; otherwise the summary's 25 hours.
+  const hours = given ?? forecast(summary)
   const busiest = Math.max(1, peak(hours.slice(1)))
   const marks = markHours(hours, waitingOn)
   const today = hours[0] ? new Date(hours[0].at).toDateString() : null
-  const midnight = hours.findIndex((h, i) => i > 0 && new Date(h.at).toDateString() !== today)
-  const share = i => `${(i / Math.max(1, hours.length)) * 100}%`
+  const days = dayStarts(hours)
+  const dayOf = hourDays(hours.length, days)
 
   return (
-    <section className="forecast" aria-label="Reviews over the next 24 hours">
-      {/* The strip: on a phone it keeps an hour wide enough to name and
-          scrolls sideways, rather than squeezing 25 hours into 335px. */}
+    <section className="forecast" aria-label="Reviews over the week ahead">
+      {/* The strip: the first 25 hours fill its width and the rest of the
+          week scrolls sideways. On a phone an hour keeps 26px, wide enough to
+          name. */}
       <div className="strip">
-        <div className="days" aria-hidden="true">
-          {/* Today's name has only until midnight: when midnight is an hour
-              or two off, it would run into the next day's, so it goes. */}
-          <span className="today" style={{ left: 0, width: midnight > 0 ? `calc(${share(midnight)} - 6px)` : undefined }}>today</span>
-          {midnight > 0 ? <span style={{ left: share(midnight) }}>{weekday(hours[midnight].at)}</span> : null}
+        <div
+          className="days"
+          aria-hidden="true"
+          style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))`, '--span': hours.length / DAY_HOURS }}
+        >
+          {/* Each name spans its day's hours and holds to the strip's left
+              edge while the day is in view, so a scrolled strip still says
+              which day it is. A day of a couple of hours is too narrow for
+              its name, so the name goes and the rule stays. */}
+          {days.map((start, d) => {
+            const end = days[d + 1] ?? hours.length
+            return (
+              <span key={start} style={{ gridColumn: `${start + 1} / ${end + 1}` }}>
+                {end - start >= NAMED ? <b>{d === 0 ? 'today' : weekday(hours[start].at)}</b> : null}
+              </span>
+            )
+          })}
         </div>
 
         <div
           className="hours"
           role="group"
-          aria-label="Reviews due in each of the next 24 hours"
-          style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))` }}
+          aria-label="Reviews due in each hour of the week ahead"
+          style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))`, '--span': hours.length / DAY_HOURS }}
           onKeyDown={walk(hours.length, reading, point)}
           {...groupProps}
         >
@@ -79,8 +94,8 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
                   'hour',
                   hour.count ? 'busy' : '',
                   index === 0 ? 'now' : '',
-                  midnight > 0 && index >= midnight ? 'next-day' : '',
-                  index === midnight ? 'midnight' : '',
+                  dayOf[index] % 2 ? 'next-day' : '',
+                  index > 0 && dayOf[index] !== dayOf[index - 1] ? 'midnight' : '',
                   kanji ? 'marked' : '',
                   reading === index ? 'reading' : ''
                 ]
@@ -117,7 +132,7 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
 
       <p className="notes readout" aria-live="polite">
         <span className="soft">
-          {reading === null ? resting(summary, hours) : hourLabel(hours, reading, today, marks.get(reading))}
+          {reading === null ? resting(summary, hours.slice(0, DAY_HOURS)) : hourLabel(hours, reading, today, marks.get(reading))}
         </span>
         <span className="hint">
           Count above each bar
@@ -129,6 +144,29 @@ export default function Forecast({ summary, waitingOn = [], nextLevel = null }) 
       </p>
     </section>
   )
+}
+
+// The summary's day: the current hour and the 24 after it. It is the width
+// the strip shows at once, and what "by this time tomorrow" sums.
+const DAY_HOURS = 25
+
+// The fewest hours a day needs on the strip before it carries its name.
+const NAMED = 3
+
+// Where each day begins: hour zero, then every hour on a new date.
+function dayStarts(hours) {
+  const starts = hours.length ? [0] : []
+  for (let i = 1; i < hours.length; i++) {
+    if (new Date(hours[i].at).toDateString() !== new Date(hours[i - 1].at).toDateString()) starts.push(i)
+  }
+  return starts
+}
+
+// Which day, counting from today, each hour falls on.
+function hourDays(length, starts) {
+  const days = Array.from({ length }, () => 0)
+  starts.forEach((start, d) => days.fill(d, start))
+  return days
 }
 
 // Which hour each of the level-up's kanji next comes up in: the bucket its
@@ -164,21 +202,26 @@ function named(k) {
 // Left and right walk an hour, Home and End go to the ends, Escape gives the
 // line back to its resting state. The first press lands on the current hour
 // whichever way it went, rather than stepping off and skipping hour zero.
+// The strip scrolls, so the hour landed on is brought into view.
 function walk(count, now, point) {
   return function key(event) {
+    const go = index => {
+      point(index)
+      event.currentTarget.children[index]?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+    }
     const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
     if (step) {
       event.preventDefault()
-      point(now === null ? 0 : Math.min(count - 1, Math.max(0, now + step)))
+      go(now === null ? 0 : Math.min(count - 1, Math.max(0, now + step)))
       return
     }
     if (event.key === 'Home') {
       event.preventDefault()
-      point(0)
+      go(0)
     }
     if (event.key === 'End') {
       event.preventDefault()
-      point(count - 1)
+      go(count - 1)
     }
     if (event.key === 'Escape') point(null)
   }

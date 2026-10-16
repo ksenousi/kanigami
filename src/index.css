@@ -429,7 +429,7 @@ body {
   color: var(--srs-burned);
 }
 
-/* ---- 刻 the next 24 hours ----
+/* ---- 刻 the week ahead ----
    A column per hour: a stack — the level-up's kanji, the count, the bar —
    standing on the shared baseline, and the hour named beneath. No gaps
    between columns, so the baselines join into one hairline and every hour is
@@ -444,10 +444,23 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+/* The first 25 hours fill the strip, as the day alone always did; the rest
+   of the week runs on past its edge. `--span` is how many of those widths
+   the whole run is. */
+.forecast .days,
+.forecast .hours {
+  flex: none;
+  width: calc(var(--span, 1) * 100%);
 }
 
 .forecast .days {
-  position: relative;
+  display: grid;
   height: 24px;
   font-family: var(--mono);
   font-size: var(--label);
@@ -455,27 +468,24 @@ body {
   color: var(--text-soft);
 }
 
+/* Each day's span carries the rule its name hangs from; `clip` rather than
+   `hidden`, which would make each span a scroller of its own and pin the
+   name to it instead of to the strip. */
 .forecast .days span {
-  position: absolute;
-  top: 0;
-  padding-left: 4px;
+  grid-row: 1;
+  min-width: 0;
+  margin-right: 6px;
   border-left: 1px solid var(--rule);
+  overflow: clip;
   white-space: nowrap;
 }
 
-/* Today's name is held to the hours before midnight. Behind an empty
-   inline-block it wraps to a second line when it does not fit, and the
-   second line is clipped: the word shows whole or not at all, never under
-   the next day's. */
-.forecast .days .today {
-  height: 1lh;
-  overflow: hidden;
-  white-space: normal;
-}
-
-.forecast .days .today::before {
-  content: '';
+.forecast .days b {
+  position: sticky;
+  left: 0;
   display: inline-block;
+  padding-left: 4px;
+  font-weight: inherit;
 }
 
 .forecast .hours {
@@ -3127,8 +3137,6 @@ button.quiet {
      keeps 26px an hour and scrolls sideways under a finger; the line
      beneath stays put and still reads the tapped hour. */
   .forecast .strip {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
     scrollbar-width: none;
   }
 
@@ -3138,7 +3146,7 @@ button.quiet {
 
   .forecast .days,
   .forecast .hours {
-    min-width: 650px;
+    width: calc(var(--span, 1) * 650px);
   }
 
   /* The dial's decades keep their kanji; only the current one keeps its

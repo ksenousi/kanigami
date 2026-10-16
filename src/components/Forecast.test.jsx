@@ -52,6 +52,21 @@ describe('Forecast', () => {
     expect(all.slice(0, first).some(h => h.classList.contains('next-day'))).toBe(false)
   })
 
+  it('runs on past the summary for a week, each day named, every other one tinted', async () => {
+    const week = Array.from({ length: 168 }, (_, i) => ({ at: new Date(START + i * HOUR).toISOString(), count: i < COUNTS.length ? COUNTS[i] : i % 5 }))
+    const host = await render(<Forecast summary={summary} hours={week} />)
+    const all = [...hours(host)]
+    expect(all).toHaveLength(168)
+    const days = [...host.querySelectorAll('.days span')]
+    expect(days.length).toBeGreaterThanOrEqual(7)
+    const midnights = all.filter(h => h.classList.contains('midnight'))
+    expect(midnights).toHaveLength(days.length - 1)
+    const tinted = midnights.map(h => h.classList.contains('next-day'))
+    expect(tinted.slice(0, 3)).toEqual([true, false, true])
+    // The line at rest still sums the summary's day, not the week.
+    expect(label(host)).toMatch(RESTING)
+  })
+
   it('prints each count on its bar, and stops a backlog bigger than the day at the top', async () => {
     const host = await render(<Forecast summary={summary} />)
     const counts = [...host.querySelectorAll('.n')].map(n => n.textContent)

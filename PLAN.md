@@ -2130,3 +2130,17 @@ strong ink: done reads as solid and stays clear of whichever apprentice
 set is in. Guru's gold stays on the SRS spread, where it names the guru
 band. The strong ink was then found too plain — "something more fun" — and
 passed took its own palette token, `--srs-passed` tangerine `#ff8c42`.
+
+**The 24 hours run on to a week, scrolling sideways.** Asked for: scroll the
+strip to see further ahead. `/summary` stops 24 hours out, so past its 25
+buckets each hour is counted from the `available_at` WaniKani set on the
+started assignments the board already reads (`forecastAhead`) — no new
+request, and the summary's own day is never recounted. The strip ends at
+the midnight that would begin a second of today's weekday, so no day's name
+appears twice. The first 25 hours fill the strip's width as before and the
+rest scroll on past its edge, with a thin hairline scrollbar on a wide
+screen (the phone still hides it). Every midnight has its dashed rule,
+every other day the tint, and each day's name sticks to the strip's left
+edge while its day is in view. The bars scale to the busiest hour of the
+week, and "by this time tomorrow" still sums the summary's day alone. The
+arrows, Home and End scroll the hour they land on into view.

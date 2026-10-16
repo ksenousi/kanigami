@@ -13,7 +13,7 @@ import {
   getSummary,
   getUser
 } from '../lib/wanikani.js'
-import { dueNow, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
+import { dueNow, forecastAhead, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
 import {
   accuracy,
   accuracyByLevel,
@@ -134,6 +134,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           ...held,
           now,
           summary,
+          hours: forecastAhead(summary, started),
           spread: spread(started),
           moved: moved(started, now),
           learned: learned(started),
@@ -321,12 +322,13 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
       ) : (
         <>
           <Band kanji="今" name="Now · what’s due and when">
-            {/* The level line and the next 24 hours side by side on a wide
+            {/* The level line and the week ahead side by side on a wide
                 screen: both are short and wide, and stacked they were 800px. */}
             <div className="now-pair">
               <LevelLine board={board} level={user.level} perLevel={paceFor(board.pace, chosenPace)} />
               <Forecast
                 summary={board.summary}
+                hours={board.hours}
                 waitingOn={user.level < TOP_LEVEL ? (board.waitingOn ?? []) : []}
                 nextLevel={user.level + 1}
               />

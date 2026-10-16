@@ -44,6 +44,40 @@ export function forecast(summary, hours = Infinity) {
   }))
 }
 
+// The week past the summary. WaniKani's report stops 24 hours out; beyond
+// that each hour is counted from the `available_at` WaniKani set on the
+// started assignments the board already holds — its times, read, not worked
+// out. The summary's own buckets come first and are never recounted, so the
+// day the board has always drawn stays exactly WaniKani's. Burned items have
+// no next review and drop out. The week ends at the midnight that would
+// begin a second of today's weekday, so no day's name appears twice.
+export const AHEAD_HOURS = 7 * 24
+
+export function forecastAhead(summary, assignments = [], most = AHEAD_HOURS) {
+  const first = forecast(summary)
+  if (first.length === 0) return first
+  const start = Date.parse(first[0].at)
+  const end = new Date(start)
+  end.setHours(0, 0, 0, 0)
+  end.setDate(end.getDate() + 7)
+  const length = Math.min(most, Math.round((end - start) / HOUR_MS))
+  const hours = first.slice(0, length)
+  if (hours.length >= length) return hours
+  const counts = Array.from({ length }, () => 0)
+  for (const assignment of assignments) {
+    const at = assignment?.data?.available_at
+    if (!at) continue
+    const index = Math.floor((Date.parse(at) - start) / HOUR_MS)
+    if (index >= hours.length && index < length) counts[index] += 1
+  }
+  for (let i = hours.length; i < length; i++) {
+    hours.push({ at: new Date(start + i * HOUR_MS).toISOString(), count: counts[i] })
+  }
+  return hours
+}
+
+const HOUR_MS = 60 * 60 * 1000
+
 export function dueNow(summary) {
   return summary?.reviews?.[0]?.subject_ids?.length ?? 0
 }

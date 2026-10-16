@@ -3,6 +3,8 @@ import {
   BANDS,
   dueNow,
   forecast,
+  forecastAhead,
+  AHEAD_HOURS,
   kanjiPassed,
   learned,
   lessonsWaiting,
@@ -84,6 +86,33 @@ describe('forecast', () => {
   it('has nothing to draw for a summary that never arrived', () => {
     expect(forecast(null)).toEqual([])
     expect(forecast({})).toEqual([])
+  })
+})
+
+describe('forecastAhead', () => {
+  const summary = { reviews: [bucket(9, 12), bucket(10, 0)] }
+  const due = (hour, minute = 0) => ({ data: { available_at: `2026-07-27T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00.000Z` } })
+
+  it('keeps the summary’s buckets and counts the hours after from the assignments', () => {
+    const hours = forecastAhead(summary, [due(9), due(10), due(11), due(11, 30), due(13)], 5)
+    expect(hours.map(h => h.count)).toEqual([12, 0, 2, 0, 1])
+    expect(hours[4].at).toBe('2026-07-27T13:00:00.000Z')
+  })
+
+  it('leaves out burned items and anything past the window', () => {
+    const hours = forecastAhead(summary, [{ data: { available_at: null } }, due(20)], 4)
+    expect(hours.map(h => h.count)).toEqual([12, 0, 0, 0])
+  })
+
+  it('reaches the end of the sixth day after today, and has nothing without a summary', () => {
+    const week = forecastAhead(summary)
+    expect(week.length).toBeLessThanOrEqual(AHEAD_HOURS)
+    const last = new Date(week.at(-1).at)
+    const first = new Date(week[0].at)
+    expect(last.getHours()).toBe(23)
+    const day = d => new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    expect(Math.round((day(last) - day(first)) / (24 * 60 * 60 * 1000))).toBe(6)
+    expect(forecastAhead(null, [due(11)])).toEqual([])
   })
 })
 
