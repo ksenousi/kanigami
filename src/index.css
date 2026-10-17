@@ -2226,11 +2226,14 @@ button.quiet {
   font-size: var(--small);
 }
 
-/* The level line and the next 24 hours: side by side on a wide screen. */
+/* The level line and the next 24 hours: side by side on a wide screen.
+   Stacked, the columns dissolve into one list so the spread, which sits
+   under the level in the wide layout, can go after the forecast: the
+   level, then what is due, then the spread. */
 .board .now-pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
+  gap: 36px;
 }
 
 @media (min-width: 1180px) {
@@ -2687,12 +2690,24 @@ button.quiet {
   }
 }
 
-/* 今 Now: the level in one column, the week and the spread in the other. */
+/* 今 Now: the level and the spread in one column, the week in the other —
+   from 1180px. Stacked, the columns dissolve so the spread can follow the
+   forecast (see .now-pair). */
 .board .now-pair > .column {
   display: flex;
   flex-direction: column;
   gap: 36px;
   min-width: 0;
+}
+
+@media (max-width: 1179px) {
+  .board .now-pair > .column {
+    display: contents;
+  }
+
+  .board .now-pair .srs {
+    order: 1;
+  }
 }
 
 /* The level's kanji as the strip — one block a kanji in its state's

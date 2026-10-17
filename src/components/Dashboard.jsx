@@ -290,11 +290,13 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
         <>
           <Band kanji="今" name="Now · this level, and what’s due">
             {/* The level beside what is due: its kanji as the strip, a block
-                each with the character under it, then the
-                reads; the week ahead and the SRS spread in the other column.
-                The level line and the level's grid were one section each
-                until they were merged (PLAN.md, "The strip carries the
-                kanji"). */}
+                each with the character under it, then the reads and the SRS
+                spread; the week ahead in the other column. The level line
+                and the level's grid were one section each until they were
+                merged (PLAN.md, "The strip carries the kanji"); the spread
+                came left when one slot left that column short (PLAN.md,
+                "The spread under the level"). Stacked, the spread goes
+                last, so what is due still comes second. */}
             <div className="now-pair">
               <div className="column">
                 <Level
@@ -304,6 +306,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
                   token={token}
                   perLevel={paceFor(board.pace, chosenPace)}
                 />
+                <Srs spread={board.spread} moved={board.moved} />
               </div>
               <div className="column">
                 <Forecast
@@ -311,7 +314,6 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
                   hours={board.hours}
                   waitingOn={user.level < TOP_LEVEL ? (board.waitingOn ?? []) : []}
                 />
-                <Srs spread={board.spread} moved={board.moved} />
               </div>
             </div>
           </Band>
@@ -918,7 +920,7 @@ function describe(k) {
 
 function Srs({ spread: bands, moved: gained }) {
   return (
-    <section>
+    <section className="srs">
       <Head>srs spread</Head>
       <Spread spread={bands} />
       <p className="notes row moves">
@@ -1636,11 +1638,11 @@ function Milestones({ milestones: m, now }) {
 //
 // The share column is as wide as its widest value at any point on the
 // slider, worked out up front, so dragging never narrows the hairlines.
-// The third field is what the measure is, short enough for the head's right,
-// where it went when the note under the rows did (PLAN.md, "One slot").
+// What each measure is was a note under the rows, then the head's right,
+// and is now neither, on the owner's word (PLAN.md, "One slot").
 const MEASURES = [
-  ['JLPT', 'JLPT', 'unofficial lists'],
-  ['JOYO', 'Jōyō', '2010 grades']
+  ['JLPT', 'JLPT'],
+  ['JOYO', 'Jōyō']
 ]
 
 function Coverage({ coverage: c, at }) {
@@ -1660,7 +1662,7 @@ function Coverage({ coverage: c, at }) {
     <section>
       {/* The measure switch sits in the head, as the level's kinds do, rather
           than taking a row of its own. */}
-      <Head right={at ? `through level ${at}` : MEASURES.find(([key]) => key === measure)[2]}>
+      <Head right={at ? `through level ${at}` : null}>
         coverage
         <span className="kinds" role="group" aria-label="Measure coverage against">
           {MEASURES.map(([key, label]) => (

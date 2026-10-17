@@ -2271,11 +2271,21 @@ said by pointing at the thing they explained. What shipped:
   own caption names its swatch (`· your fastest`,
   `· a break, left out of the pace`, `· every item guru or above`). The
   right-answers row is labelled `right answers by level`, `84% overall`.
-- **Coverage's note** went into its head: `unofficial lists` for the JLPT,
-  `2010 grades` for Jōyō, or `through level N` while one is chosen. The
+- **Coverage's note** went into its head (`unofficial lists`, `2010
+  grades`) and then, on the owner's word, went altogether; the head's
+  right says `through level N` while one is chosen and nothing else. The
   milestones' fold reads `reached · 5`; the reached dates are WaniKani's
   records and carry no ≈.
 
 `Hint.jsx`, which wrote "Point at" or "Tap" by device, went with the last
 hint. Don't add a resting instruction line back; if something can't be
 found by pointing, that is a design problem for the thing itself.
+
+**The spread under the level.** One slot left the level's column two
+lines of reads beside the forecast's full height, so the SRS spread and
+the past seven days moved under the level: from 1,180px the level and the
+spread are one column and the forecast the other, and the two come out
+near the same height. Stacked, below 1,180px, the columns dissolve
+(`display: contents`) and the spread goes last — the level, the
+forecast, the spread — so what is due still comes second on an iPad or a
+phone.
