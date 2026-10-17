@@ -17,7 +17,6 @@ import {
   accuracyByLevel,
   earliestLevelUp,
   fastestLevel,
-  LEVEL_STANDINGS,
   levelStandings,
   levelKanji,
   levelUpItems,
@@ -40,7 +39,6 @@ import { kanjiIndex } from '../lib/kanjiIndex.js'
 import { coverage, taughtKanji, throughLevel } from '../lib/coverage.js'
 import { aheadByLevel, aheadIndex } from '../lib/aheadIndex.js'
 import Forecast from './Forecast.jsx'
-import Hint from './Hint.jsx'
 import useOnline from './useOnline.js'
 import usePointing from './usePointing.js'
 import useScrollKeys from './useScrollKeys.js'
@@ -292,7 +290,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
         <>
           <Band kanji="今" name="Now · this level, and what’s due">
             {/* The level beside what is due: its kanji as the strip, a block
-                each with the character under it, then the tally and the
+                each with the character under it, then the
                 reads; the week ahead and the SRS spread in the other column.
                 The level line and the level's grid were one section each
                 until they were merged (PLAN.md, "The strip carries the
@@ -312,7 +310,6 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
                   summary={board.summary}
                   hours={board.hours}
                   waitingOn={user.level < TOP_LEVEL ? (board.waitingOn ?? []) : []}
-                  nextLevel={user.level + 1}
                 />
                 <Srs spread={board.spread} moved={board.moved} />
               </div>
@@ -441,38 +438,25 @@ function Figures({ board }) {
   )
 }
 
-// 段 Under the level's strip, what the level says: the counts by state,
-// the radicals holding its locked kanji, then the reads — what is next,
+// 段 Under the level's strip, what the level says: the radicals holding
+// its locked kanji, then the reads — what is next,
 // what the level-up waits on, and the next level: fastest, at your
 // last-five pace, and at the dial when it has been moved. It was the level
 // line, a section with its own strip (PLAN.md, "The level line"), until
 // the strip and the level's grid were merged (PLAN.md, "The strip carries
-// the kanji"); the strip is the grid's now.
+// the kanji"); the strip is the grid's now. The counts by state were a
+// key here until the board went to one slot (PLAN.md, "One slot"): the
+// strip's colours are their own key, and pointing at a kanji names its
+// stage.
 //
 // Every state is WaniKani's, read off an assignment. The fastest level-up
 // runs WaniKani's own intervals and the dates run a pace; all are
-// projections, and the line beneath says so.
-// Apprentice is drawn stage by stage, a hue to each — bubblegum, grape, sky,
-// mint — so the strip says how far each kanji has to go. Passed keys even at
-// none: its colour is the one being worked towards, and a strip of no passes
-// has to say what one looks like.
-const STATES = [
-  ['passed', 'passed'],
-  ['a4', 'apprentice IV'],
-  ['a3', 'apprentice III'],
-  ['a2', 'apprentice II'],
-  ['a1', 'apprentice I'],
-  ['lesson', 'in lessons'],
-  ['locked', 'locked']
-]
-const stateOf = k => (k.state === 'apprentice' ? `a${k.stage}` : k.state)
+// projections, and each says what it assumes beside its date.
 
-// `counts`: the tally and the holding line, which are the kanji's — left
-// out while the strip shows the radicals.
+// `counts`: the holding line, which is the kanji's — left out while the
+// strip shows the radicals.
 function LevelReads({ board, level, perLevel, counts = true }) {
   const { remaining, total } = board.passed
-  const kanji = board.kanji
-  const tally = Object.fromEntries(STATES.map(([state]) => [state, kanji.filter(k => stateOf(k) === state).length]))
   const p = board.pace
   const top = level >= TOP_LEVEL
   const levelUp = board.levelUp
@@ -491,25 +475,13 @@ function LevelReads({ board, level, perLevel, counts = true }) {
   let up = null
   if (top || total === 0) up = null
   else if (remaining === 0) up = 'Ready — WaniKani levels you up on its next look'
-  // Waiting on locked kanji gets no read: the tally counts them and the
+  // Waiting on locked kanji gets no read: the strip greys them and the
   // holding line names the radicals behind them.
   else if (levelUp === undefined) up = 'Reading…'
 
   return (
     <div className="level-line">
-      {counts && total > 0 ? (
-        <>
-          <p className="tally">
-            {STATES.filter(([state]) => tally[state] > 0 || state === 'passed').map(([state, word]) => (
-              <span key={state}>
-                <i className={state} aria-hidden="true" />
-                {many(tally[state])} {word}
-              </span>
-            ))}
-          </p>
-          <Holding behind={board.behind} />
-        </>
-      ) : null}
+      {counts && total > 0 ? <Holding behind={board.behind} /> : null}
       <div className="reads">
         {next ? (
           <div>
@@ -534,32 +506,20 @@ function LevelReads({ board, level, perLevel, counts = true }) {
         {ahead ? (
           <div>
             <span className="what">level {level + 1}</span>
-            {fastest ? <span>Fastest {when(fastest, board.now)}</span> : null}
-            {atHome ? (
-              <span>
-                At your last-five pace ≈ {dayMonth(atHome)}, {dayCount(home)} days a level
-              </span>
-            ) : null}
-            {atDial ? (
-              <span>
-                At the dial ≈ {dayMonth(atDial)}, {dayCount(perLevel)} days a level
-              </span>
-            ) : null}
+            {/* Each projection names what it assumes, in place of the
+                footnote that once said it for the whole line. */}
+            <span>
+              {[
+                fastest ? `${when(fastest, board.now)} if all correct` : null,
+                atHome ? `≈ ${dayMonth(atHome)} at your pace` : null,
+                atDial ? `≈ ${dayMonth(atDial)} at the dial` : null
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
           </div>
         ) : null}
       </div>
-      {ahead || board.behind?.blockers.some(b => b.at) ? (
-        <p className="notes">
-          <span className="proj">
-            {[
-              fastest || board.behind?.blockers.some(b => b.at) ? 'Fastest and soonest assume every answer is right' : null,
-              atHome || atDial ? '≈ at a pace, from now' : null
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </span>
-        </p>
-      ) : null}
     </div>
   )
 }
@@ -592,7 +552,7 @@ function levelCount(board, level) {
 function Holding({ behind }) {
   if (!behind || (behind.blockers.length === 0 && behind.others.length === 0)) return null
   const days = behind.blockers.map(b => (b.at ? dayMonth(b.at) : null))
-  const shared = days.length > 1 && days[0] !== null && days.every(d => d === days[0]) ? days[0] : null
+  const shared = days[0] && days.every(d => d === days[0]) ? days[0] : null
 
   return (
     <p className="holding">
@@ -607,7 +567,10 @@ function Holding({ behind }) {
           {at && !shared ? <span className="dim"> · soonest {dayMonth(at)}</span> : null}
         </span>
       ))}
-      {shared ? <span className="dim">each soonest {shared}</span> : null}
+      {/* The soonest days assume every answer right, as the level-up's
+          fastest does; said once, where the footnote used to say it. */}
+      {shared ? <span className="dim">{days.length > 1 ? 'each ' : ''}soonest {shared} if all correct</span> : null}
+      {!shared && days.some(Boolean) ? <span className="dim">if all correct</span> : null}
       {behind.others.length > 0 ? (
         <span>
           <span className="kanji-held">
@@ -766,25 +729,29 @@ function Level({ board, level, token, perLevel }) {
           />
         )}
       </div>
-      <p className="notes readout" aria-live="polite">
-        <span className={reading ? 'usual hidden' : 'usual'}>
-          {count ? <span className="soft">{count}</span> : null}
-          <Hint pointer="Point at" touch="Tap">
-            {other ? other.one : 'a kanji'} for its next review,{' '}
-            <span className="by-pointer">click</span>
-            <span className="by-touch">again</span> for its WaniKani page
-          </Hint>
-        </span>
-        {reading ? (
-          <span className="usual">
-            <span className="soft">
-              {reading.characters ?? ''} {reading.kana ? `${reading.kana} ` : ''}{reading.meaning} · {describe(reading)}
-            </span>
-            <span className="soft">{nextReview(reading, new Date())}</span>
-          </span>
-        ) : null}
-      </p>
-      <LevelReads board={board} level={level} perLevel={perLevel} counts={!other} />
+      {/* One slot (PLAN.md, "One slot"): at rest it holds the level's reads;
+          pointing at an item puts the item there instead. The reads keep
+          their room while hidden, so nothing moves under the pointer. */}
+      <div className="slot">
+        <div className={reading ? 'rest hidden' : 'rest'}>
+          {count ? (
+            <p className="notes">
+              <span className="soft">{count}</span>
+            </p>
+          ) : null}
+          <LevelReads board={board} level={level} perLevel={perLevel} counts={!other} />
+        </div>
+        <p className="notes readout" aria-live="polite">
+          {reading ? (
+            <>
+              <span className="soft">
+                {reading.characters ?? ''} {reading.kana ? `${reading.kana} ` : ''}{reading.meaning} · {describe(reading)}
+              </span>
+              <span className="soft">{nextReview(reading, new Date())}</span>
+            </>
+          ) : null}
+        </p>
+      </div>
     </section>
   )
 }
@@ -1068,8 +1035,8 @@ function Waiting({ title }) {
 // Every level from 1 to 60 has a slot: a passed level is a bar as tall as
 // it took, this one is the accent with its projected remainder above it,
 // every level ahead is a faint bar at the dial's pace, and a break is a
-// dotted hairline — its place kept, its length kept out of the scale and
-// named beneath, so leaving it out is never silent. A dashed line crosses
+// dotted hairline — its place kept, its length kept out of the scale, and
+// its caption saying it was left out, so leaving it out is never silent. A dashed line crosses
 // the bars at the dial's pace and a dotted one at the median.
 //
 // **The six decades are marked across the bars** — a hairline where each
@@ -1079,7 +1046,7 @@ function Waiting({ title }) {
 //
 // **Pointing at a bar re-points the line right under it** — the days a level
 // took and the day it began, the day this one is on, or when one ahead would
-// start — with the legend beside it. The arrows walk it; the line is the live
+// start — and what its swatch means. The arrows walk it; the line is the live
 // region. The slider is a native range: a finger, a drag, the arrow keys.
 //
 // **A goal: a level by a month**, chosen under the readings and remembered
@@ -1125,11 +1092,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
     return { level: n, kind: ahead ? 'ahead' : 'empty' }
   })
   const breaks = p.levels.filter(l => l.break)
-  // Each standing a whole level has reached, with its levels, guru first.
-  const standing = LEVEL_STANDINGS.map(({ key }) => [
-    key,
-    [...(standings ?? [])].filter(([, k]) => k === key).map(([n]) => n).sort((a, b) => a - b)
-  ]).filter(([, levels]) => levels.length > 0)
   const quickest = p.levels
     .filter(l => !l.break && l.level > ACCELERATED)
     .reduce((best, l) => (!best || l.days < best.days ? l : best), null)
@@ -1300,8 +1262,8 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
       {rightByLevel !== null ? (
         <div className="rights">
           <p className="label">
-            <span>right answers on each level’s items, to date</span>
-            <span>{rightByLevel ? `${percent(floor)}–100%${rightByLevel.overall !== null ? ` · dashed at your ${percent(rightByLevel.overall)}%` : ''}` : 'reading…'}</span>
+            <span>right answers by level</span>
+            <span>{rightByLevel ? (rightByLevel.overall !== null ? `${percent(rightByLevel.overall)}% overall` : '') : 'reading…'}</span>
           </p>
           <div className="strip" aria-hidden="true" onPointerLeave={event => event.pointerType === 'mouse' && point(null)}>
             {slots.map((s, i) => (
@@ -1317,27 +1279,22 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
       <div className="under">
         <p className="notes readout" aria-live="polite">
           <span className={shown ? 'usual hidden' : 'usual'}>
+            {/* At rest the line is empty unless a level ahead is chosen:
+                what the bars, the swatches and the slider mean is read by
+                pointing at them (PLAN.md, "One slot"). The ≈ marks it a
+                projection. */}
             {through ? (
-              <>
-                <span className="soft">
-                  <span className="strong">Through level {through}</span>
-                  {ahead ? ` ≈ ${dayMonthYear(through >= TOP_LEVEL ? ahead.done : ahead.startOf(through + 1))}` : ''} · taught and coverage below are as of then
-                </span>
-                <span className="proj">
-                  Projection · once WaniKani has taught you everything through level {through}
-                  {counted ? '' : ' · radicals and vocabulary stay at what is taught now'}
-                </span>
-              </>
-            ) : (
-              <Hint pointer="Point at" touch="Tap">
-                a bar for its level{onThrough ? ', choose one ahead for what you’d know by then,' : ''} or drag the slider to change the pace
-              </Hint>
-            )}
+              <span className="soft">
+                <span className="strong">Through level {through}</span>
+                {ahead ? ` ≈ ${dayMonthYear(through >= TOP_LEVEL ? ahead.done : ahead.startOf(through + 1))}` : ''} · taught and coverage below as of then
+                {counted ? '' : ', radicals and vocabulary as now'}
+              </span>
+            ) : null}
           </span>
           {shown ? (
             <span className="usual">
               <span className="soft">
-                {caption(shown, ahead, perLevel)}
+                {caption(shown, ahead, perLevel, quickest)}
                 {rights?.[reading] ? ` · ${percent(rights[reading].share)}% right` : ''}
                 {onThrough && shown.level > level ? (
                   <>
@@ -1351,35 +1308,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             </span>
           ) : null}
         </p>
-        {quickest || breaks.length > 0 || standing.length > 0 ? (
-          <p className="notes flags">
-            {standing.length > 0 ? (
-              <span>
-                Every item at least
-                {standing.map(([key, levels]) => (
-                  <Fragment key={key}>
-                    {' · '}
-                    <i className={`swatch all-${key}`} aria-hidden="true" />
-                    {key} {levels.length === 1 ? 'level' : 'levels'} {runs(levels)}
-                  </Fragment>
-                ))}
-              </span>
-            ) : null}
-            {quickest ? (
-              <span>
-                <i className="swatch fastest" aria-hidden="true" />
-                Your fastest · level {quickest.level}, {Math.round(quickest.days)} days
-              </span>
-            ) : null}
-            {breaks.length > 0 ? (
-              <span>
-                <i className="swatch break" aria-hidden="true" />
-                {breaks.length === 1 ? 'Level' : 'Levels'} {breaks.map(b => b.level).join(', ')} left out as{' '}
-                {breaks.length === 1 ? 'a break' : 'breaks'} · {breaks.map(b => `${Math.round(b.days)} days`).join(', ')}
-              </span>
-            ) : null}
-          </p>
-        ) : null}
       </div>
 
       {perLevel !== null ? (
@@ -1566,21 +1494,13 @@ function levelSpan(levels) {
   return last - first === levels.length - 1 ? `${first}–${last}` : levels.map(l => l.level).join(', ')
 }
 
-// Levels as runs: 1–9, 11, 14–15.
-function runs(levels) {
-  const out = []
-  for (const n of levels) {
-    const last = out[out.length - 1]
-    if (last && n === last[1] + 1) last[1] = n
-    else out.push([n, n])
-  }
-  return out.map(([a, b]) => (a === b ? `${a}` : `${a}–${b}`)).join(', ')
-}
-
-function caption(s, ahead, perLevel) {
+// A bar in words. What the swatches mean is said here, on the bar that
+// wears one, rather than in a key under the chart.
+function caption(s, ahead, perLevel, quickest) {
   const began = s.began ? ` · began ${dayMonthYear(s.began)}` : ''
-  if (s.kind === 'passed') return `Level ${s.level} · ${Math.round(s.days)} days${began}${s.standing ? ` · every item ${s.standing} or above` : ''}`
-  if (s.kind === 'break') return `Level ${s.level} · ${Math.round(s.days)} days · break${began}`
+  const fastest = s.level === quickest?.level ? ' · your fastest' : ''
+  if (s.kind === 'passed') return `Level ${s.level} · ${Math.round(s.days)} days${fastest}${began}${s.standing ? ` · every item ${s.standing} or above` : ''}`
+  if (s.kind === 'break') return `Level ${s.level} · ${Math.round(s.days)} days · a break, left out of the pace${began}`
   if (s.kind === 'current') return `Level ${s.level} · day ${Math.floor(s.days) + 1} so far${began}`
   if (s.kind === 'missing') return `Level ${s.level} · no record`
   if (s.kind === 'ahead') return `Level ${s.level} ≈ ${monthYear(ahead.startOf(s.level))} at ${dayCount(perLevel)} days a level`
@@ -1678,8 +1598,8 @@ function Milestones({ milestones: m, now }) {
 
   return (
     <section className="milestones">
-      {/* The projection is named in the head — its own clock, not the dial's —
-          and the reached dates say whose they are in their fold. */}
+      {/* The projection is named in the head — its own clock, not the dial's.
+          The reached dates are WaniKani's records and carry no ≈. */}
       <Head right={m.next.some(n => n.at) ? '≈ last 30 days’ rate' : null}>milestones</Head>
       <div className="body">
         <ul className="ladder">
@@ -1693,7 +1613,7 @@ function Milestones({ milestones: m, now }) {
         </ul>
         {reached.length > 0 ? (
           <details className="reached">
-            <summary>reached · {reached.length} · WaniKani’s dates</summary>
+            <summary>reached · {reached.length}</summary>
             <ul className="ladder">
               {reached.map(r => (
                 <li key={r.label} className="reached">
@@ -1716,9 +1636,11 @@ function Milestones({ milestones: m, now }) {
 //
 // The share column is as wide as its widest value at any point on the
 // slider, worked out up front, so dragging never narrows the hairlines.
+// The third field is what the measure is, short enough for the head's right,
+// where it went when the note under the rows did (PLAN.md, "One slot").
 const MEASURES = [
-  ['JLPT', 'JLPT', 'Unofficial lists — the JLPT stopped publishing them in 2010'],
-  ['JOYO', 'Jōyō', 'The 2,136 Jōyō kanji by school grade, as allocated in 2010']
+  ['JLPT', 'JLPT', 'unofficial lists'],
+  ['JOYO', 'Jōyō', '2010 grades']
 ]
 
 function Coverage({ coverage: c, at }) {
@@ -1738,7 +1660,7 @@ function Coverage({ coverage: c, at }) {
     <section>
       {/* The measure switch sits in the head, as the level's kinds do, rather
           than taking a row of its own. */}
-      <Head right={at ? `through level ${at}` : null}>
+      <Head right={at ? `through level ${at}` : MEASURES.find(([key]) => key === measure)[2]}>
         coverage
         <span className="kinds" role="group" aria-label="Measure coverage against">
           {MEASURES.map(([key, label]) => (
@@ -1766,9 +1688,6 @@ function Coverage({ coverage: c, at }) {
           )
         })}
       </div>
-      <p className="notes">
-        <span className="hint">{MEASURES.find(([key]) => key === measure)[2]}</span>
-      </p>
     </section>
   )
 }

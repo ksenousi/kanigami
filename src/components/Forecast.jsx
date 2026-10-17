@@ -1,7 +1,6 @@
 import { forecast, nextDue, peak } from '../lib/standing.js'
 import { clock, count as many, weekday } from '../lib/dates.js'
 import { stageName } from '../lib/srs.js'
-import Hint from './Hint.jsx'
 import usePointing from './usePointing.js'
 
 // 刻 The week ahead, every hour named — decided from a prototype (see
@@ -29,7 +28,9 @@ import usePointing from './usePointing.js'
 //   scaled among themselves.
 // - **Pointing at a bar, or tapping it, re-points the line beneath** to that
 //   hour in words — its slot, its count, the kanji in it. The arrows walk the
-//   hours from the keyboard; the line is the live region.
+//   hours from the keyboard; the line is the live region. At rest it is the
+//   day's total and nothing else: the lines that explained the counts, the
+//   marks and the pointing went with "One slot" in PLAN.md.
 //
 // Each bar is a share of the tallest (`--h`, 0–1); the CSS says how tall the
 // tallest is — 96px on its own, taller in the column beside the level.
@@ -40,7 +41,7 @@ import usePointing from './usePointing.js'
 // first.
 const SHOWN = 3
 
-export default function Forecast({ summary, hours: given = null, waitingOn = [], nextLevel = null }) {
+export default function Forecast({ summary, hours: given = null, waitingOn = [] }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   // A week when the board hands one over; otherwise the summary's 25 hours.
   const hours = given ?? forecast(summary)
@@ -134,13 +135,6 @@ export default function Forecast({ summary, hours: given = null, waitingOn = [],
         <span className="soft">
           {reading === null ? resting(summary, hours.slice(0, DAY_HOURS)) : hourLabel(hours, reading, today, marks.get(reading))}
         </span>
-        <span className="hint">
-          Count above each bar
-          {marks.size ? ` · the ${waited(marks)} level ${nextLevel} waits on above theirs, strong ink one step from passing` : ''}
-        </span>
-        <Hint pointer="Point at" touch="Tap">
-          a bar for its hour
-        </Hint>
       </p>
     </section>
   )
@@ -187,11 +181,6 @@ function markHours(hours, waitingOn) {
   }
   for (const kanji of marks.values()) kanji.sort((a, b) => (b.stage === 4) - (a.stage === 4))
   return marks
-}
-
-// What the marks are, for the key line: kanji, and radicals once one is up.
-function waited(marks) {
-  return [...marks.values()].flat().some(k => k.radical) ? 'kanji and radicals' : 'kanji'
 }
 
 // A mark in words: its character, or a radical's meaning when it has none.

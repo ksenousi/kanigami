@@ -1471,41 +1471,36 @@ button.quiet {
 
 
 /* ---- 段 the level's reads ----
-   Under the strip: the counts by state, the radicals holding the locked
-   kanji, and three short reads. */
-.board .level-line {
+   Under the strip: the radicals holding the locked kanji and three short
+   reads. They share one slot with the readout of whatever is pointed at
+   (PLAN.md, "One slot"); the reads keep their room while hidden, so
+   nothing moves under the pointer. */
+.board .level .slot {
+  display: grid;
+}
+
+.board .level .slot > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.board .level .slot > .rest {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.board .level-line .tally i {
-  display: block;
-  background: var(--rule);
+.board .level .slot > .hidden {
+  visibility: hidden;
 }
 
-.board .level-line i.passed {
-  background: var(--srs-passed);
+.board .level .slot > .readout {
+  align-self: start;
 }
-
-.board .level-line i.a1 {
-  background: var(--srs-apprentice-1);
-}
-
-.board .level-line i.a2 {
-  background: var(--srs-apprentice-2);
-}
-
-.board .level-line i.a3 {
-  background: var(--srs-apprentice-3);
-}
-
-.board .level-line i.a4 {
-  background: var(--srs-apprentice-4);
-}
-
-.board .level-line i.lesson {
-  background: color-mix(in srgb, var(--dim) 45%, var(--ground));
+.board .level-line {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 /* A radical holding a lock wears where it stands, in the strip's hues:
@@ -1562,28 +1557,6 @@ button.quiet {
   height: 0.9em;
   width: auto;
   filter: var(--strokes);
-}
-
-.board .level-line .tally {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 24px;
-  margin: 0;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.03em;
-  color: var(--dim);
-}
-
-.board .level-line .tally span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.board .level-line .tally i {
-  width: 14px;
-  height: 4px;
 }
 
 .board .level-line .reads {
@@ -1700,23 +1673,19 @@ button.quiet {
 }
 
 /* A level by its least-advanced item, from guru up, in that stage's hue. */
-.board .dial .bars .all-guru i,
-.board .swatch.all-guru {
+.board .dial .bars .all-guru i {
   background: var(--srs-guru);
 }
 
-.board .dial .bars .all-master i,
-.board .swatch.all-master {
+.board .dial .bars .all-master i {
   background: var(--srs-master);
 }
 
-.board .dial .bars .all-enlightened i,
-.board .swatch.all-enlightened {
+.board .dial .bars .all-enlightened i {
   background: var(--srs-enlightened);
 }
 
-.board .dial .bars .all-burned i,
-.board .swatch.all-burned {
+.board .dial .bars .all-burned i {
   background: var(--srs-burned);
 }
 
@@ -2067,19 +2036,21 @@ button.quiet {
   color: var(--text-strong);
 }
 
-/* Right under the level numbers: what a pointed-at bar says, and beside it
-   the legend for the marked bars — the answer next to the question, not
-   past the slider. */
+/* Right under the level numbers: what a pointed-at bar says. The legend
+   that sat beside it went with "One slot" in PLAN.md; a bar's caption
+   names its swatch. */
 .board .dial .under {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px 40px;
   align-items: start;
   margin-top: -6px;
 }
 
-.board .dial .under .flags {
-  justify-content: flex-end;
+/* Empty at rest, but its line is kept, so a bar's caption arriving never
+   pushes the slider down under the pointer. */
+.board .dial .under .readout {
+  min-height: calc(var(--small) * 1.45);
 }
 
 /* The words in the past 7 days are counts, so mono like the spread above
@@ -2094,36 +2065,6 @@ button.quiet {
    means attention. */
 .board .masthead .tag {
   color: var(--dim);
-}
-
-/* What the marked bars are: a swatch of each beside its words. */
-.board .notes.flags {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 4px 28px;
-}
-
-.board .swatch {
-  display: inline-block;
-  width: 12px;
-  height: 8px;
-  margin-right: 10px;
-}
-
-.board .swatch.fastest {
-  background: var(--text-strong);
-}
-
-
-.board .swatch.break {
-  background: repeating-linear-gradient(90deg, var(--dim) 0 2px, transparent 2px 4px);
-}
-
-/* The projection's own label, a quiet mono line. */
-.board .proj {
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.03em;
 }
 
 /* The footline. The forecast left it for a place under the figures; what
@@ -2542,14 +2483,6 @@ button.quiet {
     margin-left: 0;
   }
 
-
-  .board .dial .under {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .board .dial .under .flags {
-    justify-content: flex-start;
-  }
 }
 
 /* An upright 11- or 13-inch iPad (820px and up) keeps at hand two-up, as

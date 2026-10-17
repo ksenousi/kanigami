@@ -78,10 +78,10 @@ describe('Forecast', () => {
     expect(share(0)).toBe(share(15))
   })
 
-  it('rests on what is due now and the day’s total, and says the bars can be read', async () => {
+  it('rests on what is due now and the day’s total, and nothing else', async () => {
     const host = await render(<Forecast summary={summary} />)
     expect(label(host)).toMatch(RESTING)
-    expect(host.querySelector('.readout').textContent).toContain('a bar for its hour')
+    expect(host.querySelector('.readout').textContent).toBe(label(host))
   })
 
   it('says when the next ones come when nothing is due', async () => {
@@ -135,46 +135,43 @@ describe('Forecast', () => {
       { characters: '汗', stage: 0, availableAt: null }, // in lessons: nothing to mark
       { characters: '鼻', stage: 2, availableAt: at(40) } // past the chart
     ]
-    const host = await render(<Forecast summary={summary} waitingOn={waitingOn} nextLevel={16} />)
+    const host = await render(<Forecast summary={summary} waitingOn={waitingOn} />)
     const marks = [...host.querySelectorAll('.mark')]
     expect(marks.map(m => m.textContent)).toEqual(['薬皿', '涙'])
     expect(marks[0].querySelector('.quiet')).toBeNull()
     expect(marks[1].querySelector('.quiet')).not.toBeNull()
     await hover(hours(host)[2])
     expect(label(host)).toMatch(/· 7 reviews · 薬 to pass, 皿 to pass$/)
-    expect(host.querySelector('.readout').textContent).toContain('level 16 waits on')
   })
 
   it('draws three kanji over a crowded hour, the closest to passing first, and counts the rest', async () => {
     const at = new Date(START + 2 * HOUR + 30 * 60 * 1000).toISOString()
     const waitingOn = [...'鼻堂塩席果'].map((characters, i) => ({ characters, stage: i === 3 ? 4 : 2, availableAt: at }))
-    const host = await render(<Forecast summary={summary} waitingOn={waitingOn} nextLevel={16} />)
+    const host = await render(<Forecast summary={summary} waitingOn={waitingOn} />)
     expect(host.querySelector('.mark').textContent).toBe('席鼻堂+2')
     await hover(hours(host)[2])
     expect(label(host)).toContain('席 to pass, 鼻 apprentice')
     expect(label(host)).toContain('果')
   })
 
-  it('marks the radicals holding locked kanji beside the kanji, and says so', async () => {
+  it('marks the radicals holding locked kanji beside the kanji', async () => {
     const at = new Date(START + 2 * HOUR + 30 * 60 * 1000).toISOString()
     const waitingOn = [
       { id: 1, characters: '警', stage: 3, availableAt: at },
       { id: 2, characters: '吉', stage: 4, availableAt: at, radical: true },
       { id: 3, characters: null, image: 'https://example.test/r.svg', meaning: 'Gun', stage: 2, availableAt: at, radical: true }
     ]
-    const host = await render(<Forecast summary={summary} waitingOn={waitingOn} nextLevel={16} />)
+    const host = await render(<Forecast summary={summary} waitingOn={waitingOn} />)
     const mark = host.querySelector('.mark')
     expect(mark.textContent).toBe('吉警')
     expect(mark.querySelector('img')).not.toBeNull()
     await hover(hours(host)[2])
     expect(label(host)).toContain('吉 radical to pass, 警 apprentice III, Gun radical apprentice II')
-    expect(host.querySelector('.readout').textContent).toContain('the kanji and radicals level 16 waits on')
   })
 
   it('marks nothing without a level-up to wait on', async () => {
     const host = await render(<Forecast summary={summary} />)
     expect(host.querySelector('.mark')).toBeNull()
-    expect(host.querySelector('.readout').textContent).not.toContain('waits on')
   })
 
   it('walks the hours from the keyboard', async () => {

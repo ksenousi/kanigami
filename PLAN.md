@@ -2226,3 +2226,56 @@ which only read that one. A click or a single tap on a level ahead now both
 reads and chooses it, and a tap on the chosen level lets go; a passed level
 still only reads. Nothing is lost: once chosen, the line under the bars
 names the level and its date (`Through level 20 ≈ 20 Jan 2027`).
+
+**The readout carries the reading.** Asked for: a kanji's reading in what
+pointing at it says. `levelKanji` keeps the primary reading off the
+subject (`kana` — both, joined with 、, where WaniKani marks two primary),
+and the readout reads `港 こう harbor · passed, master`. Radicals have
+none, and kana vocabulary is its own reading; both read as before.
+
+**One slot — decided from a prototype.** Reported: too much text
+everywhere — under the strip, under the forecast, under the dial. Three
+directions were drawn against the board as shipped: **A** one line each,
+every piece kept; **B** one slot, nothing explaining itself until it is
+pointed at; **C** the reads as one sentence, the counts in the strip's
+colours. B was picked, for the whole board; A and C are rejected.
+
+The rule: **a resting line says what is, never how to read the board.**
+Keys, hints ("Point at…", "Tap…") and footnotes go; what they said is
+said by pointing at the thing they explained. What shipped:
+
+- **Under the strip, one slot.** At rest it holds the holding line and
+  the reads; pointing at a kanji puts the kanji there instead (character,
+  reading, meaning, stage; its next review), the reads hidden but keeping
+  their room so nothing moves under the pointer. The tally — the counts by
+  state, which were the strip's key — is gone: the strip's colours are
+  their own key, and pointing names a kanji's stage. Radicals and
+  vocabulary keep their `n of m passed` at rest, since their head has no
+  count.
+- **Projections say what they assume beside the date**, in place of the
+  footnote under the reads. The next level is one line —
+  `Wed 21 Oct 02:00 if all correct · ≈ 22 Oct at your pace`, and
+  `≈ … at the dial` once the dial has moved — and the holding line's
+  soonest day reads `soonest 20 Oct if all correct`. The days a level that
+  followed the pace are the dial's head. The rule in CLAUDE.md that
+  projections stay labelled still holds; the label moved, not the honesty.
+- **The forecast** keeps its resting line (due now, the day's total) and
+  nothing under it. "Count above each bar", the line naming the marks and
+  "point at a bar" are gone; an hour's reading names its marked kanji and
+  which pass with one right answer.
+- **The dial** has no resting line under the bars — the line keeps its
+  height, empty — unless a level ahead is chosen, which reads
+  `Through level 20 ≈ 22 Mar 2027 · taught and coverage below as of then`
+  (`, radicals and vocabulary as now` until those are read). The key under
+  it — every item at least, your fastest, the breaks — is gone; a bar's
+  own caption names its swatch (`· your fastest`,
+  `· a break, left out of the pace`, `· every item guru or above`). The
+  right-answers row is labelled `right answers by level`, `84% overall`.
+- **Coverage's note** went into its head: `unofficial lists` for the JLPT,
+  `2010 grades` for Jōyō, or `through level N` while one is chosen. The
+  milestones' fold reads `reached · 5`; the reached dates are WaniKani's
+  records and carry no ≈.
+
+`Hint.jsx`, which wrote "Point at" or "Tap" by device, went with the last
+hint. Don't add a resting instruction line back; if something can't be
+found by pointing, that is a design problem for the thing itself.

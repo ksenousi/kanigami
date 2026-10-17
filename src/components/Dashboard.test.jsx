@@ -224,7 +224,7 @@ describe('the pace dial', () => {
     const host = await board()
     expect(host.querySelector('#pace-dial').value).toBe('10')
     expect(head(host)).toContain('projected at 10 days a level')
-    expect(host.querySelector('.level-line').textContent).toContain('At your last-five pace')
+    expect(host.querySelector('.level-line').textContent).toContain('at your pace')
   })
 
   it('starts at the last five even when the median is slower', async () => {
@@ -343,7 +343,7 @@ describe('the decades on the dial', () => {
     const marks = host.querySelector('.dial .decades').textContent
     for (const name of ['pleasant', 'painful', 'death', 'hell', 'paradise', 'reality']) expect(marks).toContain(name)
     // Level 1 runs the accelerated system, so it is never called yours.
-    expect(host.querySelector('.notes.flags')).toBeNull()
+    expect(host.querySelectorAll('.dial .bars .fastest')).toHaveLength(0)
   })
 
   it('names your fastest level from the ones after the accelerated two', async () => {
@@ -360,8 +360,10 @@ describe('the decades on the dial', () => {
       { data: { level: 6, unlocked_at: new Date(t).toISOString(), passed_at: null, abandoned_at: null } }
     ])
     const host = await board({ user: { ...USER, level: 6 } })
-    expect(host.querySelector('.notes.flags').textContent).toContain('Your fastest · level 4, 7 days')
     expect(host.querySelectorAll('.dial .bars .fastest')).toHaveLength(1)
+    // The swatch has no key: the bar's own caption names it.
+    await hover(host.querySelectorAll('.dial .bars > span')[3])
+    expect(host.querySelector('.dial .readout').textContent).toContain('Level 4 · 7 days · your fastest')
   })
 })
 
@@ -380,7 +382,7 @@ describe('milestones', () => {
     expect(ladder).toContain('250 kanji')
     expect(ladder).toContain('130 to go')
     // The reached ones fold away behind their count.
-    expect(host.querySelector('.milestones details summary').textContent).toMatch(/^reached · \d+ · WaniKani’s dates$/)
+    expect(host.querySelector('.milestones details summary').textContent).toMatch(/^reached · \d+$/)
     expect(host.querySelector('.milestones details').textContent).toContain('100 kanji')
   })
 })
@@ -458,7 +460,7 @@ describe('coverage', () => {
     const fills = host.querySelector('.fills').textContent
     expect(fills).toContain('+2 3 kanji')
     expect(host.querySelectorAll('.fills .still')).toHaveLength(2)
-    expect(readout(host)).toContain('radicals and vocabulary stay')
+    expect(readout(host)).toContain('radicals and vocabulary as now')
   })
 
   it('moves every taught line once the radicals and words ahead are read', async () => {
@@ -505,10 +507,9 @@ describe('the level and its strip', () => {
     // The 90% line stands beside the block that reaches it — the second.
     expect(blocks.map(li => li.classList.contains('need'))).toEqual([false, true])
     expect(blocks.map(li => li.querySelector('.character').textContent)).toEqual(['山', '川'])
-    expect(host.querySelector('.level-line .tally').textContent).toBe('0 passed1 apprentice II1 locked')
   })
 
-  it('says what is up next, and leaves the locked kanji to the tally', async () => {
+  it('says what is up next, and leaves the locked kanji to the strip', async () => {
     api.getLevelRadicals.mockResolvedValue([
       [{ id: 31, data: { characters: '工', meanings: [{ meaning: 'Construction', primary: true }], lesson_position: 0 } }],
       [{ data: { subject_id: 31, srs_stage: 3, started_at: new Date().toISOString() } }]
@@ -516,7 +517,6 @@ describe('the level and its strip', () => {
     const host = await board()
     await settle()
     expect(line(host)).toContain('山 up at')
-    expect(line(host)).toContain('1 locked')
     expect(line(host)).not.toContain('level-up')
   })
 
@@ -559,7 +559,7 @@ describe('the level and its strip', () => {
     const host = await board()
     await settle()
     const holding = host.querySelector('.level-line .holding').textContent
-    expect(holding).toMatch(/each soonest \d+ \w+$/)
+    expect(holding).toMatch(/each soonest \d+ \w+ if all correct$/)
     expect(holding.match(/soonest/g)).toHaveLength(1)
   })
 
@@ -606,7 +606,7 @@ describe('the level and its strip', () => {
     const host = await board()
     await settle()
     // 山 alone is not the two needed; 川 comes through its radical.
-    expect(line(host)).toMatch(/level \d+Fastest /)
+    expect(line(host)).toMatch(/level \d+\w{3} \d+ \w{3} \d\d:\d\d if all correct/)
   })
 
   it('hands its radicals to the grid’s switch, so they are read once', async () => {
@@ -624,17 +624,19 @@ describe('the level’s kanji', () => {
     const host = await board()
     await hover(cell(host, 0))
     expect(readout(host)).toContain('山 Mountain · apprentice II')
+    expect(host.querySelector('.level .slot .rest').classList.contains('hidden')).toBe(true)
     await unhover(cell(host, 0))
-    expect(host.querySelector('.readout .usual:not(.hidden)').textContent).toContain('Point at')
+    expect(readout(host)).toBe('')
+    expect(host.querySelector('.level .slot .rest').classList.contains('hidden')).toBe(false)
   })
 
   it('holds a tapped kanji until the next tap', async () => {
     const host = await board()
     await tap(cell(host, 0))
     expect(cell(host, 0).classList.contains('reading')).toBe(true)
-    expect(host.querySelector('.readout .usual:not(.hidden)').textContent).toContain('山 Mountain')
+    expect(readout(host)).toContain('山 Mountain')
     await tap(cell(host, 1))
-    expect(host.querySelector('.readout .usual:not(.hidden)').textContent).toContain('川 River · locked')
+    expect(readout(host)).toContain('川 River · locked')
     await tap(document.body)
     expect(host.querySelector('.kanji li.reading')).toBeNull()
   })
@@ -648,7 +650,7 @@ describe('the level’s kanji', () => {
     await click(button(host, 'radicals'))
     await settle()
     expect(host.querySelector('.level .kanji').textContent).toContain('工')
-    expect(host.querySelector('.level .readout').textContent).toContain('1 of 1 passed')
+    expect(host.querySelector('.level .slot').textContent).toContain('1 of 1 passed')
     await click(button(host, 'kanji'))
     expect(host.querySelector('.level .kanji').textContent).toContain('山')
     await click(button(host, 'radicals'))
@@ -669,8 +671,7 @@ describe('the level’s kanji', () => {
     const words = host.querySelector('.level .kanji.words')
     expect(words.textContent).toContain('山道')
     expect(words.textContent).toContain('すごい')
-    expect(host.querySelector('.level .readout').textContent).toContain('1 of 2 passed')
-    expect(host.querySelector('.level .readout').textContent).toContain('a word')
+    expect(host.querySelector('.level .slot').textContent).toContain('1 of 2 passed')
     await click(button(host, 'kanji'))
     expect(host.querySelector('.level .kanji.words')).toBeNull()
     await click(button(host, 'vocab'))
