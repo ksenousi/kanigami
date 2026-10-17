@@ -897,7 +897,8 @@ function below(list, at, way) {
 
 // The pointed-at kanji, radical or word as a specimen: the character
 // large, its reading and meaning beside it, and under them its stage in the
-// strip's own hue and when WaniKani next asks for it in plain time. Read
+// strip's own hue and when WaniKani next asks for it, as shortly as it can
+// be said. Read
 // off the assignment, like everything else here.
 function ItemSpecimen({ item: k, now }) {
   const next = upNext(k, now)
@@ -914,9 +915,9 @@ function ItemSpecimen({ item: k, now }) {
       }
       where={
         <>
-          <span className={`stage ${standing(k)}`}>{describe(k)}</span>
+          {/* Named as well as coloured: `passed · guru I`. */}
+          <span className={`stage ${standing(k)}`}>{k.state === 'passed' ? `passed · ${stageName(k.stage)}` : describe(k)}</span>
           {next ? ` · ${next}` : ''}
-          {k.state === 'apprentice' && k.stage === 4 ? ' · one right answer passes it' : ''}
         </>
       }
     />
@@ -928,7 +929,7 @@ function ItemSpecimen({ item: k, now }) {
 function upNext(k, now) {
   if (k.state === 'locked' || k.state === 'lesson' || k.stage === 9 || !k.availableAt) return null
   const at = new Date(k.availableAt)
-  return at <= now ? 'due now' : `next ${plainly(at, now)}`
+  return at <= now ? 'due now' : plainly(at, now)
 }
 
 // When WaniKani next asks for it, read off the assignment — never worked out.
@@ -1026,17 +1027,13 @@ function Srs({ spread: bands, moved: gained }) {
 // started, and what moved into it in the past seven days where WaniKani
 // dates that — lessons for apprentice, first arrivals for guru and burned.
 function BandSpecimen({ band, total, gained }) {
-  const moved = {
-    apprentice: `${many(gained.apprentice)} taught in the past 7 days`,
-    guru: `${many(gained.guru)} reached guru in the past 7 days`,
-    burned: `${many(gained.burned)} burned in the past 7 days`
-  }[band.key]
+  const moved = { apprentice: gained.apprentice, guru: gained.guru, burned: gained.burned }[band.key]
   return (
     <Specimen
       glyph={many(band.count)}
       kind={`number srs-${band.key}`}
-      named={`${band.key} · ${share(band.count, total)} of everything started`}
-      where={moved ?? null}
+      named={`${band.key} · ${share(band.count, total)}`}
+      where={moved !== undefined ? `+${many(moved)} in 7 days` : null}
     />
   )
 }
@@ -1401,7 +1398,6 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
               s={shown}
               ahead={ahead}
               perLevel={perLevel}
-              home={homePace(p)}
               median={p.median}
               passed={levelPassed}
               soonest={soonest}
@@ -1605,7 +1601,7 @@ function levelSpan(levels) {
 // rather than in a key under the chart. A passed level is held against
 // your median; this one says how far through it you are and the soonest
 // it can end; one ahead gives the span the dial's pace puts it in.
-function LevelSpecimen({ s, ahead, perLevel, home, median, passed, soonest, now, quickest, right, choosable, chosen }) {
+function LevelSpecimen({ s, ahead, perLevel, median, passed, soonest, now, quickest, right, choosable, chosen }) {
   const began = s.began ? new Date(s.began) : null
   const ended = began && s.days !== undefined ? new Date(began.getTime() + s.days * 24 * 60 * 60 * 1000) : null
   // The year once when both ends share it: `26 Jan – 9 Feb 2026`.
@@ -1614,44 +1610,41 @@ function LevelSpecimen({ s, ahead, perLevel, home, median, passed, soonest, now,
       ? `${began.getFullYear() === ended.getFullYear() ? dayMonth(began) : dayMonthYear(began)} – ${dayMonthYear(ended)}`
       : null
   const fastest = s.level === quickest?.level
-  const pace = perLevel !== null ? `≈ ${dayCount(perLevel)} at ${perLevel === home ? 'your pace' : 'the dial'}` : null
+  // Against your median, as a signed count of days: `+1 vs median`.
   const versus = () => {
     if (median === null || median === undefined) return null
     const diff = toStep(s.days) - toStep(median)
-    if (diff === 0) return 'your median'
-    const gap = Math.abs(diff)
-    return `${dayCount(gap)} ${gap === 1 ? 'day' : 'days'} ${diff < 0 ? 'quicker' : 'slower'} than your median`
+    return diff === 0 ? 'median' : `${diff > 0 ? '+' : '−'}${dayCount(Math.abs(diff))} vs median`
   }
   const start = s.kind === 'ahead' && ahead ? ahead.startOf(s.level) : null
   const end = start ? (s.level >= TOP_LEVEL ? ahead.done : ahead.startOf(s.level + 1)) : null
 
+  // Labels and figures, not sentences.
   const named = {
-    passed: [`${Math.round(s.days)} days`, fastest ? 'your fastest' : null, versus()],
-    break: [`${Math.round(s.days)} days`, 'a break'],
-    current: [`day ${Math.floor(s.days ?? 0) + 1} so far`, pace ? `of ${pace}` : null],
+    passed: [`${Math.round(s.days)} days`, fastest ? 'fastest' : null, versus()],
+    break: [`${Math.round(s.days)} days`, 'break'],
+    current: [`day ${Math.floor(s.days ?? 0) + 1}`, perLevel !== null ? `of ≈ ${dayCount(perLevel)}` : null],
     missing: ['no record'],
     ahead: [start && end ? `≈ ${start.getFullYear() === end.getFullYear() ? dayMonth(start) : dayMonthYear(start)} – ${dayMonthYear(end)}` : ''],
     empty: ['']
   }[s.kind].filter(Boolean)
   const where = [
-    s.kind === 'break' ? 'left out of the pace' : null,
-    s.kind === 'passed' || s.kind === 'break' ? span : began ? `began ${dayMonthYear(began)}` : null,
+    s.kind === 'passed' || s.kind === 'break' ? span : began ? `since ${dayMonth(began)}` : null,
     right ? `${percent(right.share)}% right` : null,
     s.standing ? (
       <span key="standing" className={`stage all-${s.standing}`}>
-        every item {s.standing} or above
+        all {s.standing}+
       </span>
-    ) : null,
-    s.kind === 'ahead' && perLevel !== null ? `at ${dayCount(perLevel)} days a level` : null
+    ) : null
   ].filter(Boolean)
   const more = [
-    s.kind === 'current' && passed?.total ? `${passed.passed} of ${passed.needed} kanji passed` : null,
-    s.kind === 'current' && soonest ? `fastest level-up ${when(soonest, now)} if all correct` : null,
+    s.kind === 'current' && passed?.total ? `${passed.passed}/${passed.needed} kanji` : null,
+    s.kind === 'current' && soonest ? `fastest ${when(soonest, now)} if all correct` : null,
     choosable ? (
       <Fragment key="choose">
         <span className="by-pointer">click</span>
         <span className="by-touch">tap</span>
-        {chosen ? ' to let go' : ' for what you’d know by then'}
+        {chosen ? ' to let go' : ' to choose'}
       </Fragment>
     ) : null
   ].filter(Boolean)

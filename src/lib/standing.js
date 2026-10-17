@@ -61,19 +61,49 @@ export function forecastAhead(summary, assignments = [], most = AHEAD_HOURS) {
   end.setHours(0, 0, 0, 0)
   end.setDate(end.getDate() + 7)
   const length = Math.min(most, Math.round((end - start) / HOUR_MS))
-  const hours = first.slice(0, length)
+  // Each hour's own items, for what is in it: the summary's by subject id,
+  // the hours after by `available_at`.
+  const bySubject = new Map(assignments.map(a => [a?.data?.subject_id, a]))
+  const ids = (summary?.reviews ?? []).map(bucket => bucket.subject_ids ?? [])
+  const hours = first.slice(0, length).map((hour, i) => ({
+    ...hour,
+    mix: mixOf((ids[i] ?? []).map(id => bySubject.get(id)).filter(Boolean))
+  }))
   if (hours.length >= length) return hours
-  const counts = Array.from({ length }, () => 0)
+  const later = Array.from({ length }, () => [])
   for (const assignment of assignments) {
     const at = assignment?.data?.available_at
     if (!at) continue
     const index = Math.floor((Date.parse(at) - start) / HOUR_MS)
-    if (index >= hours.length && index < length) counts[index] += 1
+    if (index >= hours.length && index < length) later[index].push(assignment)
   }
   for (let i = hours.length; i < length; i++) {
-    hours.push({ at: new Date(start + i * HOUR_MS).toISOString(), count: counts[i] })
+    hours.push({ at: new Date(start + i * HOUR_MS).toISOString(), count: later[i].length, mix: mixOf(later[i]) })
   }
   return hours
+}
+
+// The stage a right answer moves an item out of its rank from, and the rank
+// it moves into: apprentice IV to guru, guru II to master, and on. Read off
+// the stage WaniKani recorded; the step is WaniKani's own ladder.
+export const RANK_UP = { 4: 'guru', 6: 'master', 7: 'enlightened', 8: 'burned' }
+
+// An hour's items by type — radicals, kanji, vocabulary, in that order and
+// only those present — each with how many a right answer would move up a
+// rank, by the rank they would move into. Asked for by the owner for the
+// forecast's hour, the one place the board splits by type.
+export function mixOf(assignments) {
+  const kinds = new Map()
+  for (const a of assignments) {
+    const type = subjectTypeName(a?.data?.subject_type)
+    if (!['radical', 'kanji', 'vocabulary'].includes(type)) continue
+    if (!kinds.has(type)) kinds.set(type, { type, count: 0, up: {} })
+    const kind = kinds.get(type)
+    kind.count += 1
+    const to = RANK_UP[a.data.srs_stage]
+    if (to) kind.up[to] = (kind.up[to] ?? 0) + 1
+  }
+  return ['radical', 'kanji', 'vocabulary'].map(type => kinds.get(type)).filter(Boolean)
 }
 
 const HOUR_MS = 60 * 60 * 1000

@@ -1568,6 +1568,43 @@ button.quiet {
   color: var(--dim);
 }
 
+/* What an hour holds, by type, in WaniKani's colours carried toward the
+   text — information, on one line of type. */
+.board .specimen .wk-radical {
+  color: var(--subject-radical);
+}
+
+.board .specimen .wk-kanji {
+  color: var(--subject-kanji);
+}
+
+.board .specimen .wk-vocabulary {
+  color: var(--subject-vocabulary);
+}
+
+/* ↑n: how many a right answer moves up a rank, in the colour of the rank
+   they move into. */
+.board .specimen .up {
+  font-family: var(--mono);
+  font-size: var(--label);
+}
+
+.board .specimen .up.srs-guru {
+  color: var(--srs-guru);
+}
+
+.board .specimen .up.srs-master {
+  color: var(--srs-master);
+}
+
+.board .specimen .up.srs-enlightened {
+  color: var(--srs-enlightened);
+}
+
+.board .specimen .up.srs-burned {
+  color: var(--srs-burned);
+}
+
 .board .specimen .stage.passed {
   color: var(--srs-passed);
 }
@@ -1629,7 +1666,7 @@ button.quiet {
 }
 
 /* The forecast's readout holds the specimen's height at rest, so reading
-   an hour moves nothing under the forecast. */
+   an hour moves nothing under it. */
 .board .forecast .readout {
   min-height: var(--figure);
 }

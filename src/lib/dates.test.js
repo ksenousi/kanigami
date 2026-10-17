@@ -12,10 +12,11 @@ describe('dates', () => {
     expect(monthYear(new Date(2027, 8, 1))).toBe('Sep 2027')
   })
 
-  it('says a moment in plain time, counting calendar days', () => {
+  it('says a moment as shortly as it can, counting calendar days', () => {
     expect(plainly(AT, new Date(2026, 9, 7, 8))).toBe('today 19:05')
     expect(plainly(AT, new Date(2026, 9, 6, 23, 30))).toBe('tomorrow 19:05')
-    expect(plainly(AT, new Date(2026, 9, 1, 20))).toBe('in 6 days · Wed 7 Oct 19:05')
+    expect(plainly(AT, new Date(2026, 9, 1, 20))).toBe('Wed 19:05')
+    expect(plainly(AT, new Date(2026, 8, 30, 20))).toBe('7 Oct')
   })
 
   it('says today, or the day, for a moment', () => {

@@ -187,6 +187,10 @@
   const COUNTS = fresh
     ? [0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     : [38, 12, 7, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 9, 31, 18, 0, 0, 6, 14, 0, 3, 0, 0]
+  // The summary's ids are started subjects, as WaniKani's are, so an hour
+  // can say what is in it; spread across the stages so the mix varies.
+  const pool = started.filter(a => a.data.srs_stage < 9)
+  const step = 37
   let next = 0
   const summary = {
     object: 'report',
@@ -194,7 +198,7 @@
       lessons: [{ available_at: iso(hour0), subject_ids: Array.from({ length: fresh ? 12 : 14 }, (_, i) => 40000 + i) }],
       reviews: COUNTS.map((count, i) => ({
         available_at: iso(hour0 + i * H),
-        subject_ids: Array.from({ length: count }, () => 50000 + next++)
+        subject_ids: Array.from({ length: count }, () => pool[(next++ * step) % pool.length].data.subject_id)
       }))
     }
   }

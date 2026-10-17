@@ -1,6 +1,5 @@
 import { forecast, nextDue, peak } from '../lib/standing.js'
 import { clock, count as many, weekday } from '../lib/dates.js'
-import { stageName } from '../lib/srs.js'
 import Specimen from './Specimen.jsx'
 import usePointing from './usePointing.js'
 
@@ -142,7 +141,7 @@ export default function Forecast({ summary, hours: given = null, waitingOn = [] 
             <span className="soft">{resting(summary, hours.slice(0, DAY_HOURS))}</span>
           </p>
         ) : (
-          <HourSpecimen hours={hours} index={reading} today={today} marked={marks.get(reading)} />
+          <HourSpecimen hours={hours} index={reading} today={today} />
         )}
       </div>
     </section>
@@ -192,11 +191,6 @@ function markHours(hours, waitingOn) {
   return marks
 }
 
-// A mark in words: its character, or a radical's meaning when it has none.
-function named(k) {
-  return k.radical ? `${k.characters ?? k.meaning} radical` : k.characters
-}
-
 // Left and right walk an hour, Home and End go to the ends, Escape gives the
 // line back to its resting state. The first press lands on the current hour
 // whichever way it went, rather than stepping off and skipping hour zero.
@@ -225,34 +219,41 @@ function walk(count, now, point) {
   }
 }
 
-// An hour, read: its count large, the hour beside it, and under them the
-// level-up's kanji in it, grouped by stage, each group in its stage's hue —
-// the ones a right answer passes first.
-function HourSpecimen({ hours, index, today, marked }) {
+// An hour, read: its count large, the hour beside it, and under that what
+// is in it by type, each in WaniKani's colour, with `↑n guru` for how many a
+// right answer moves up a rank and into which — named, not only coloured,
+// on the owner's word — and the sentence for it kept for a screen reader (PLAN.md, "The hour by
+// type").
+const NOUNS = { radical: ['radical', 'radicals'], kanji: ['kanji', 'kanji'], vocabulary: ['vocab', 'vocab'] }
+
+function HourSpecimen({ hours, index, today }) {
   const hour = hours[index]
   if (!hour) return null
   const start = new Date(hour.at)
-  const end = new Date(start.getTime() + 60 * 60 * 1000)
-  const slot = `${clock(start)}–${clock(end)}${start.toDateString() !== today ? ` ${weekday(start)}` : ''}`
-  const what = index === 0 ? 'due now' : hour.count === 1 ? 'review' : 'reviews'
-  const stages = [...new Set((marked ?? []).map(k => k.stage))].sort((a, b) => b - a)
+  const when = index === 0 ? 'due now' : `${clock(start)}${start.toDateString() !== today ? ` ${weekday(start)}` : ''}`
+  const mix = hour.mix ?? []
   return (
     <Specimen
       glyph={many(hour.count)}
       kind={['number', index === 0 && hour.count ? 'hot' : '', hour.count ? '' : 'none'].join(' ')}
-      named={index === 0 ? what : `${what} · ${slot}`}
+      named={when}
       where={
-        stages.length
-          ? stages.map((stage, i) => (
-              <span key={stage}>
+        mix.length
+          ? mix.map((kind, i) => (
+              <span key={kind.type}>
                 {i ? ' · ' : ''}
-                <span className={`stage a${stage}`}>
-                  {marked
-                    .filter(k => k.stage === stage)
-                    .map(named)
-                    .join(' ')}{' '}
-                  {stage === 4 ? 'to pass' : stageName(stage)}
+                <span className={`wk-${kind.type}`}>
+                  {many(kind.count)} {NOUNS[kind.type][kind.count === 1 ? 0 : 1]}
                 </span>
+                {Object.entries(kind.up).map(([to, n]) => (
+                  <span key={to}>
+                    {' '}
+                    <span className={`up srs-${to}`} aria-hidden="true">
+                      ↑{many(n)} {to}
+                    </span>
+                    <span className="sr-only">, {many(n)} to {to} if right</span>
+                  </span>
+                ))}
               </span>
             ))
           : null

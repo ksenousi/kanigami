@@ -2336,3 +2336,28 @@ correct`. A level ahead reads the span the dial's pace puts it in, `≈ 20
 Jan – 7 Feb 2027`, its pace, and the click to choose it. The specimen
 takes an optional third line for this (`more`), and the dial's readout
 keeps three lines' height at rest.
+
+**The hour by type, and terse readouts.** Asked for: the forecast's hour
+to say only how many radicals, kanji and vocabulary are in it, and how
+many of each a right answer promotes. Each hour now carries its items'
+types and stages (`forecastAhead` → `mix`, from `mixOf`): the summary's
+hours by subject id against the started assignments, the hours after by
+`available_at`. A promotion is a right answer that moves an item up a
+rank — apprentice IV to guru, guru II to master, master to enlightened,
+enlightened to burned (`RANK_UP`). The hour reads `31 · 06:00 Sun`, then
+`9 radicals ↑9 burned · 10 kanji ↑9 enlightened · 12 vocab`, each type in
+WaniKani's colour and each `↑n rank` in that rank's; a screen reader hears
+`9 to burned if right`. The running total, time from now, stage mix and
+the level-up kanji line were mocked and dropped. This is the one place the
+board splits by type, asked for by the owner.
+
+Then every readout was cut to labels and figures, on the owner's word ("I
+don't need sentences, just the relevant info"), with ranks named as well as
+coloured ("don't just color code"). A kanji: `passed · guru I · tomorrow
+22:00` — `plainly` says `today`/`tomorrow HH:MM`, the weekday within the
+week, the date after. A passed level: `14 days · median` (or `+1 vs
+median`, `fastest`), `26 Jan – 9 Feb 2026 · 92% right · all guru+`. This
+level: `day 14 of ≈ 18`, `since 4 Oct · 71% right`, `20/29 kanji ·
+fastest Wed 21 Oct 02:00 if all correct`. A level ahead: its span and
+`click to choose`. An SRS band: `guru · 18%`, `+318 in 7 days`. Keep new
+readouts to this register.

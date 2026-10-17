@@ -92,7 +92,7 @@ describe('Forecast', () => {
   it('reads an hour under the mouse as its slot, and lets go when it leaves', async () => {
     const host = await render(<Forecast summary={summary} />)
     await hover(hours(host)[2])
-    expect(label(host)).toMatch(/^7 reviews · \d\d:00–\d\d:00$/)
+    expect(label(host)).toMatch(/^7 \d\d:00$/)
     await unhover(hours(host)[2])
     expect(label(host)).toMatch(RESTING)
   })
@@ -100,7 +100,7 @@ describe('Forecast', () => {
   it('holds an hour a finger taps, through the leave the lift sends', async () => {
     const host = await render(<Forecast summary={summary} />)
     await tap(hours(host)[2])
-    expect(label(host)).toMatch(/^7 reviews · /)
+    expect(label(host)).toMatch(/^7 \d\d:00/)
     expect(hours(host)[2].classList.contains('reading')).toBe(true)
   })
 
@@ -115,7 +115,7 @@ describe('Forecast', () => {
     const host = await render(<Forecast summary={summary} />)
     await tap(hours(host)[2])
     await tap(hours(host)[15])
-    expect(label(host)).toMatch(/^31 reviews · /)
+    expect(label(host)).toMatch(/^31 \d\d:00/)
   })
 
   it('lets go when a tap lands outside the chart', async () => {
@@ -139,8 +139,6 @@ describe('Forecast', () => {
     expect(marks.map(m => m.textContent)).toEqual(['薬皿', '涙'])
     expect(marks[0].querySelector('.quiet')).toBeNull()
     expect(marks[1].querySelector('.quiet')).not.toBeNull()
-    await hover(hours(host)[2])
-    expect(label(host)).toMatch(/^7 reviews · \d\d:00–\d\d:00 薬 皿 to pass$/)
   })
 
   it('draws three kanji over a crowded hour, the closest to passing first, and counts the rest', async () => {
@@ -148,9 +146,6 @@ describe('Forecast', () => {
     const waitingOn = [...'鼻堂塩席果'].map((characters, i) => ({ characters, stage: i === 3 ? 4 : 2, availableAt: at }))
     const host = await render(<Forecast summary={summary} waitingOn={waitingOn} />)
     expect(host.querySelector('.mark').textContent).toBe('席鼻堂+2')
-    await hover(hours(host)[2])
-    expect(label(host)).toContain('席 to pass · 鼻')
-    expect(label(host)).toContain('果')
   })
 
   it('marks the radicals holding locked kanji beside the kanji', async () => {
@@ -164,13 +159,29 @@ describe('Forecast', () => {
     const mark = host.querySelector('.mark')
     expect(mark.textContent).toBe('吉警')
     expect(mark.querySelector('img')).not.toBeNull()
-    await hover(hours(host)[2])
-    expect(label(host)).toContain('吉 radical to pass · 警 apprentice III · Gun radical apprentice II')
   })
 
   it('marks nothing without a level-up to wait on', async () => {
     const host = await render(<Forecast summary={summary} />)
     expect(host.querySelector('.mark')).toBeNull()
+  })
+
+  it('reads an hour by type, and what a right answer moves up a rank', async () => {
+    const at = START + 2 * HOUR
+    const given = [0, 1, 2].map(i => ({ at: new Date(START + i * HOUR).toISOString(), count: 0, mix: [] }))
+    given[2] = {
+      at: new Date(at).toISOString(),
+      count: 4,
+      mix: [
+        { type: 'radical', count: 1, up: {} },
+        { type: 'kanji', count: 2, up: { guru: 1 } },
+        { type: 'vocabulary', count: 1, up: { master: 1 } }
+      ]
+    }
+    const host = await render(<Forecast summary={summary} hours={given} />)
+    await hover(hours(host)[2])
+    expect(label(host)).toMatch(/^4 \d\d:00 1 radical · 2 kanji ↑1 guru, 1 to guru if right · 1 vocab ↑1 master, 1 to master if right$/)
+    expect(host.querySelector('.up.srs-guru').textContent).toBe('↑1 guru')
   })
 
   it('walks the hours from the keyboard', async () => {
@@ -179,9 +190,9 @@ describe('Forecast', () => {
     await key(chart, 'ArrowRight')
     expect(label(host)).toBe('38 due now')
     await key(chart, 'ArrowRight')
-    expect(label(host)).toMatch(/^12 reviews · /)
+    expect(label(host)).toMatch(/^12 \d\d:00/)
     await key(chart, 'End')
-    expect(label(host)).toMatch(/^0 reviews · /)
+    expect(label(host)).toMatch(/^0 \d\d:00/)
     await key(chart, 'Escape')
     expect(label(host)).toMatch(RESTING)
   })

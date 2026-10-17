@@ -286,7 +286,7 @@ describe('the pace dial', () => {
     history()
     const host = await board()
     await tap(host.querySelectorAll('.dial .bars > span')[29])
-    expect(host.querySelector('.dial .specimen').textContent).toMatch(/^30 ≈ \d+ \w{3} – \d+ \w{3} \d{4} at 10 days a level/)
+    expect(host.querySelector('.dial .specimen').textContent).toMatch(/^30 ≈ \d+ \w{3}( \d{4})? – \d+ \w{3} \d{4}/)
   })
 
   it('remembers a goal of a level by a month, and says the pace it asks for', async () => {
@@ -363,7 +363,7 @@ describe('the decades on the dial', () => {
     expect(host.querySelectorAll('.dial .bars .fastest')).toHaveLength(1)
     // The swatch has no key: the bar's own caption names it.
     await hover(host.querySelectorAll('.dial .bars > span')[3])
-    expect(host.querySelector('.dial .readout').textContent).toContain('4 7 days · your fastest')
+    expect(host.querySelector('.dial .readout').textContent).toContain('4 7 days · fastest')
   })
 })
 
@@ -376,7 +376,7 @@ describe('the srs spread', () => {
     const host = await board()
     const counts = host.querySelectorAll('.srs .counts > span')
     await hover(counts[0])
-    expect(host.querySelector('.srs .specimen').textContent).toMatch(/^1 apprentice · 50% of everything started/)
+    expect(host.querySelector('.srs .specimen').textContent).toMatch(/^1 apprentice · 50%/)
     expect(host.querySelector('.srs .rest').classList.contains('hidden')).toBe(true)
     await unhover(host.querySelector('.srs .spreadline'))
     expect(host.querySelector('.srs .specimen')).toBeNull()
@@ -639,7 +639,7 @@ describe('the level’s kanji', () => {
   it('reads a kanji under the mouse and lets go when it leaves', async () => {
     const host = await board()
     await hover(cell(host, 0))
-    expect(readout(host)).toContain('山 Mountain apprentice II · next')
+    expect(readout(host)).toMatch(/山 Mountain apprentice II · today \d\d:\d\d/)
     // The rest of the strip steps back while one is read.
     expect(host.querySelector('.kanji.strip').classList.contains('dimming')).toBe(true)
     expect(host.querySelector('.level .slot .rest').classList.contains('hidden')).toBe(true)

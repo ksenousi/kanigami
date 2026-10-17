@@ -4,6 +4,7 @@ import {
   dueNow,
   forecast,
   forecastAhead,
+  mixOf,
   AHEAD_HOURS,
   kanjiPassed,
   learned,
@@ -99,6 +100,20 @@ describe('forecastAhead', () => {
     expect(hours[4].at).toBe('2026-07-27T13:00:00.000Z')
   })
 
+  it('says what is in each hour by type, the summary’s by subject id and the later ones by time', () => {
+    const item = (id, type, stage, at = null) => ({ data: { subject_id: id, subject_type: type, srs_stage: stage, available_at: at } })
+    const hours = forecastAhead({ reviews: [{ ...bucket(9, 0), subject_ids: [1, 2] }, bucket(10, 0)] }, [
+      item(1, 'kanji', 4),
+      item(2, 'kana_vocabulary', 2),
+      item(3, 'radical', 8, '2026-07-27T11:10:00.000Z')
+    ], 3)
+    expect(hours[0].mix).toEqual([
+      { type: 'kanji', count: 1, up: { guru: 1 } },
+      { type: 'vocabulary', count: 1, up: {} }
+    ])
+    expect(hours[2].mix).toEqual([{ type: 'radical', count: 1, up: { burned: 1 } }])
+  })
+
   it('leaves out burned items and anything past the window', () => {
     const hours = forecastAhead(summary, [{ data: { available_at: null } }, due(20)], 4)
     expect(hours.map(h => h.count)).toEqual([12, 0, 0, 0])
@@ -113,6 +128,17 @@ describe('forecastAhead', () => {
     const day = d => new Date(d.getFullYear(), d.getMonth(), d.getDate())
     expect(Math.round((day(last) - day(first)) / (24 * 60 * 60 * 1000))).toBe(6)
     expect(forecastAhead(null, [due(11)])).toEqual([])
+  })
+})
+
+describe('mixOf', () => {
+  it('counts each type and what a right answer moves up a rank, guru I and master II aside', () => {
+    const a = (type, stage) => ({ data: { subject_type: type, srs_stage: stage } })
+    expect(mixOf([a('vocabulary', 4), a('vocabulary', 6), a('vocabulary', 5), a('kanji', 3), a('radical', 7)])).toEqual([
+      { type: 'radical', count: 1, up: { enlightened: 1 } },
+      { type: 'kanji', count: 1, up: {} },
+      { type: 'vocabulary', count: 3, up: { guru: 1, master: 1 } }
+    ])
   })
 })
 
