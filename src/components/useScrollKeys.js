@@ -13,8 +13,8 @@ import { useEffect } from 'react'
 // Never while typing in a field, and never with a modifier held, so the
 // browser keeps its shortcuts. With reduced motion asked for, each press
 // and each repeat is a plain step.
-const TOP_SPEED = 1500 // px a second, held
-const TAP_SPEED = 900 // px a second, at once — a tap glides about 90px
+const TOP_SPEED = 1000 // px a second, held
+const TAP_SPEED = 650 // px a second, at once — a tap glides about 65px
 const EASE = 10 // how fast the speed closes on its target, per second
 const STEP = 80 // px a press, with reduced motion
 const MARGIN = 16 // px left above a band jumped to

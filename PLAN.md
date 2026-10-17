@@ -2171,10 +2171,10 @@ them, and don't bring slipping back as a lens elsewhere.
 owner to "just j and k, keep it simple", with the scrolling smooth while a
 key is held, and d and u moving between the three bands rather than half a
 screen. One window listener, `useScrollKeys.js`. `j` and `k` glide: a key
-down sets a speed (1,500px a second) for the page to ease up to, a key up
+down sets a speed (1,000px a second — first 1,500, slowed on the owner's word) for the page to ease up to, a key up
 lets it ease back to rest, and a frame loop moves the page — so a held key
 runs smooth instead of stepping at the keyboard's repeat rate, and a tap
-starts at 900px a second and glides about 90px. `d` and `u` scroll to the
+starts at 650px a second and glides about 65px. `d` and `u` scroll to the
 top of the next or previous band (今 now, 手元 at hand, 先 ahead), 16px
 above it; `u` from the first band goes to the top of the page. Never while
 typing in a field, never with Cmd, Ctrl or Alt held; with reduced motion,
