@@ -40,6 +40,7 @@ import { coverage, taughtKanji, throughLevel } from '../lib/coverage.js'
 import { aheadByLevel, aheadIndex } from '../lib/aheadIndex.js'
 import Forecast from './Forecast.jsx'
 import useOnline from './useOnline.js'
+import Specimen from './Specimen.jsx'
 import usePointing from './usePointing.js'
 import useScrollKeys from './useScrollKeys.js'
 
@@ -744,7 +745,7 @@ function Level({ board, level, token, perLevel }) {
           <LevelReads board={board} level={level} perLevel={perLevel} counts={!other} />
         </div>
         <div className="readout" aria-live="polite">
-          {reading ? <Specimen item={reading} now={new Date()} /> : null}
+          {reading ? <ItemSpecimen item={reading} now={new Date()} /> : null}
         </div>
       </div>
     </section>
@@ -893,31 +894,31 @@ function below(list, at, way) {
   return best
 }
 
-// 標本 The pointed-at item, set like a dictionary entry (PLAN.md, "The
-// specimen"): the character large, its reading and meaning beside it, and
-// under them its stage in the strip's own hue and when WaniKani next asks
-// for it in plain time. Read off the assignment, like everything else here.
-function Specimen({ item: k, now }) {
-  const glyphs = k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')
+// The pointed-at kanji, radical or word as a specimen: the character
+// large, its reading and meaning beside it, and under them its stage in the
+// strip's own hue and when WaniKani next asks for it in plain time. Read
+// off the assignment, like everything else here.
+function ItemSpecimen({ item: k, now }) {
   const next = upNext(k, now)
   return (
-    <div className="specimen">
-      {/* The spaces between the parts are for the live region, which
-          reads the text run together otherwise. */}
-      <span className={k.characters && k.characters.length > 2 ? 'glyph long' : 'glyph'}>{glyphs}</span>{' '}
-      <div className="entry">
-        <p className="named">
+    <Specimen
+      glyph={k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')}
+      kind={k.characters && k.characters.length > 2 ? 'long' : ''}
+      named={
+        <>
           {k.kana ? <span className="kana">{k.kana}</span> : null}
           {k.kana ? ' ' : null}
           {k.meaning}
-        </p>{' '}
-        <p className="where">
+        </>
+      }
+      where={
+        <>
           <span className={`stage ${standing(k)}`}>{describe(k)}</span>
           {next ? ` · ${next}` : ''}
           {k.state === 'apprentice' && k.stage === 4 ? ' · one right answer passes it' : ''}
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    />
   )
 }
 
@@ -947,26 +948,95 @@ function describe(k) {
   return stageName(k.stage)
 }
 
+// The spread and the past seven days at rest; pointing at a band, its
+// segment or its count, reads that band as a specimen in their place
+// (PLAN.md, "The specimen"). It was a swap of every count for its share.
 function Srs({ spread: bands, moved: gained }) {
+  const { at, point, groupProps, itemProps } = usePointing()
+  const band = at === null ? null : bands.bands[at]
+
+  function key(event) {
+    const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
+    if (step) {
+      event.preventDefault()
+      point(at === null ? 0 : Math.min(bands.bands.length - 1, Math.max(0, at + step)))
+    }
+    if (event.key === 'Escape') point(null)
+  }
+
   return (
     <section className="srs">
       <Head>srs spread</Head>
-      <Spread spread={bands} />
-      <p className="notes row moves">
-        {/* Only the moves WaniKani dates — see `moved` for why master and
-            enlightened cannot be here. */}
-        {/* `+27 apprentice` read as the apprentice count going up by that;
-            it is lessons started, and the guru and burned counts are first
-            arrivals. Past, so it says past. */}
-        <span className="soft">Past 7 days</span>
-        {/* Lessons done are progress, so neutral ink — in apprentice's red
-            they read as a warning about something done right. Guru and
-            burned keep their band colours, which mean nothing urgent. */}
-        <span className="soft">{many(gained.apprentice)} taught</span>
-        <span className="srs-guru">{many(gained.guru)} to guru</span>
-        <span className="srs-burned">{many(gained.burned)} burned</span>
-      </p>
+      <div
+        className={at === null ? 'spreadline' : 'spreadline aside'}
+        role="group"
+        aria-label="SRS spread"
+        onKeyDown={key}
+        {...groupProps}
+      >
+        {bands.total > 0 ? (
+          <div className="segments" aria-hidden="true">
+            {bands.bands.map((b, i) =>
+              b.count > 0 ? (
+                <span
+                  key={b.key}
+                  className={`segment srs-${b.key}${at === i ? ' reading' : ''}`}
+                  style={{ flexGrow: b.count }}
+                  {...itemProps(i)}
+                />
+              ) : null
+            )}
+          </div>
+        ) : null}
+        <div className="readout" aria-live="polite">
+          <div className={band ? 'rest hidden' : 'rest'}>
+            {bands.total > 0 ? (
+              <p className="counts">
+                {bands.bands.map((b, i) => (
+                  <span key={b.key} className={`srs-${b.key}`} {...itemProps(i)}>
+                    {b.key} <span className="count">{many(b.count)}</span>
+                  </span>
+                ))}
+              </p>
+            ) : null}
+            <p className="notes row moves">
+              {/* Only the moves WaniKani dates — see `moved` for why master and
+                  enlightened cannot be here. */}
+              {/* `+27 apprentice` read as the apprentice count going up by that;
+                  it is lessons started, and the guru and burned counts are first
+                  arrivals. Past, so it says past. */}
+              <span className="soft">Past 7 days</span>
+              {/* Lessons done are progress, so neutral ink — in apprentice's red
+                  they read as a warning about something done right. Guru and
+                  burned keep their band colours, which mean nothing urgent. */}
+              <span className="soft">{many(gained.apprentice)} taught</span>
+              <span className="srs-guru">{many(gained.guru)} to guru</span>
+              <span className="srs-burned">{many(gained.burned)} burned</span>
+            </p>
+          </div>
+          {band ? <BandSpecimen band={band} total={bands.total} gained={gained} /> : null}
+        </div>
+      </div>
     </section>
+  )
+}
+
+// A band, read: its count large in its colour, its share of everything
+// started, and what moved into it in the past seven days where WaniKani
+// dates that — lessons for apprentice, first arrivals for guru and burned.
+function BandSpecimen({ band, total, gained }) {
+  const moved = {
+    apprentice: `${many(gained.apprentice)} taught in the past 7 days`,
+    guru: `${many(gained.guru)} reached guru in the past 7 days`,
+    burned: `${many(gained.burned)} burned in the past 7 days`
+  }[band.key]
+  return (
+    <Specimen
+      glyph={many(band.count)}
+      kind={`number srs-${band.key}`}
+      named={`${band.key} · ${share(band.count, total)} of everything started`}
+      where={moved ?? null}
+    />
   )
 }
 
@@ -1249,7 +1319,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             </span>
           ))}
         </div>
-        <div className="bars" role="group" aria-label="Days on each level, past and projected" onKeyDown={key} {...groupProps}>
+        <div className={reading !== null ? 'bars aside' : 'bars'} role="group" aria-label="Days on each level, past and projected" onKeyDown={key} {...groupProps}>
           {slots.map((s, i) => (
             <span
               key={s.level}
@@ -1296,7 +1366,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
             <span>right answers by level</span>
             <span>{rightByLevel ? (rightByLevel.overall !== null ? `${percent(rightByLevel.overall)}% overall` : '') : 'reading…'}</span>
           </p>
-          <div className="strip" aria-hidden="true" onPointerLeave={event => event.pointerType === 'mouse' && point(null)}>
+          <div className={reading !== null ? 'strip aside' : 'strip'} aria-hidden="true" onPointerLeave={event => event.pointerType === 'mouse' && point(null)}>
             {slots.map((s, i) => (
               <span key={s.level} className={[s.kind === 'current' ? 'current' : '', reading === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
                 {rights?.[i] ? <i style={{ height: `${rightHeight(rights[i].share)}%` }} /> : null}
@@ -1308,12 +1378,14 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
       ) : null}
 
       <div className="under">
-        <p className="notes readout" aria-live="polite">
-          <span className={shown ? 'usual hidden' : 'usual'}>
-            {/* At rest the line is empty unless a level ahead is chosen:
-                what the bars, the swatches and the slider mean is read by
-                pointing at them (PLAN.md, "One slot"). The ≈ marks it a
-                projection. */}
+        {/* The chosen level's line at rest, and a pointed-at level's
+            specimen over it (PLAN.md, "The specimen"); the line keeps the
+            specimen's height, so the slider never moves under the pointer. */}
+        <div className="readout" aria-live="polite">
+          <p className={shown ? 'notes rest hidden' : 'notes rest'}>
+            {/* Empty unless a level ahead is chosen: what the bars, the
+                swatches and the slider mean is read by pointing at them
+                (PLAN.md, "One slot"). The ≈ marks it a projection. */}
             {through ? (
               <span className="soft">
                 <span className="strong">Through level {through}</span>
@@ -1321,24 +1393,19 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
                 {counted ? '' : ', radicals and vocabulary as now'}
               </span>
             ) : null}
-          </span>
+          </p>
           {shown ? (
-            <span className="usual">
-              <span className="soft">
-                {caption(shown, ahead, perLevel, quickest)}
-                {rights?.[reading] ? ` · ${percent(rights[reading].share)}% right` : ''}
-                {onThrough && shown.level > level ? (
-                  <>
-                    {' · '}
-                    <span className="by-pointer">click</span>
-                    <span className="by-touch">tap again</span>
-                    {shown.level === through ? ' to let go' : ' for what you’d know by then'}
-                  </>
-                ) : null}
-              </span>
-            </span>
+            <LevelSpecimen
+              s={shown}
+              ahead={ahead}
+              perLevel={perLevel}
+              quickest={quickest}
+              right={rights?.[reading] ?? null}
+              choosable={Boolean(onThrough) && shown.level > level}
+              chosen={shown.level === through}
+            />
           ) : null}
-        </p>
+        </div>
       </div>
 
       {perLevel !== null ? (
@@ -1525,17 +1592,56 @@ function levelSpan(levels) {
   return last - first === levels.length - 1 ? `${first}–${last}` : levels.map(l => l.level).join(', ')
 }
 
-// A bar in words. What the swatches mean is said here, on the bar that
-// wears one, rather than in a key under the chart.
-function caption(s, ahead, perLevel, quickest) {
-  const began = s.began ? ` · began ${dayMonthYear(s.began)}` : ''
-  const fastest = s.level === quickest?.level ? ' · your fastest' : ''
-  if (s.kind === 'passed') return `Level ${s.level} · ${Math.round(s.days)} days${fastest}${began}${s.standing ? ` · every item ${s.standing} or above` : ''}`
-  if (s.kind === 'break') return `Level ${s.level} · ${Math.round(s.days)} days · a break, left out of the pace${began}`
-  if (s.kind === 'current') return `Level ${s.level} · day ${Math.floor(s.days) + 1} so far${began}`
-  if (s.kind === 'missing') return `Level ${s.level} · no record`
-  if (s.kind === 'ahead') return `Level ${s.level} ≈ ${monthYear(ahead.startOf(s.level))} at ${dayCount(perLevel)} days a level`
-  return `Level ${s.level}`
+// A level, read: its number large, how long it took (or is taking, or
+// would take) beside it, and under that when it began, how right you were
+// on its items, and what its swatch means — said on the bar that wears one
+// rather than in a key under the chart.
+function LevelSpecimen({ s, ahead, perLevel, quickest, right, choosable, chosen }) {
+  const began = s.began ? `began ${dayMonthYear(s.began)}` : null
+  const fastest = s.level === quickest?.level
+  const named = {
+    passed: `${Math.round(s.days)} days${fastest ? ' · your fastest' : ''}`,
+    break: `${Math.round(s.days)} days · a break`,
+    current: `day ${Math.floor(s.days ?? 0) + 1} so far`,
+    missing: 'no record',
+    ahead: ahead ? `≈ ${monthYear(ahead.startOf(s.level))}` : '',
+    empty: ''
+  }[s.kind]
+  const parts = [
+    s.kind === 'break' ? 'left out of the pace' : null,
+    s.standing ? (
+      <span key="standing" className={`stage all-${s.standing}`}>
+        every item {s.standing} or above
+      </span>
+    ) : null,
+    began,
+    right ? `${percent(right.share)}% right` : null,
+    s.kind === 'ahead' && perLevel !== null ? `at ${dayCount(perLevel)} days a level` : null,
+    choosable ? (
+      <Fragment key="choose">
+        <span className="by-pointer">click</span>
+        <span className="by-touch">tap</span>
+        {chosen ? ' to let go' : ' for what you’d know by then'}
+      </Fragment>
+    ) : null
+  ].filter(Boolean)
+  return (
+    <Specimen
+      glyph={s.level}
+      kind={`number${s.kind === 'current' ? ' hot' : ''}`}
+      named={named}
+      where={
+        parts.length
+          ? parts.map((part, i) => (
+              <Fragment key={i}>
+                {i ? ' · ' : ''}
+                {part}
+              </Fragment>
+            ))
+          : null
+      }
+    />
+  )
 }
 
 // Everything taught so far, against how much of it WaniKani has: the count,
@@ -1732,40 +1838,5 @@ function share(count, total) {
   return `${Math.round(exact)}%`
 }
 
-// One segmented hairline, and the counts as one line of type beneath it,
-// each in its band's colour — the colour is what ties a number to its
-// segment. Never five cards with five numbers in them.
-//
-// Pointing anywhere on it — hover, or a tap that holds — turns every count
-// into its share of the total at once. Each figure stacks its count and its
-// share in one cell, as wide as the wider of the two, so the swap moves
-// nothing on the line.
-function Spread({ spread: bands }) {
-  const { at, groupProps, itemProps } = usePointing()
-  if (bands.total === 0) return null
-
-  return (
-    <div className={at === null ? 'spreadline' : 'spreadline shares'} {...groupProps} {...itemProps(0)}>
-      <div className="segments" aria-hidden="true">
-        {bands.bands
-          .filter(band => band.count > 0)
-          .map(band => (
-            <span key={band.key} className={`segment srs-${band.key}`} style={{ flexGrow: band.count }} />
-          ))}
-      </div>
-      <p className="counts">
-        {bands.bands.map(band => (
-          <span key={band.key} className={`srs-${band.key}`}>
-            {band.key}{' '}
-            <span className="figure">
-              <span className="count">{many(band.count)}</span>
-              <span className="share">{share(band.count, bands.total)}</span>
-            </span>
-          </span>
-        ))}
-      </p>
-    </div>
-  )
-}
 
 

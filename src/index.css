@@ -336,14 +336,20 @@ body {
   gap: 10px;
 }
 
+/* A 2px segment is too thin to point at, so each is a 14px band of
+   pointer with its line drawn through the middle (the padding, clipped);
+   the negative margins keep the line where it always sat. */
 .segments {
   display: flex;
   gap: 2px;
-  height: 2px;
+  height: 14px;
+  margin-block: -6px;
 }
 
 .segment {
   height: 100%;
+  padding-block: 6px;
+  background-clip: content-box;
   border-radius: 1px;
 }
 
@@ -383,26 +389,30 @@ body {
   color: var(--dim);
 }
 
-/* The count and its share in one cell: the cell takes the wider, and only
-   one shows, so the swap moves nothing. */
-.counts .figure {
-  display: inline-grid;
+/* Pointing at a band reads it in the counts' place (PLAN.md, "The
+   specimen"): the counts and the past seven days are the rest, the
+   specimen sits over them, and the cell keeps the taller. */
+.spreadline .readout {
+  display: grid;
 }
 
-.counts .figure > span {
+.spreadline .readout > * {
   grid-area: 1 / 1;
+  min-width: 0;
 }
 
-/* Keyboard focus reads the shares too — that is its focus mark. */
-.counts .share,
-.spreadline.shares .counts .count,
-.spreadline:focus-visible .counts .count {
+.spreadline .readout > .rest {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.spreadline .readout > .hidden {
   visibility: hidden;
 }
 
-.spreadline.shares .counts .share,
-.spreadline:focus-visible .counts .share {
-  visibility: visible;
+.spreadline.aside .segment:not(.reading) {
+  opacity: 0.35;
 }
 
 .spreadline:focus-visible {
@@ -1575,6 +1585,54 @@ button.quiet {
   color: var(--dim);
 }
 
+/* A count as the specimen's glyph: the masthead's figure face. */
+.board .specimen .glyph.number {
+  font-family: var(--jp-serif);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+
+.board .specimen .glyph.srs-apprentice {
+  color: var(--accent);
+}
+
+.board .specimen .glyph.srs-guru {
+  color: var(--srs-guru);
+}
+
+.board .specimen .glyph.srs-master {
+  color: var(--srs-master);
+}
+
+.board .specimen .glyph.srs-enlightened {
+  color: var(--srs-enlightened);
+}
+
+.board .specimen .glyph.srs-burned {
+  color: var(--srs-burned);
+}
+
+.board .specimen .glyph.hot {
+  color: var(--accent);
+}
+
+.board .specimen .glyph.none {
+  color: var(--dim);
+}
+
+/* The forecast's readout holds the specimen's height at rest, so reading
+   an hour moves nothing under the forecast. */
+.board .forecast .readout {
+  min-height: var(--figure);
+}
+
+/* The other hours step back while one is read, as the strip's kanji do. */
+.forecast .hour.aside i,
+.forecast .hour.aside .mark,
+.forecast .hour.aside .n {
+  opacity: 0.4;
+}
+
 /* While one is read, the rest step back, so the block under the pointer
    is the one lit. */
 .board .kanji.dimming li:not(.reading) .character {
@@ -2136,10 +2194,43 @@ button.quiet {
   margin-top: -6px;
 }
 
-/* Empty at rest, but its line is kept, so a bar's caption arriving never
-   pushes the slider down under the pointer. */
+/* The chosen level's line and a pointed-at level's specimen share one
+   cell, kept at the specimen's height, so reading a bar never pushes the
+   slider down under the pointer. */
 .board .dial .under .readout {
-  min-height: calc(var(--small) * 1.45);
+  display: grid;
+  min-height: var(--figure);
+}
+
+.board .dial .under .readout > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.board .dial .under .readout > .hidden {
+  visibility: hidden;
+}
+
+/* The other levels step back while one is read. */
+.board .dial .bars.aside > span:not(.reading) i,
+.board .dial .rights .strip.aside > span:not(.reading) i {
+  opacity: 0.4;
+}
+
+.board .specimen .stage.all-guru {
+  color: var(--srs-guru);
+}
+
+.board .specimen .stage.all-master {
+  color: var(--srs-master);
+}
+
+.board .specimen .stage.all-enlightened {
+  color: var(--srs-enlightened);
+}
+
+.board .specimen .stage.all-burned {
+  color: var(--srs-burned);
 }
 
 /* The words in the past 7 days are counts, so mono like the spread above

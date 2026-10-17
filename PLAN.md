@@ -2308,3 +2308,17 @@ in sky) and when WaniKani next asks for it in plain time — `next today
 `one right answer passes it`; locked, in lessons and burned say nothing
 more than their stage. While one is read the rest of the strip steps back
 to `--dim`, its blocks at 45%, so the one under the pointer is the one lit.
+
+**The specimen everywhere pointing reads.** The strip's specimen went to
+every readout on the board, through one `Specimen` component: something
+large, and beside it what it is and where it stands. The forecast's hour —
+its count in the masthead's figure face (the accent when due now), `reviews
+· 06:00–07:00 Sun`, and the level-up's kanji in that hour grouped by stage
+in their stage's hue, `to pass` first. A pace bar — the level number (the
+accent for this one), how long it took, is taking or would take, and its
+swatch, start, right answers and the click to choose one ahead. An SRS band
+— pointed at by its segment, now a 14px band of pointer, or its count — its
+count in the band's colour, its share of everything started, and what
+WaniKani dates of its past week. The SRS counts no longer swap to shares on
+hover; the specimen says the share. Each readout keeps the specimen's
+height at rest, and the rest of its chart steps back while one is read.

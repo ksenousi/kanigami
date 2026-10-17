@@ -286,7 +286,7 @@ describe('the pace dial', () => {
     history()
     const host = await board()
     await tap(host.querySelectorAll('.dial .bars > span')[29])
-    expect(host.querySelector('.dial .readout .usual:not(.hidden)').textContent).toMatch(/^Level 30 ≈ .+ at 10 days a level · /)
+    expect(host.querySelector('.dial .specimen').textContent).toMatch(/^30 ≈ \w{3} \d{4} at 10 days a level · /)
   })
 
   it('remembers a goal of a level by a month, and says the pace it asks for', async () => {
@@ -363,7 +363,23 @@ describe('the decades on the dial', () => {
     expect(host.querySelectorAll('.dial .bars .fastest')).toHaveLength(1)
     // The swatch has no key: the bar's own caption names it.
     await hover(host.querySelectorAll('.dial .bars > span')[3])
-    expect(host.querySelector('.dial .readout').textContent).toContain('Level 4 · 7 days · your fastest')
+    expect(host.querySelector('.dial .readout').textContent).toContain('4 7 days · your fastest')
+  })
+})
+
+describe('the srs spread', () => {
+  it('reads a band as a specimen in place of the counts, and lets go', async () => {
+    api.getStartedAssignments.mockResolvedValue([
+      { data: { subject_id: 501, subject_type: 'kanji', srs_stage: 2, started_at: new Date().toISOString() } },
+      { data: { subject_id: 502, subject_type: 'kanji', srs_stage: 6, started_at: new Date().toISOString() } }
+    ])
+    const host = await board()
+    const counts = host.querySelectorAll('.srs .counts > span')
+    await hover(counts[0])
+    expect(host.querySelector('.srs .specimen').textContent).toMatch(/^1 apprentice · 50% of everything started/)
+    expect(host.querySelector('.srs .rest').classList.contains('hidden')).toBe(true)
+    await unhover(host.querySelector('.srs .spreadline'))
+    expect(host.querySelector('.srs .specimen')).toBeNull()
   })
 })
 

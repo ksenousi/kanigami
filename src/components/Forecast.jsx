@@ -1,6 +1,7 @@
 import { forecast, nextDue, peak } from '../lib/standing.js'
 import { clock, count as many, weekday } from '../lib/dates.js'
 import { stageName } from '../lib/srs.js'
+import Specimen from './Specimen.jsx'
 import usePointing from './usePointing.js'
 
 // 刻 The week ahead, every hour named — decided from a prototype (see
@@ -98,7 +99,8 @@ export default function Forecast({ summary, hours: given = null, waitingOn = [] 
                   dayOf[index] % 2 ? 'next-day' : '',
                   index > 0 && dayOf[index] !== dayOf[index - 1] ? 'midnight' : '',
                   kanji ? 'marked' : '',
-                  reading === index ? 'reading' : ''
+                  reading === index ? 'reading' : '',
+                  reading !== null && reading !== index ? 'aside' : ''
                 ]
                   .join(' ')
                   .trim()}
@@ -131,11 +133,18 @@ export default function Forecast({ summary, hours: given = null, waitingOn = [] 
         </div>
       </div>
 
-      <p className="notes readout" aria-live="polite">
-        <span className="soft">
-          {reading === null ? resting(summary, hours.slice(0, DAY_HOURS)) : hourLabel(hours, reading, today, marks.get(reading))}
-        </span>
-      </p>
+      {/* At rest the day's total; pointing at an hour reads it as a
+          specimen in the same place, which keeps the specimen's height so
+          nothing under the forecast moves (PLAN.md, "The specimen"). */}
+      <div className="readout" aria-live="polite">
+        {reading === null ? (
+          <p className="notes">
+            <span className="soft">{resting(summary, hours.slice(0, DAY_HOURS))}</span>
+          </p>
+        ) : (
+          <HourSpecimen hours={hours} index={reading} today={today} marked={marks.get(reading)} />
+        )}
+      </div>
     </section>
   )
 }
@@ -216,20 +225,40 @@ function walk(count, now, point) {
   }
 }
 
-// What the line says while an hour is read: its slot, its count, and the
-// level-up's kanji in it.
-function hourLabel(hours, index, today, marked) {
+// An hour, read: its count large, the hour beside it, and under them the
+// level-up's kanji in it, grouped by stage, each group in its stage's hue —
+// the ones a right answer passes first.
+function HourSpecimen({ hours, index, today, marked }) {
   const hour = hours[index]
-  if (!hour) return ''
+  if (!hour) return null
   const start = new Date(hour.at)
   const end = new Date(start.getTime() + 60 * 60 * 1000)
-  const slot =
-    index === 0 ? 'Now' : `${clock(start)}–${clock(end)}${start.toDateString() !== today ? ` ${weekday(start)}` : ''}`
-  const count = index === 0 ? `${many(hour.count)} due` : hour.count ? `${many(hour.count)} reviews` : 'none'
-  const kanji = marked
-    ? ` · ${marked.map(k => `${named(k)} ${k.stage === 4 ? 'to pass' : stageName(k.stage)}`).join(', ')}`
-    : ''
-  return `${slot} · ${count}${kanji}`
+  const slot = `${clock(start)}–${clock(end)}${start.toDateString() !== today ? ` ${weekday(start)}` : ''}`
+  const what = index === 0 ? 'due now' : hour.count === 1 ? 'review' : 'reviews'
+  const stages = [...new Set((marked ?? []).map(k => k.stage))].sort((a, b) => b - a)
+  return (
+    <Specimen
+      glyph={many(hour.count)}
+      kind={['number', index === 0 && hour.count ? 'hot' : '', hour.count ? '' : 'none'].join(' ')}
+      named={index === 0 ? what : `${what} · ${slot}`}
+      where={
+        stages.length
+          ? stages.map((stage, i) => (
+              <span key={stage}>
+                {i ? ' · ' : ''}
+                <span className={`stage a${stage}`}>
+                  {marked
+                    .filter(k => k.stage === stage)
+                    .map(named)
+                    .join(' ')}{' '}
+                  {stage === 4 ? 'to pass' : stageName(stage)}
+                </span>
+              </span>
+            ))
+          : null
+      }
+    />
+  )
 }
 
 // The line at rest: what is due now, or when the next ones come, and the

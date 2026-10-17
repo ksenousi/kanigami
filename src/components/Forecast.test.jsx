@@ -16,7 +16,7 @@ const summary = {
   }))
 }
 
-const label = host => host.querySelector('.readout .soft').textContent
+const label = host => host.querySelector('.readout').textContent
 const hours = host => host.querySelectorAll('.hour')
 const RESTING = /^38 due now · 106 more by this time tomorrow$/
 
@@ -81,7 +81,6 @@ describe('Forecast', () => {
   it('rests on what is due now and the day’s total, and nothing else', async () => {
     const host = await render(<Forecast summary={summary} />)
     expect(label(host)).toMatch(RESTING)
-    expect(host.querySelector('.readout').textContent).toBe(label(host))
   })
 
   it('says when the next ones come when nothing is due', async () => {
@@ -93,7 +92,7 @@ describe('Forecast', () => {
   it('reads an hour under the mouse as its slot, and lets go when it leaves', async () => {
     const host = await render(<Forecast summary={summary} />)
     await hover(hours(host)[2])
-    expect(label(host)).toMatch(/^\d\d:00–\d\d:00 · 7 reviews$/)
+    expect(label(host)).toMatch(/^7 reviews · \d\d:00–\d\d:00$/)
     await unhover(hours(host)[2])
     expect(label(host)).toMatch(RESTING)
   })
@@ -101,7 +100,7 @@ describe('Forecast', () => {
   it('holds an hour a finger taps, through the leave the lift sends', async () => {
     const host = await render(<Forecast summary={summary} />)
     await tap(hours(host)[2])
-    expect(label(host)).toMatch(/· 7 reviews$/)
+    expect(label(host)).toMatch(/^7 reviews · /)
     expect(hours(host)[2].classList.contains('reading')).toBe(true)
   })
 
@@ -116,7 +115,7 @@ describe('Forecast', () => {
     const host = await render(<Forecast summary={summary} />)
     await tap(hours(host)[2])
     await tap(hours(host)[15])
-    expect(label(host)).toMatch(/· 31 reviews$/)
+    expect(label(host)).toMatch(/^31 reviews · /)
   })
 
   it('lets go when a tap lands outside the chart', async () => {
@@ -141,7 +140,7 @@ describe('Forecast', () => {
     expect(marks[0].querySelector('.quiet')).toBeNull()
     expect(marks[1].querySelector('.quiet')).not.toBeNull()
     await hover(hours(host)[2])
-    expect(label(host)).toMatch(/· 7 reviews · 薬 to pass, 皿 to pass$/)
+    expect(label(host)).toMatch(/^7 reviews · \d\d:00–\d\d:00 薬 皿 to pass$/)
   })
 
   it('draws three kanji over a crowded hour, the closest to passing first, and counts the rest', async () => {
@@ -150,7 +149,7 @@ describe('Forecast', () => {
     const host = await render(<Forecast summary={summary} waitingOn={waitingOn} />)
     expect(host.querySelector('.mark').textContent).toBe('席鼻堂+2')
     await hover(hours(host)[2])
-    expect(label(host)).toContain('席 to pass, 鼻 apprentice')
+    expect(label(host)).toContain('席 to pass · 鼻')
     expect(label(host)).toContain('果')
   })
 
@@ -166,7 +165,7 @@ describe('Forecast', () => {
     expect(mark.textContent).toBe('吉警')
     expect(mark.querySelector('img')).not.toBeNull()
     await hover(hours(host)[2])
-    expect(label(host)).toContain('吉 radical to pass, 警 apprentice III, Gun radical apprentice II')
+    expect(label(host)).toContain('吉 radical to pass · 警 apprentice III · Gun radical apprentice II')
   })
 
   it('marks nothing without a level-up to wait on', async () => {
@@ -178,11 +177,11 @@ describe('Forecast', () => {
     const host = await render(<Forecast summary={summary} />)
     const chart = host.querySelector('.hours')
     await key(chart, 'ArrowRight')
-    expect(label(host)).toBe('Now · 38 due')
+    expect(label(host)).toBe('38 due now')
     await key(chart, 'ArrowRight')
-    expect(label(host)).toMatch(/· 12 reviews$/)
+    expect(label(host)).toMatch(/^12 reviews · /)
     await key(chart, 'End')
-    expect(label(host)).toMatch(/· none$/)
+    expect(label(host)).toMatch(/^0 reviews · /)
     await key(chart, 'Escape')
     expect(label(host)).toMatch(RESTING)
   })
