@@ -11,7 +11,6 @@ vi.mock('../lib/wanikani.js', () => ({
   getUser: vi.fn(),
   getSummary: vi.fn(),
   getStartedAssignments: vi.fn(),
-  getLevelAssignments: vi.fn(),
   getLevelKanji: vi.fn(),
   getLevelKanjiSubjects: vi.fn(),
   getLevelRadicals: vi.fn(),
@@ -19,7 +18,6 @@ vi.mock('../lib/wanikani.js', () => ({
   getReviewStatistics: vi.fn(),
   getLevelProgressions: vi.fn(),
   getSpacedRepetitionSystems: vi.fn(),
-  getSubjects: vi.fn(),
   getSubjectTotals: vi.fn(),
   getAllKanjiSubjects: vi.fn(),
   getAllRadicalAndVocabularySubjects: vi.fn()
@@ -50,10 +48,8 @@ function answer() {
     { data: { subject_id: 1, srs_stage: 2, started_at: new Date(now).toISOString(), available_at: new Date(now + HOUR).toISOString() } }
   ])
   api.getReviewStatistics.mockResolvedValue([])
-  api.getLevelAssignments.mockResolvedValue([])
   api.getLevelProgressions.mockResolvedValue([])
   api.getSpacedRepetitionSystems.mockResolvedValue([])
-  api.getSubjects.mockResolvedValue([])
   api.getSubjectTotals.mockResolvedValue({ radical: 10, kanji: 20, vocabulary: 30 })
   api.getLevelRadicals.mockResolvedValue([[], []])
   api.getLevelVocabulary.mockResolvedValue([[], []])
@@ -366,114 +362,6 @@ describe('the decades on the dial', () => {
     const host = await board({ user: { ...USER, level: 6 } })
     expect(host.querySelector('.notes.flags').textContent).toContain('Your fastest · level 4, 7 days')
     expect(host.querySelectorAll('.dial .bars .fastest')).toHaveLength(1)
-  })
-})
-
-describe('keeps slipping', () => {
-  const stat = (subject_id, percentage) => ({
-    data: { subject_id, subject_type: 'kanji', percentage_correct: percentage, meaning_incorrect: 4 }
-  })
-
-  beforeEach(() => {
-    api.getReviewStatistics.mockResolvedValue([stat(700, 40), stat(1, 60)])
-    api.getLevelAssignments.mockResolvedValue([{ data: { subject_id: 1 } }])
-    api.getSubjects.mockResolvedValue([subject(700, '届', 'Deliver'), subject(1, '山', 'Mountain')])
-  })
-
-  const shown = host => [...host.querySelectorAll('.slipping .character')].map(c => c.textContent)
-
-  it('switches between every level and this one, reading the subjects once', async () => {
-    const host = await board()
-    await until(host, '.slipping')
-    expect(shown(host)).toEqual(['届', '山'])
-    await click(button(host, 'level 5'))
-    expect(shown(host)).toEqual(['山'])
-    await click(button(host, 'all levels'))
-    expect(shown(host)).toEqual(['届', '山'])
-    expect(api.getSubjects).toHaveBeenCalledOnce()
-  })
-
-  it('shows the first five and folds the rest behind their count', async () => {
-    const ids = [701, 702, 703, 704, 705, 706, 707]
-    api.getReviewStatistics.mockResolvedValue(ids.map((id, i) => stat(id, 30 + i)))
-    api.getSubjects.mockResolvedValue(ids.map(id => subject(id, String.fromCharCode(0x4e00 + id), 'Some')))
-    const host = await board()
-    await until(host, '.slipping')
-    expect(shown(host)).toHaveLength(5)
-    await click(button(host, '2 more'))
-    expect(shown(host)).toHaveLength(7)
-    await click(button(host, 'fewer'))
-    expect(shown(host)).toHaveLength(5)
-  })
-
-  it('links each character out to its WaniKani page, and names the half it is missed on', async () => {
-    api.getReviewStatistics.mockResolvedValue([
-      { data: { subject_id: 700, subject_type: 'kanji', percentage_correct: 40,
-        meaning_correct: 9, meaning_incorrect: 1, reading_correct: 3, reading_incorrect: 7 } }
-    ])
-    const page = 'https://www.wanikani.com/kanji/%E5%B1%8A'
-    api.getSubjects.mockResolvedValue([{ ...subject(700, '届', 'Deliver'), data: { ...subject(700, '届', 'Deliver').data, document_url: page } }])
-    const host = await board()
-    await until(host, '.slipping')
-    const link = host.querySelector('.slipping a.character')
-    expect(link.getAttribute('href')).toBe(page)
-    expect(link.getAttribute('target')).toBe('_blank')
-    expect(host.querySelector('.slipping .weak').textContent).toBe('r reading 30%, ')
-  })
-
-  it('reads a row in full by hover, and by a tap that holds', async () => {
-    api.getReviewStatistics.mockResolvedValue([
-      { data: { subject_id: 700, subject_type: 'kanji', percentage_correct: 40,
-        meaning_correct: 9, meaning_incorrect: 1, reading_correct: 3, reading_incorrect: 7 } }
-    ])
-    const deliver = subject(700, '届', 'Deliver')
-    api.getSubjects.mockResolvedValue([{ ...deliver, data: { ...deliver.data, readings: [{ reading: 'とど', primary: true }] } }])
-    const host = await board()
-    await until(host, '.slipping')
-    const readout = () => host.querySelector('.slipping + .readout').textContent
-    const row = host.querySelector('.slipping .meaning')
-    expect(readout()).toContain('for how it is missed')
-    await hover(row)
-    expect(readout()).toContain('届 Deliver, とど · missed 8 times · meaning 90%, reading 30% right')
-    await unhover(row)
-    expect(readout()).not.toContain('missed 8 times')
-    await tap(row)
-    expect(readout()).toContain('missed 8 times')
-  })
-
-  it('looks at the same slips by lens, reading the look-alikes only when that lens opens', async () => {
-    api.getReviewStatistics.mockResolvedValue([
-      { data: { subject_id: 700, subject_type: 'kanji', percentage_correct: 40, meaning_correct: 3, meaning_incorrect: 5,
-        meaning_current_streak: 1, meaning_max_streak: 5 } },
-      { data: { subject_id: 701, subject_type: 'kanji', percentage_correct: 88, meaning_correct: 8, meaning_incorrect: 1 } }
-    ])
-    const end = subject(700, '末', 'End')
-    api.getSubjects
-      .mockResolvedValueOnce([{ ...end, data: { ...end.data, visually_similar_subject_ids: [701] } }])
-      .mockResolvedValueOnce([subject(701, '未', 'Not Yet')])
-    const host = await board()
-    await until(host, '.slipping')
-    expect(api.getSubjects).toHaveBeenCalledOnce()
-
-    await click(button(host, 'how'))
-    expect(host.querySelector('.slipping li.group').textContent).toBe('fell back1')
-
-    await click(button(host, 'alike'))
-    await until(host, '.pair')
-    expect(api.getSubjects).toHaveBeenLastCalledWith(expect.anything(), [701])
-    expect(host.querySelector('.pair').textContent).toContain('未 sticks; 末 is the one to fix')
-
-    await click(button(host, 'worst'))
-    await click(button(host, 'alike'))
-    expect(api.getSubjects).toHaveBeenCalledTimes(2)
-  })
-
-  it('has no switch when the level’s assignments do not load', async () => {
-    api.getLevelAssignments.mockRejectedValue(new Error('Load failed'))
-    const host = await board()
-    await until(host, '.slipping')
-    expect(button(host, 'level 5')).toBeUndefined()
-    expect(shown(host)).toEqual(['届', '山'])
   })
 })
 
@@ -823,5 +711,81 @@ describe('the level’s kanji', () => {
   it('carries each cell’s words for a screen reader', async () => {
     const host = await board()
     expect(cell(host, 1).querySelector('.sr-only').textContent).toBe('川 River: locked, Not unlocked yet')
+  })
+})
+
+describe('j, k, d and u', () => {
+  // The glide runs on animation frames; these tests hand them out by hand.
+  let frames
+  beforeEach(() => {
+    frames = []
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(run => frames.push(run))
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
+  })
+
+  function key(type, key, at = document.body, init = {}) {
+    act(() => {
+      at.dispatchEvent(new KeyboardEvent(type, { key, bubbles: true, cancelable: true, ...init }))
+    })
+  }
+
+  // Run the frame loop for `ms`, sixty frames a second, and return how far
+  // the page was asked to move.
+  function run(scrollBy, ms) {
+    let at = performance.now()
+    for (let t = 0; t < ms && frames.length; t += 16) {
+      at += 16
+      frames.shift()(at)
+    }
+    return scrollBy.mock.calls.reduce((sum, [, y]) => sum + y, 0)
+  }
+
+  it('glides down while j is held, and comes to rest when it is let go', async () => {
+    await board()
+    const scrollBy = vi.spyOn(window, 'scrollBy').mockImplementation(() => {})
+    key('keydown', 'j')
+    key('keydown', 'j', document.body, { repeat: true })
+    const held = run(scrollBy, 500)
+    expect(held).toBeGreaterThan(300)
+    key('keyup', 'j')
+    run(scrollBy, 2000)
+    expect(frames).toHaveLength(0)
+    expect(scrollBy.mock.calls.every(([, y]) => y >= 0)).toBe(true)
+  })
+
+  it('moves a short step up on a tap of k', async () => {
+    await board()
+    const scrollBy = vi.spyOn(window, 'scrollBy').mockImplementation(() => {})
+    key('keydown', 'k')
+    key('keyup', 'k')
+    const moved = run(scrollBy, 2000)
+    expect(moved).toBeLessThan(-40)
+    expect(moved).toBeGreaterThan(-200)
+  })
+
+  it('jumps to the next band on d and back on u', async () => {
+    const host = await board()
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const bands = [...host.querySelectorAll('.band')]
+    expect(bands).toHaveLength(3)
+    // The page sits with the second band's top 16px down: at hand is up.
+    bands.forEach((band, i) => {
+      band.getBoundingClientRect = () => ({ top: [-600, 16, 900][i] })
+    })
+    key('keydown', 'd')
+    expect(scrollTo).toHaveBeenLastCalledWith(expect.objectContaining({ top: window.scrollY + 884 }))
+    key('keydown', 'u')
+    expect(scrollTo).toHaveBeenLastCalledWith(expect.objectContaining({ top: window.scrollY - 616 }))
+  })
+
+  it('leaves the keys alone while typing', async () => {
+    await board()
+    const scrollBy = vi.spyOn(window, 'scrollBy').mockImplementation(() => {})
+    const field = document.createElement('input')
+    document.body.append(field)
+    key('keydown', 'j', field)
+    expect(frames).toHaveLength(0)
+    expect(scrollBy).not.toHaveBeenCalled()
+    field.remove()
   })
 })

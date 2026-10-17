@@ -1,6 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import {
-  getLevelAssignments,
   getLevelKanji,
   getLevelRadicals,
   getLevelVocabulary,
@@ -9,7 +8,6 @@ import {
   getReviewStatistics,
   getSpacedRepetitionSystems,
   getStartedAssignments,
-  getSubjects,
   getSummary,
   getUser
 } from '../lib/wanikani.js'
@@ -21,10 +19,7 @@ import {
   fastestLevel,
   LEVEL_STANDINGS,
   levelStandings,
-  FIELD,
-  leeches,
   levelKanji,
-  MIN_MISSES,
   levelUpItems,
   lockedBehind,
   medianWorking,
@@ -34,14 +29,11 @@ import {
   nextUp,
   pace,
   paceToReach,
-  partnerFor,
   project,
   road,
-  SLIPPING,
   srsSystems
 } from '../lib/board.js'
-import { glyphFor, pageFor } from '../lib/subject.js'
-import { clock, count as many, dayMonth, dayMonthYear, monthYear, roughly, weekday, when } from '../lib/dates.js'
+import { clock, count as many, dayMonth, dayMonthYear, monthYear, roughly, when } from '../lib/dates.js'
 import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
 import { kanjiIndex } from '../lib/kanjiIndex.js'
@@ -51,16 +43,19 @@ import Forecast from './Forecast.jsx'
 import Hint from './Hint.jsx'
 import useOnline from './useOnline.js'
 import usePointing from './usePointing.js'
+import useScrollKeys from './useScrollKeys.js'
 
 // 盤 The board — the whole app. Decided from a prototype: of four
 // directions (everything at once, time leads, the level is the page, the
 // almanac) and four branches of the first, the original "everything at
 // once" was picked. See "The dashboard" in PLAN.md.
 //
+// j and k scroll it and d and u jump band to band (useScrollKeys).
+//
 // The figures in the masthead, then three bands, each named on its
 // hairline (PLAN.md, "The regroup"): 今 now — the level line beside the next
-// 24 hours; 手元 at hand — the level, where the reviews stand, and what is
-// slipping; 先 ahead — the pace dial, then taught, coverage and the
+// 24 hours; 手元 at hand — the level's grid beside where the reviews stand;
+// 先 ahead — the pace dial, then taught, coverage and the
 // milestones a row each, the first two following a level chosen on the
 // dial's bars.
 //
@@ -85,6 +80,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
   // The pace dial's setting, held here because coverage's dates run on it
   // too. Null is the median.
   const [chosenPace, setChosenPace] = useState(null)
+  useScrollKeys()
   const readAt = useRef(0)
   const online = useOnline()
 
@@ -106,7 +102,6 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
       optional(getLevelProgressions(token)),
       optional(subjectTotals(token)),
       optional(getSpacedRepetitionSystems(token)),
-      optional(getLevelAssignments(token, user.level)),
       // The level's radicals, for the level line's count of what still
       // holds locked kanji back — read up front now, and handed to the grid's
       // switch so it never reads them twice.
@@ -173,29 +168,8 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           }))
         })
 
-        return commentary.then(async ([statistics, progressions, totals, systems, onLevel, radicals]) => {
-          // Every slip, ranked; the lists take the top ten and the field
-          // the top sixty. This level's, for the switch — null, and no
-          // switch, if the level's assignments did not come.
-          const every = statistics ? leeches(statistics, started, Infinity) : null
-          const onLevelIds = onLevel ? new Set(onLevel.map(a => a.data.subject_id)) : null
-          const everyHere = every && onLevelIds ? every.filter(l => onLevelIds.has(l.subjectId)) : null
-          const slipping = every?.slice(0, SLIPPING)
-          const slippingHere = everyHere?.slice(0, SLIPPING)
-          // Only the handful on screen — never a subject sync. Both lists'
-          // at most twenty, read together so the switch never waits. The
-          // look-alikes and the field read theirs when their lens opens.
-          const ids = [...new Set([...(slipping ?? []), ...(slippingHere ?? [])].map(l => l.subjectId))]
-          const leechSubjects = ids.length ? await optional(getSubjects(token, ids)) : null
+        return commentary.then(([statistics, progressions, totals, systems, radicals]) => {
           if (!live) return
-          const shares = statistics
-            ? new Map(statistics.filter(st => st?.data).map(st => [st.data.subject_id, st.data.percentage_correct]))
-            : null
-          const scoped = (list, all) => ({
-            items: withPartners(withSubjects(list, leechSubjects), shares),
-            field: all.slice(0, FIELD),
-            total: all.length
-          })
           const srs = systems ? srsSystems(systems) : null
           const radicalItems = radicals ? levelKanji(radicals[0], radicals[1]) : null
           setBoard(held => ({
@@ -207,10 +181,6 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             // The level's own system — the accelerated one on levels 1–2.
             fastest: srs ? fastestLevel(srs.get(kanji.find(k => k.system)?.system)) : null,
             accuracy: statistics ? accuracy(statistics) : null,
-            slipping: every && {
-              all: scoped(slipping, every),
-              level: everyHere && scoped(slippingHere, everyHere)
-            },
             pace: progressions ? pace(progressions, user.level, now) : null,
             radicals: radicalItems,
             // Without the intervals there is no soonest, but which radical
@@ -335,15 +305,16 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             </div>
           </Band>
           <Band kanji="手元" name="At hand · this level and your items">
-            {/* The spread sits under the level's grid: slipping beside them runs
-                taller than the grid alone, and the column has the room. */}
+            {/* The level's grid, and the spread beside it. Keeps slipping
+                stood here until it was taken off the board; of four layouts
+                prototyped for the room it left, the owner kept the two
+                columns (PLAN.md, "Without slipping"). */}
             <div className="columns">
               <div className="column">
                 <Level key={user.level} board={board} level={user.level} token={token} />
-                <Srs spread={board.spread} moved={board.moved} />
               </div>
               <div className="column">
-                <Slipping slipping={board.slipping} level={user.level} now={board.now} readSubjects={ids => getSubjects(token, ids)} />
+                <Srs spread={board.spread} moved={board.moved} />
               </div>
             </div>
           </Band>
@@ -367,6 +338,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           </Band>
         </>
       )}
+
 
       {board && !blocking ? null : (
         <div className="footline">
@@ -403,27 +375,6 @@ function Disconnect({ onDisconnect }) {
       {armed ? 'Confirm disconnect' : 'Disconnect'}
     </button>
   )
-}
-
-// Attach the fetched subject to each slipping item. One that did not come
-// back (the read failed, or the subject vanished) is dropped rather than
-// drawn as a percentage with no character.
-function withSubjects(slipping, subjects) {
-  if (!subjects) return []
-  const byId = new Map(subjects.map(s => [s.id, s]))
-  return slipping.filter(l => byId.has(l.subjectId)).map(l => ({ ...l, subject: byId.get(l.subjectId) }))
-}
-
-// The look-alike lens's partner for each, with its share right — null for
-// one not yet reviewed. Read off the subjects already fetched and the
-// statistics already loaded; only the partner's own subject waits for the
-// lens to open.
-function withPartners(items, shares) {
-  if (!shares) return items
-  return items.map(l => {
-    const partner = partnerFor(l.type, l.subject.data, shares)
-    return partner ? { ...l, partner: { ...partner, percentage: shares.get(partner.id) ?? null } } : l
-  })
 }
 
 const TOP_LEVEL = 60
@@ -999,469 +950,6 @@ function Srs({ spread: bands, moved: gained }) {
       </p>
     </section>
   )
-}
-
-// The switch reads every level's slips or only this one's — the same ten
-// worst, narrowed to what the current level holds. Every level's is first:
-// it is the lifetime record, and a level's items are new enough that few of
-// them have been missed the three times it takes to count.
-//
-// Under it, the lenses: five ways to look at the same slips, one at a
-// time (picked from a prototype; PLAN.md, "Lenses"). Worst is the ranked
-// list; next orders it by when WaniKani asks for each; how groups it by
-// streak; alike puts each beside the kanji it is taken for; field plots
-// every slip, not just ten. Never saved — the board opens on worst.
-const LENSES = ['worst', 'next', 'how', 'alike', 'field']
-
-function Slipping({ slipping, level, now, readSubjects }) {
-  const [scope, setScope] = useState('all')
-  const [lens, setLens] = useState('worst')
-  // Subjects the alike and field lenses read when they open, by id: the
-  // partners' and the field's, kept across switches so each is read once.
-  const [extra, setExtra] = useState(() => new Map())
-  const [reading, setReading] = useState(null)
-
-  const onLevel = scope === 'level' && slipping?.level
-  const shown = slipping ? (onLevel ? slipping.level : slipping.all) : null
-
-  const wanted =
-    !shown || (lens !== 'alike' && lens !== 'field')
-      ? []
-      : (lens === 'alike' ? shown.items.map(l => l.partner?.id) : shown.field.map(l => l.subjectId)).filter(
-          id => id && !extra.has(id) && !shown.items.some(l => l.subjectId === id)
-        )
-  const key = wanted.join(',')
-
-  useEffect(() => {
-    if (!key) return
-    let live = true
-    setReading('reading')
-    readSubjects(key.split(',').map(Number))
-      .then(subjects => {
-        if (!live) return
-        // An id WaniKani does not return is kept as null, so it is asked
-        // for once rather than waited on for ever.
-        const ids = key.split(',').map(Number)
-        setExtra(held => new Map([...held, ...ids.map(id => [id, null]), ...subjects.map(s => [s.id, s])]))
-        setReading(null)
-      })
-      .catch(() => live && setReading('failed'))
-    return () => {
-      live = false
-    }
-    // Keyed on the ids alone: readSubjects is a fresh arrow every render.
-  }, [key])
-
-  if (slipping === undefined) return <Waiting title="keeps slipping" />
-  if (!slipping) return null
-
-  const scopes = [['all', 'all levels'], ['level', `level ${level}`]]
-  const items = shown.items
-  const subjectOf = id => items.find(l => l.subjectId === id)?.subject ?? extra.get(id) ?? null
-
-  return (
-    <section>
-      <Head right={lens === 'field' && shown.total ? fieldCount(shown) : null}>keeps slipping</Head>
-      {slipping.level ? (
-        <div className="switch" role="group" aria-label="Show what keeps slipping on">
-          {scopes.map(([k, label]) => (
-            <button key={k} type="button" aria-pressed={k === (onLevel ? 'level' : 'all')} onClick={() => setScope(k)}>
-              {label}
-            </button>
-          ))}
-        </div>
-      ) : null}
-      {items.length === 0 ? (
-        <p className="notes">
-          {onLevel ? `Nothing on level ${level} missed often enough to count` : 'Nothing missed often enough to count'}
-        </p>
-      ) : (
-        <>
-          <div className="lenses" role="group" aria-label="Look at them by">
-            {LENSES.map(k => (
-              <button key={k} type="button" aria-pressed={k === lens} onClick={() => setLens(k)}>
-                {k}
-              </button>
-            ))}
-          </div>
-          {lens === 'alike' || lens === 'field' ? (
-            reading === 'failed' && wanted.length ? (
-              <p className="notes">
-                <span className="hint">Couldn’t read them from WaniKani</span>
-              </p>
-            ) : wanted.length ? (
-              <p className="notes">
-                <span className="hint">Reading…</span>
-              </p>
-            ) : lens === 'alike' ? (
-              <Alike items={items} subjectOf={subjectOf} />
-            ) : (
-              <Field key={onLevel ? 'level' : 'all'} items={shown.field} subjectOf={subjectOf} />
-            )
-          ) : (
-            <SlipList key={`${lens}-${onLevel ? 'level' : 'all'}`} {...lensed(lens, items, now)} />
-          )}
-        </>
-      )}
-    </section>
-  )
-}
-
-function fieldCount({ field, total }) {
-  return total > field.length ? `worst ${field.length} of ${many(total)}` : `${many(total)} in all`
-}
-
-// What each list lens shows: the rows in their order, with group labels
-// where it groups, what the row ends with, and what the readout adds.
-function lensed(lens, items, now) {
-  const share = l => `${l.percentage}%`
-  if (lens === 'next') {
-    const order = [...items].sort((a, b) => (a.due ? Date.parse(a.due) : Infinity) - (b.due ? Date.parse(b.due) : Infinity))
-    const groups = [
-      ['due now', l => l.due && Date.parse(l.due) <= now.getTime()],
-      ['next 6 hours', l => l.due && Date.parse(l.due) <= now.getTime() + 6 * HOUR_MS],
-      ['later today', l => l.due && new Date(l.due).toDateString() === now.toDateString()],
-      ['later', () => true]
-    ]
-    return {
-      groups: grouped(order, groups),
-      end: l => [<span key="d" className={dueIn(l, now) === 'now' ? 'due now' : 'due'}>{dueIn(l, now)}</span>, ` · ${share(l)}`],
-      say: l => `${slipLine(l)} · ${l.stage === null ? 'no assignment' : stageName(l.stage)}, ${dueIn(l, now) === 'now' ? 'due now' : `next up ${dueIn(l, now)}`}`,
-      hint: 'one for its stage and when it is next up'
-    }
-  }
-  if (lens === 'how') {
-    const groups = [
-      ['fell back', l => l.kind === 'fell'],
-      ['never stuck', l => l.kind === 'never'],
-      ['mending', l => l.kind === 'mending']
-    ]
-    return {
-      groups: grouped(items, groups),
-      end: l => [<Streak key="s" streak={l.streak} />, ` ${share(l)}`],
-      say: l => `${slipLine(l)} · ${l.streak.half} streak ${l.streak.current}, best ${l.streak.best}`,
-      hint: 'one for its streak — fell back held once, never stuck never has, mending is on its way out'
-    }
-  }
-  return {
-    groups: [{ label: null, items }],
-    end: l => [
-      // The half it is missed on — what to drill — as its initial, so the
-      // row stays one line. Said in full to a screen reader.
-      l.weak ? (
-        <span key="w" className="weak">
-          <span aria-hidden="true">{l.weak.half[0]} </span>
-          <span className="sr-only">
-            {l.weak.half} {l.weak.percentage}%,{' '}
-          </span>
-        </span>
-      ) : null,
-      share(l)
-    ],
-    say: slipLine,
-    hint: 'one for how it is missed'
-  }
-}
-
-const HOUR_MS = 60 * 60 * 1000
-
-// Each item into the first group that takes it, empty groups dropped.
-function grouped(items, groups) {
-  let left = items
-  const out = []
-  for (const [label, takes] of groups) {
-    const taken = left.filter(takes)
-    left = left.filter(l => !taken.includes(l))
-    if (taken.length) out.push({ label, items: taken })
-  }
-  return out
-}
-
-// When WaniKani next asks: now, the hour today, the weekday and hour this
-// week, the date after that.
-function dueIn(l, now) {
-  if (!l.due) return '—'
-  const at = new Date(l.due)
-  if (at <= now) return 'now'
-  if (at.toDateString() === now.toDateString()) return clock(at)
-  if (at - now < 6 * 24 * HOUR_MS) return `${weekday(at)} ${clock(at)}`
-  return dayMonth(at)
-}
-
-// The weak half's current run lit, the rest of its best run in the rule,
-// and a mark on the floor when the last answer was a miss.
-function Streak({ streak }) {
-  const cells = Math.min(streak.best, 8)
-  return (
-    <span className="streak" aria-hidden="true">
-      {Array.from({ length: cells }, (_, i) => (
-        <i key={i} className={i < streak.current ? 'on' : undefined} />
-      ))}
-      {streak.current === 1 ? <i className="miss" /> : null}
-    </span>
-  )
-}
-
-// One line a row — character, meaning, reading, and what the lens ends it
-// with — so ten fit where five used to (picked from a prototype; see
-// PLAN.md). What the line leaves out is in the readout under it: point at a
-// row, or tap it, or arrow to it. Like the level grid, a mouse clicks the
-// character through to WaniKani, and a finger's first tap reads and its
-// second opens. Group labels sit between rows and are not pointed at.
-// The first few show; the rest fold behind their count, so the column is no
-// taller than the level's grid beside it.
-const SLIPS_SHOWN = 5
-
-function SlipList({ groups, end, say, hint }) {
-  const [all, setAll] = useState(false)
-  const every = groups.flatMap(g => g.items)
-  const items = all ? every : every.slice(0, SLIPS_SHOWN)
-  const { at, point, groupProps, itemProps } = usePointing()
-  const opens = useRef(true)
-  const read = at === null ? null : items[at]
-
-  function key(event) {
-    const step = { ArrowUp: -1, ArrowDown: 1 }[event.key]
-    if (step) {
-      event.preventDefault()
-      point(at === null ? 0 : Math.min(items.length - 1, Math.max(0, at + step)))
-    }
-    if (event.key === 'Escape') point(null)
-    const page = read && pageFor(read.subject.data)
-    if (event.key === 'Enter' && page) window.open(page, '_blank', 'noreferrer')
-  }
-
-  // Rows and group labels in one run, each row with its place among the
-  // pointable items.
-  const rows = []
-  let index = 0
-  for (const group of groups) {
-    const showing = group.items.filter(l => items.includes(l))
-    if (showing.length === 0) continue
-    if (group.label) rows.push({ label: group.label, count: group.items.length })
-    for (const l of showing) rows.push({ l, index: index++ })
-  }
-
-  return (
-    <>
-      <ul className="slipping" role="list" aria-label="What keeps slipping" onKeyDown={key} {...groupProps}>
-        {rows.map(({ label, count, l, index }) => {
-          if (label) {
-            return (
-              <li key={label} className="group" aria-hidden="true">
-                <span>{label}</span>
-                <span>{count}</span>
-              </li>
-            )
-          }
-          const { text, image } = glyphFor(l.subject.data)
-          const page = pageFor(l.subject.data)
-          const reading = readingOf(l.subject.data)
-          const glyph = text ?? (image ? <img src={image} alt="" /> : '〓')
-          return (
-            <li key={l.subjectId} className={at === index ? 'read' : undefined} {...itemProps(index)}>
-              {/* Out to WaniKani's page for it, where the mnemonic is. */}
-              {page ? (
-                <a
-                  className="character"
-                  href={page}
-                  target="_blank"
-                  rel="noreferrer"
-                  tabIndex={-1}
-                  onPointerDown={event => {
-                    opens.current = event.pointerType === 'mouse' || at === index
-                  }}
-                  onClick={event => {
-                    if (!opens.current) event.preventDefault()
-                    opens.current = true
-                  }}
-                >
-                  {glyph}
-                </a>
-              ) : (
-                <span className="character">{glyph}</span>
-              )}
-              <span className="what">
-                <span className={`meaning wk-${l.type}`}>{meaningOf(l.subject.data)}</span>
-                {reading ? <span className="reading">{reading}</span> : null}
-              </span>
-              <span className="count">{end(l)}</span>
-            </li>
-          )
-        })}
-      </ul>
-      {every.length > SLIPS_SHOWN ? (
-        <button className="quiet more" type="button" aria-expanded={all} onClick={() => setAll(shown => !shown)}>
-          {all ? 'fewer' : `${every.length - SLIPS_SHOWN} more`}
-        </button>
-      ) : null}
-      <p className="notes readout" aria-live="polite">
-        <span className={read ? 'usual hidden' : 'usual'}>
-          <Hint pointer="Point at" touch="Tap">
-            {hint}, <span className="by-pointer">click</span>
-            <span className="by-touch">again</span> for its WaniKani page
-          </Hint>
-        </span>
-        {read ? (
-          <span className="usual">
-            <span className="soft">{say(read)}</span>
-          </span>
-        ) : null}
-      </p>
-    </>
-  )
-}
-
-// Each slip beside the kanji it is most likely taken for, or a word beside
-// the kanji in it that is pulling it down (`partnerFor`). A pair whose two
-// halves are both in the list shows once. Six at most: a pair is three
-// lines, and ten of them would run past the other columns.
-const PAIRS = 6
-
-function Alike({ items, subjectOf }) {
-  const listed = new Set(items.map(l => l.subjectId))
-  const seen = new Set()
-  const pairs = []
-  for (const l of items) {
-    if (!l.partner || seen.has(l.subjectId) || pairs.length >= PAIRS) continue
-    const other = subjectOf(l.partner.id)
-    if (!other) continue
-    seen.add(l.subjectId)
-    seen.add(l.partner.id)
-    pairs.push({ l, other, both: listed.has(l.partner.id) })
-  }
-  if (!pairs.length) return <p className="notes">Nothing here has a look-alike WaniKani names</p>
-
-  return (
-    <ul className="pairs">
-      {pairs.map(({ l, other, both }) => {
-        const { relation, percentage } = l.partner
-        const word = relation === 'part'
-        return (
-          <li key={l.subjectId} className={word ? 'pair word' : 'pair'}>
-            <Side subject={l.subject.data} type={l.type} percentage={l.percentage} />
-            <span className="vs">{word ? 'has' : 'vs'}</span>
-            <Side subject={other.data} type="kanji" percentage={percentage} far />
-            <span className="note">
-              {word
-                ? `Missed on the ${l.weak?.half ?? 'meaning'}; ${other.data.characters} is the weakest kanji in it`
-                : both
-                  ? 'Both slipping — learn them as a pair'
-                  : percentage === null
-                    ? `${other.data.characters} is still ahead of you`
-                    : `${other.data.characters} sticks; ${glyphFor(l.subject.data).text ?? 'this'} is the one to fix`}
-            </span>
-          </li>
-        )
-      })}
-    </ul>
-  )
-}
-
-function Side({ subject, type, percentage, far = false }) {
-  const page = pageFor(subject)
-  const { text, image } = glyphFor(subject)
-  const glyph = text ?? (image ? <img src={image} alt="" /> : '〓')
-  return (
-    <span className={far ? 'side far' : 'side'}>
-      {page ? (
-        <a className="character" href={page} target="_blank" rel="noreferrer">
-          {glyph}
-        </a>
-      ) : (
-        <span className="character">{glyph}</span>
-      )}
-      <span className={`meaning wk-${type}`}>{meaningOf(subject)}</span>
-      <span className="count">{percentage === null ? 'not reviewed yet' : `${percentage}% right`}</span>
-    </span>
-  )
-}
-
-// Every slip, not just ten: misses across, share right up. Bottom right is
-// chronic — missed often and still under. The scales run to the slips on
-// screen, so a field of near misses does not sit in one corner, and misses
-// run on a log scale: one item missed hundreds of times would otherwise
-// press every other into the first few pixels. Marks sit inside the axes,
-// never on them.
-function Field({ items, subjectOf }) {
-  const placed = items.filter(l => subjectOf(l.subjectId))
-  const { at, groupProps, itemProps } = usePointing()
-  const read = at === null ? null : placed[at]
-  if (!placed.length) return null
-
-  const most = Math.max(...placed.map(l => l.misses))
-  const least = Math.min(...placed.map(l => l.percentage))
-  const floor = Math.min(90, Math.floor(least / 10) * 10)
-  const inset = x => 5 + x * 0.9
-  const across = m => inset((Math.log(m / MIN_MISSES) / Math.max(Math.log(most / MIN_MISSES), Math.log(2))) * 100)
-  const up = p => inset(100 - ((p - floor) / (100 - floor)) * 100)
-
-  return (
-    <>
-      <div className="field" role="list" aria-label="Every slip, by misses and share right" {...groupProps}>
-        <span className="tick up" style={{ top: `${up(100)}%` }}>100%</span>
-        <span className="tick up" style={{ top: `${up(floor)}%` }}>{floor}%</span>
-        <span className="tick across" style={{ left: `${across(MIN_MISSES)}%` }}>{MIN_MISSES}</span>
-        <span className="tick across end">{many(most)} missed</span>
-        {placed.map((l, i) => {
-          const data = subjectOf(l.subjectId).data
-          const { text, image } = glyphFor(data)
-          return (
-            <span
-              key={l.subjectId}
-              role="listitem"
-              className={['glyph', `wk-${l.type}`, (text?.length ?? 1) > 2 ? 'long' : '', at === i ? 'read' : ''].join(' ').trim()}
-              // Anchored as far along itself as it is along the axis, so a
-              // long word at either end stays inside.
-              style={{
-                left: `${across(l.misses)}%`,
-                top: `${up(l.percentage)}%`,
-                transform: `translate(-${across(l.misses)}%, -50%)`
-              }}
-              {...itemProps(i)}
-            >
-              <span className="sr-only">{slipLine({ ...l, subject: { data } })}</span>
-              <span aria-hidden="true">{text ?? (image ? <img src={image} alt="" /> : '〓')}</span>
-            </span>
-          )
-        })}
-      </div>
-      <p className="notes readout" aria-live="polite">
-        <span className={read ? 'usual hidden' : 'usual'}>
-          <Hint pointer="Point at" touch="Tap">
-            one for how it is missed — bottom right is missed most and right least
-          </Hint>
-        </span>
-        {read ? (
-          <span className="usual">
-            <span className="soft">{slipLine({ ...read, subject: subjectOf(read.subjectId) })}</span>
-          </span>
-        ) : null}
-      </p>
-    </>
-  )
-}
-
-const meaningOf = data => data.meanings?.find(m => m.primary)?.meaning
-const readingOf = data => data.readings?.find(r => r.primary)?.reading
-
-// 一応 Just in case, いちおう · missed 9 times · meaning 60%, reading 73%
-// right. The halves WaniKani has never asked — a radical's reading — are
-// left out rather than shown as nothing.
-function slipLine(l) {
-  const { data } = l.subject
-  const name = [glyphFor(data).text, meaningOf(data)].filter(Boolean).join(' ')
-  const reading = readingOf(data)
-  const shares = ['meaning', 'reading']
-    .filter(h => l.halves?.[h] != null)
-    .map(h => `${h} ${l.halves[h]}%`)
-  return [
-    reading ? `${name}, ${reading}` : name,
-    `missed ${l.misses} ${l.misses === 1 ? 'time' : 'times'}`,
-    shares.length ? `${shares.join(', ')} right` : null
-  ]
-    .filter(Boolean)
-    .join(' · ')
 }
 
 // 歩 Ahead — the pace dial, then taught and coverage side by side under one

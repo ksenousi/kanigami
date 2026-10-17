@@ -26,8 +26,6 @@ token. There is no server and no database. The token is held in
 - **The SRS spread** and what moved in the past seven days.
 - **Taught** — radicals, kanji and vocabulary started, each as a share of
   everything WaniKani has.
-- **What keeps slipping** — the five items you miss most that are still in
-  rotation.
 - **Ahead** — days per level for every level, the six decades WaniKani names
   marked across them, and a pace slider that re-projects level 60 and the
   decades as you drag, and a goal — a level by a month — that says the pace

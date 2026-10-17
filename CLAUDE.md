@@ -5,7 +5,9 @@ read-only, running entirely in the browser on GitHub Pages.
 
 **Read [PLAN.md](PLAN.md) before doing anything.** It holds the design spec
 and the history of every decision. **The app is one screen, the 盤 board
-(`Dashboard.jsx`), and it only reads.** It began as a full client with
+(`Dashboard.jsx`), and it only reads.** Keeps slipping, the board's list of
+items you miss most, was removed on the owner's say-so (PLAN.md, "Without
+slipping"); don't bring it back. It began as a full client with
 review and lesson screens; those were removed when the owner found they
 used the dashboard far more than the practice. They are in git history —
 the last commit holding them is `03a7aa7` — and PLAN.md describes them.
@@ -52,8 +54,7 @@ the last commit holding them is `03a7aa7` — and PLAN.md describes them.
   Keep projections labelled as projections, and keep them out of anything
   that reads as WaniKani's record.
 - **Never bulk-sync the subject database — with two sanctioned exceptions.**
-  Fetch only the subjects on screen — the level's kanji and radicals (its vocabulary when switched to), the ten slipping
-  items, and when their lens opens, the look-alikes and the field's sixty. A full sync is the offline feature this app deliberately does not
+  Fetch only the subjects on screen — the level's kanji and radicals (its vocabulary when switched to). A full sync is the offline feature this app deliberately does not
   have. The exception, on the owner's say-so: coverage reads every kanji
   subject (`getAllKanjiSubjects`, ~2,100, ~4 MB) at most once a week and
   keeps only id, level and character (`kanjiIndex`). The second, for

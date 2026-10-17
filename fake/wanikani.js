@@ -171,11 +171,12 @@
     progressions.push({ data: { level: 15, unlocked_at: iso(now - 13 * D), passed_at: null, abandoned_at: null } })
   }
 
-  // --- what keeps slipping, and lifetime accuracy ---
+  // --- review statistics, for accuracy and right answers by level ---
   // Each: characters, reading, meaning, type, meaning right/wrong, reading
   // right/wrong, meaning streak now/best, reading streak now/best, stage,
-  // hours until next up, and the look-alikes (a kanji) or the kanji inside
-  // (a word). Enough of every kind for each lens to have something to say.
+  // hours until next up, and the kanji it is taken for or built from. Once
+  // the data behind keeps slipping, which has left the board; the counts
+  // still feed the masthead's accuracy.
   const SLIPPING = [
     ['末', 'まつ', 'End', 'kanji', [9, 6], [8, 3], [1, 5], [3, 4], 2, 0, ['未']],
     ['一人暮らし', 'ひとりぐらし', 'Living Alone', 'vocabulary', [12, 1], [7, 8], [6, 6], [1, 3], 3, 5, ['一', '人', '暮']],
@@ -252,23 +253,6 @@
       })
     })
   }
-  const page_ = (characters, kind) => `https://www.wanikani.com/${kind}/${encodeURIComponent(characters)}`
-  const slippingSubjects = [
-    ...SLIPPING.map(([characters, reading, meaning, type, , , , , , , links], i) => ({
-      id: 60000 + i,
-      data: { characters, meanings: [{ meaning, primary: true }], readings: [{ reading, primary: true }],
-        document_url: page_(characters, type),
-        ...(type === 'kanji'
-          ? { visually_similar_subject_ids: links.map(c => idOf.get(c)) }
-          : { component_subject_ids: links.map(c => idOf.get(c)) }) }
-    })),
-    ...BESIDE.map(([characters, reading, meaning]) => ({
-      id: idOf.get(characters),
-      data: { characters, meanings: [{ meaning, primary: true }], readings: [{ reading, primary: true }],
-        document_url: page_(characters, 'kanji') }
-    }))
-  ]
-
   // --- WaniKani's two SRS systems, intervals in seconds ---
   const srs = (id, waits) => ({
     id,
@@ -340,11 +324,6 @@
     [/\/level_progressions/, () => page(progressions), 'commentary'],
     [/\/review_statistics/, () => page(statistics), 'commentary'],
     [/\/spaced_repetition_systems/, () => page(systems), 'commentary'],
-    [/\/assignments\?levels=\d+&hidden/, () => page([...kanjiAssignments, ...radicalAssignments]), 'commentary'],
-    [/\/subjects\?ids=/, url => {
-      const ids = new Set(new URL(url).searchParams.get('ids').split(',').map(Number))
-      return page([...slippingSubjects, ...kanjiSubjects].filter(s => ids.has(s.id)))
-    }, 'commentary'],
     [/\/subjects\?types=radical,vocabulary,kana_vocabulary&hidden/, everyRadicalAndWord, 'commentary'],
     [/\/subjects\?types=radical&hidden/, () => ({ total_count: 499, data: [] }), 'commentary'],
     // The totals read and coverage's read are the same URL: one page with

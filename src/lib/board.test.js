@@ -1,15 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
-  MIN_MISSES,
   accuracy,
   accuracyByLevel,
   earliestLevelUp,
-  leeches,
   levelKanji,
   levelUpItems,
   lockedBehind,
   medianWorking,
-  partnerFor,
   milestones,
   moved,
   nextUp,
@@ -69,91 +66,6 @@ describe('accuracy', () => {
   it('is null for a side nobody has answered, never 100%', () => {
     expect(accuracy([])).toEqual({ meaning: null, reading: null })
     expect(accuracy([stat({ meaning_correct: 3, meaning_incorrect: 0 })]).reading).toBeNull()
-  })
-})
-
-describe('leeches', () => {
-  const slipping = (id, percentage, misses, type = 'kanji') =>
-    stat({ subject_id: id, subject_type: type, percentage_correct: percentage, meaning_incorrect: misses })
-
-  it('ranks by misses over the current streak to the 1.5, so a run of right answers pulls it down', () => {
-    const found = leeches([
-      slipping(1, 80, 6),
-      stat({ subject_id: 2, subject_type: 'kanji', percentage_correct: 40, meaning_incorrect: 9, meaning_current_streak: 3 }),
-      slipping(3, 90, 4)
-    ], [])
-    expect(found.map(l => [l.subjectId, Math.round(l.score * 10) / 10])).toEqual([[1, 6], [3, 4], [2, 1.7]])
-  })
-
-  it('scores an item by its worse half, and breaks ties on misses, then on share right', () => {
-    const found = leeches([
-      stat({ subject_id: 1, subject_type: 'kanji', percentage_correct: 70, meaning_incorrect: 1, reading_incorrect: 5 }),
-      slipping(2, 60, 5),
-      slipping(3, 50, 5),
-      stat({ subject_id: 4, subject_type: 'kanji', percentage_correct: 70, meaning_incorrect: 3, reading_incorrect: 3 })
-    ], [])
-    expect(found.map(l => l.subjectId)).toEqual([1, 3, 2, 4])
-  })
-
-  it('skips burned items and items missed too few times to mean anything', () => {
-    const found = leeches(
-      [slipping(1, 40, 6), slipping(2, 10, MIN_MISSES - 1), slipping(3, 60, 3)],
-      [assignment({ subject_id: 1, srs_stage: 9 })]
-    )
-    expect(found.map(l => l.subjectId)).toEqual([3])
-  })
-
-  it('narrows to the subjects it is given, when it is given some', () => {
-    const found = leeches([slipping(1, 40, 6), slipping(2, 50, 4), slipping(3, 60, 3)], [], 5, new Set([2, 3]))
-    expect(found.map(l => l.subjectId)).toEqual([2, 3])
-  })
-
-  it('names the half it is missed on, and nothing for a radical or a tie', () => {
-    const half = (subject_id, extra) => stat({ subject_id, subject_type: 'kanji', percentage_correct: 50, ...extra })
-    const found = leeches([
-      half(1, { meaning_correct: 9, meaning_incorrect: 1, reading_correct: 3, reading_incorrect: 7 }),
-      half(2, { meaning_correct: 2, meaning_incorrect: 6, reading_correct: 9, reading_incorrect: 1 }),
-      half(3, { meaning_correct: 5, meaning_incorrect: 5 }),
-      half(4, { meaning_correct: 5, meaning_incorrect: 5, reading_correct: 5, reading_incorrect: 5 })
-    ])
-    expect(Object.fromEntries(found.map(l => [l.subjectId, l.weak]))).toEqual({
-      1: { half: 'reading', percentage: 30 },
-      2: { half: 'meaning', percentage: 25 },
-      3: null,
-      4: null
-    })
-    expect(Object.fromEntries(found.map(l => [l.subjectId, l.halves]))).toEqual({
-      1: { meaning: 90, reading: 30 },
-      2: { meaning: 25, reading: 90 },
-      3: { meaning: 50, reading: null },
-      4: { meaning: 50, reading: 50 }
-    })
-  })
-
-  it('reads the weak half’s streak into fell back, never stuck and mending', () => {
-    const streaks = (subject_id, extra) =>
-      stat({ subject_id, subject_type: 'kanji', percentage_correct: 50, meaning_correct: 5, meaning_incorrect: 3,
-        reading_correct: 9, reading_incorrect: 1, reading_current_streak: 9, reading_max_streak: 9, ...extra })
-    const found = leeches([
-      streaks(1, { meaning_current_streak: 1, meaning_max_streak: 6 }),
-      streaks(2, { meaning_current_streak: 2, meaning_max_streak: 3 }),
-      streaks(3, { meaning_current_streak: 4, meaning_max_streak: 4 })
-    ], [])
-    expect(Object.fromEntries(found.map(l => [l.subjectId, [l.kind, l.streak]]))).toEqual({
-      1: ['fell', { half: 'meaning', current: 1, best: 6 }],
-      2: ['never', { half: 'meaning', current: 2, best: 3 }],
-      3: ['mending', { half: 'meaning', current: 4, best: 4 }]
-    })
-  })
-
-  it('carries when it is next up and its stage, off the assignment', () => {
-    const at = '2026-10-06T09:00:00.000Z'
-    const found = leeches([slipping(1, 50, 4), slipping(2, 60, 4)], [{ data: { subject_id: 1, srs_stage: 3, available_at: at } }])
-    expect(found.map(l => [l.due, l.stage])).toEqual([[at, 3], [null, null]])
-  })
-
-  it('names kana vocabulary as vocabulary', () => {
-    expect(leeches([slipping(4, 50, 4, 'kana_vocabulary')], [])[0].type).toBe('vocabulary')
   })
 })
 
@@ -704,17 +616,3 @@ describe('paceToReach', () => {
   })
 })
 
-describe('partnerFor', () => {
-  const shares = new Map([[10, 90], [11, 70], [20, 95], [21, 80]])
-
-  it('takes the look-alike right least often, or the first when none is reviewed', () => {
-    expect(partnerFor('kanji', { visually_similar_subject_ids: [10, 11, 12] }, shares)).toEqual({ id: 11, relation: 'alike' })
-    expect(partnerFor('kanji', { visually_similar_subject_ids: [12, 13] }, shares)).toEqual({ id: 12, relation: 'alike' })
-  })
-
-  it('takes the weakest kanji in a word, and nothing for a radical or a word of unreviewed kanji', () => {
-    expect(partnerFor('vocabulary', { component_subject_ids: [20, 21] }, shares)).toEqual({ id: 21, relation: 'part' })
-    expect(partnerFor('vocabulary', { component_subject_ids: [30] }, shares)).toBeNull()
-    expect(partnerFor('radical', { amalgamation_subject_ids: [10] }, shares)).toBeNull()
-  })
-})

@@ -2144,3 +2144,41 @@ every other day the tint, and each day's name sticks to the strip's left
 edge while its day is in view. The bars scale to the busiest hour of the
 week, and "by this time tomorrow" still sums the summary's day alone. The
 arrows, Home and End scroll the hour they land on into view.
+
+**Without slipping — keeps slipping taken off the board.** Asked for: remove
+the top errors section, and work out what the band looks like without it.
+Keeps slipping — the ten worst by leech score, its every-level/this-level
+switch, and its five lenses (worst, next, how, alike, field) — is gone, and
+with it every read that served only it: the leech subjects
+(`/subjects?ids=`), the look-alikes and the field's sixty, and the level's
+assignments for the switch (`getLevelAssignments`). `leeches`, `partnerFor`
+and their constants went from `board.js`. The review statistics stay: the
+masthead's accuracy and right answers by level read them. The entries above
+that describe slipping, its lenses and its column are history, not spec.
+
+What fills the room was decided from a prototype — the real board on the
+fake WaniKani, four layouts on a switch: **1** the level wide, sixteen
+kanji across with the spread a line under it; **2** the grid beside the
+spread, the two columns kept; **3** taught and coverage lifted out of ahead
+into the empty column; **4** no at-hand band at all, the grid under the
+level line and the spread under the forecast. The owner picked **2**: at
+hand is the level's grid in the left column and the SRS spread with the
+past seven days in the right, two-up from 800px as before and stacked
+below it. 1 (the recommendation), 3 and 4 were rejected; don't re-pitch
+them, and don't bring slipping back as a lens elsewhere.
+
+**j and k, d and u.** Asked for: vim-like navigation, then narrowed by the
+owner to "just j and k, keep it simple", with the scrolling smooth while a
+key is held, and d and u moving between the three bands rather than half a
+screen. One window listener, `useScrollKeys.js`. `j` and `k` glide: a key
+down sets a speed (1,500px a second) for the page to ease up to, a key up
+lets it ease back to rest, and a frame loop moves the page — so a held key
+runs smooth instead of stepping at the keyboard's repeat rate, and a tap
+starts at 900px a second and glides about 90px. `d` and `u` scroll to the
+top of the next or previous band (今 now, 手元 at hand, 先 ahead), 16px
+above it; `u` from the first band goes to the top of the page. Never while
+typing in a field, never with Cmd, Ctrl or Alt held; with reduced motion,
+`j` and `k` step 80px a press and the jumps are instant. Built first as a
+fuller set — hjkl sent to each section as arrows, `}` `{` hopping between
+them, gg and G, a `?` key sheet — and cut back to this on the owner's word;
+don't re-add them.

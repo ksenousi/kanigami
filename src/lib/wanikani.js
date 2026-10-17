@@ -123,15 +123,6 @@ export function getLevelKanji(token, level) {
   return collection(token, `/assignments?levels=${level}&subject_types=kanji&hidden=false`)
 }
 
-// Everything of one level the user has reached — radicals, kanji and
-// vocabulary — for no more than its subject ids: which of what keeps
-// slipping is this level's. Statistics carry no level, and the subjects that
-// would say it are the bulk sync this app does not do. One page; a level is
-// a few hundred subjects at most.
-export function getLevelAssignments(token, level) {
-  return collection(token, `/assignments?levels=${level}&hidden=false`)
-}
-
 // The kanji the level *has*, which is a different question and the
 // denominator of that 90%. An assignment does not exist until its kanji is
 // unlocked — the radicals in it have to be passed first — so at the start of
@@ -169,8 +160,8 @@ export function getLevelVocabulary(token, level) {
   ])
 }
 
-// Lifetime right and wrong answers per subject — the dashboard's accuracy
-// and what keeps slipping. Paginated like the started assignments and about
+// Lifetime right and wrong answers per subject — the masthead's accuracy
+// and right answers by level. Paginated like the started assignments and about
 // as large, so it is read once on mount and never on a timer. Retired
 // subjects stay out, as they do everywhere.
 export function getReviewStatistics(token) {
@@ -228,18 +219,3 @@ export function getAllRadicalAndVocabularySubjects(token) {
   return collection(token, '/subjects?types=radical,vocabulary,kana_vocabulary&hidden=false')
 }
 
-// An id filter goes in the query string, and a full review queue is enough
-// ids to make that string unreasonable. Chunk it.
-function chunked(ids, size = 500) {
-  const chunks = []
-  for (let i = 0; i < ids.length; i += size) chunks.push(ids.slice(i, i + size))
-  return chunks
-}
-
-// Fetch only the subjects we are about to show.
-export async function getSubjects(token, ids) {
-  const pages = await Promise.all(
-    chunked(ids).map(chunk => collection(token, `/subjects?ids=${chunk.join(',')}`))
-  )
-  return pages.flat()
-}
