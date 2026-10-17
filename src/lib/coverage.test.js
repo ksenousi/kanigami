@@ -66,16 +66,13 @@ describe('readingCoverage', () => {
     // Hand-made shares, in parts per million: 日 is common, 山 less so.
     const kanji = '日山川'
     const reading = [
-      ['news', [500000, 200000, 100000]],
-      ['books', [100000, 0, 300000]]
+      ['news', 'a paper', [500000, 200000, 100000]],
+      ['books', 'a library', [100000, 0, 300000]]
     ]
     expect(readingCoverage(kanji, reading, new Set(['日', '山']))).toEqual([
-      { name: 'news', share: 0.7 },
-      { name: 'books', share: 0.1 }
+      { name: 'news', source: 'a paper', share: 0.7 },
+      { name: 'books', source: 'a library', share: 0.1 }
     ])
-    expect(readingCoverage(kanji, reading, new Set())).toEqual([
-      { name: 'news', share: 0 },
-      { name: 'books', share: 0 }
-    ])
+    expect(readingCoverage(kanji, reading, new Set()).map(r => r.share)).toEqual([0, 0])
   })
 })

@@ -95,3 +95,10 @@ CLAUDE.md        conventions and gotchas for working on the code
 ## Licence
 
 MIT — see [LICENSE](LICENSE). Applies to this client's code only.
+
+Coverage's Reading measure uses kanji counts from
+[scriptin/kanji-frequency](https://github.com/scriptin/kanji-frequency)
+(2015 datasets), licensed
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/);
+`src/lib/kanjiReading.js` is derived from them by
+`scripts/kanji-reading.mjs`, rounded to parts per million.

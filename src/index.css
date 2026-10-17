@@ -2757,6 +2757,26 @@ button.quiet {
   grid-row: 2;
 }
 
+/* Rows of different heights — a Reading row's source wraps — line up at
+   their tops. */
+.board .rows .cover {
+  align-items: start;
+}
+
+/* A Reading row says which text under its name, the width of the row and
+   free to wrap, with the hairline beneath it. */
+.board .rows .cover .source {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-top: -4px;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+
+.board .rows .cover .sourced .track {
+  grid-row: 3;
+}
+
 .board .rows .milestones .body {
   display: flex;
   flex-direction: column;

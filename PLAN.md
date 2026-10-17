@@ -2372,3 +2372,26 @@ not just the three drawn over the bar: the ones a right answer passes
 bright with `↑guru`, the rest softer. The SRS spread's own hover went back
 to swapping every count for its share, on the owner's word; its band
 specimen is gone.
+
+**Reading.** Asked for: coverage's other wkstats charts. Frequency (the
+top 500, 1,000 … 2,500 kanji) was prototyped as top N and as bands of 500
+and dropped on the owner's word; Reading shipped. It is a third measure
+in coverage's switch: of all the kanji written in a kind of text, counting
+repeats, the share you have been taught — and, through a level chosen on
+the dial, the share then, its gain in points. Four rows, each a plain name
+with its source under it (the owner picked that over plain names alone and
+over sources alone): newspapers — Asahi, Mainichi, Yomiuri, Saga Shimbun ·
+2014–15; tweets — one week of Twitter's public sample · June 2015;
+Wikipedia — every Japanese page · May 2015; old books — Aozora Bunko, out
+of copyright · mostly before 1950.
+
+The counts are scriptin's kanji-frequency 2015 datasets (CC BY 4.0,
+credited in the README), the ones wkstats reads. `scripts/kanji-reading.mjs`
+turns them into `src/lib/kanjiReading.js`: one string of the 5,579 kanji
+at one part per million or more in some corpus, and each corpus's shares
+in parts per million in that order — about 31 KB compressed, imported
+beside the JLPT and Jōyō lists only when coverage is drawn, and left out
+of the switch if it fails to load. Regenerate it; don't hand-edit it.
+wkstats' fifth column, NHK Easy, comes from a gist with no licence and is
+left out; counting it ourselves from NHK News Web Easy is the way to add
+it.

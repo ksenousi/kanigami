@@ -111,7 +111,10 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
     // nothing else on the board waits for either.
     const extra = Promise.all([
       optional(kanjiIndex(token)),
-      optional(import('../lib/kanjiLists.js'))
+      optional(import('../lib/kanjiLists.js')),
+      // Reading's shares (about 30 KB compressed) come with the lists; a
+      // failure leaves the Reading measure out and the lists drawn.
+      optional(import('../lib/kanjiReading.js'))
     ])
     // Taught's radicals and words ahead: larger still, so it waits on nothing
     // and nothing waits on it — without it, those two lines stay at now.
@@ -1787,7 +1790,10 @@ function Milestones({ milestones: m, now }) {
 // and is now neither, on the owner's word (PLAN.md, "One slot").
 const MEASURES = [
   ['JLPT', 'JLPT'],
-  ['JOYO', 'Jōyō']
+  ['JOYO', 'Jōyō'],
+  // How much of real text you would recognise (PLAN.md, "Reading"); only
+  // when its shares have loaded.
+  ['READ', 'Reading']
 ]
 
 // A share of running text as a whole percentage, as `share` does for a list.
@@ -1805,7 +1811,7 @@ function Coverage({ coverage: c, at }) {
   // count (`54% 90 of 166`), running text's share alone, its gain in points.
   const rowsOf = characters =>
     measure === 'READ' && c.reading
-      ? readingCoverage(c.reading.kanji, c.reading.shares, characters).map(r => ({ name: r.name, fraction: r.share }))
+      ? readingCoverage(c.reading.kanji, c.reading.shares, characters).map(r => ({ name: r.name, source: r.source, fraction: r.share }))
       : coverage(c.lists[measure === 'READ' ? 'JLPT' : measure], characters).map(r => ({ ...r, fraction: r.have / r.total }))
   const nowRows = rowsOf(c.taught)
   const thenRows = at ? rowsOf(then) : nowRows
@@ -1842,8 +1848,10 @@ function Coverage({ coverage: c, at }) {
           const before = nowRows[i]
           const w = words(row, before)
           return (
-            <div key={row.name} className="row">
+            <div key={row.name} className={row.source ? 'row sourced' : 'row'}>
               <span className="name">{row.name}</span>
+              {/* Which text, exactly: the name alone said too little. */}
+              {row.source ? <span className="source">{row.source}</span> : null}
               <span className="track" aria-hidden="true">
                 <span className="fill gain" style={{ width: `${row.fraction * 100}%` }} />
                 <span className="fill" style={{ width: `${before.fraction * 100}%` }} />
