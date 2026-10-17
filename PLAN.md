@@ -2393,5 +2393,10 @@ in parts per million in that order — about 31 KB compressed, imported
 beside the JLPT and Jōyō lists only when coverage is drawn, and left out
 of the switch if it fails to load. Regenerate it; don't hand-edit it.
 wkstats' fifth column, NHK Easy, comes from a gist with no licence and is
-left out; counting it ourselves from NHK News Web Easy is the way to add
-it.
+left out, on the owner's word, for now. The owner does not want articles
+counted here. If it comes back, the route found is nhkore
+(github.com/esotericpig/nhkore, LGPL-3.0): its release's
+`nhkore-core.zip` carries word frequencies from 7,198 NHK News Web Easy
+articles, 2011–25, which a script can turn into kanji shares — using only
+the word and count columns, not NHK's text or the definitions in the
+file.
