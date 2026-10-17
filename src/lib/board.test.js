@@ -274,6 +274,16 @@ describe('levelKanji and nextUp', () => {
     expect(k[0].meaning).toBe('m1')
   })
 
+  it('carries the primary reading, both where WaniKani marks two, and none for a radical', () => {
+    const kanji = (id, readings) => ({ id, data: { characters: 'A', lesson_position: id, meanings: [], readings } })
+    const [one, two, none] = levelKanji([
+      kanji(1, [{ reading: 'さん', primary: true }, { reading: 'やま', primary: false }]),
+      kanji(2, [{ reading: 'にち', primary: true }, { reading: 'じつ', primary: true }]),
+      kanji(3, undefined)
+    ], [])
+    expect([one.kana, two.kana, none.kana]).toEqual(['さん', 'にち、じつ', ''])
+  })
+
   it('puts a higher stage first whatever the lesson order, and keeps lesson order where no review is set', () => {
     const k = levelKanji(
       [subject(1, 'A', 0), subject(2, 'B', 1), subject(3, 'C', 2), subject(4, 'D', 3), subject(5, 'E', 4)],

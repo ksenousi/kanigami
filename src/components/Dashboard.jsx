@@ -778,7 +778,7 @@ function Level({ board, level, token, perLevel }) {
         {reading ? (
           <span className="usual">
             <span className="soft">
-              {reading.characters ?? ''} {reading.meaning} · {describe(reading)}
+              {reading.characters ?? ''} {reading.kana ? `${reading.kana} ` : ''}{reading.meaning} · {describe(reading)}
             </span>
             <span className="soft">{nextReview(reading, new Date())}</span>
           </span>
@@ -857,7 +857,7 @@ function Grid({ items, label, onRead, words = false, holders = null, need = null
             }}
           >
             <span className="sr-only">
-              {`${k.characters ?? ''} ${k.meaning}: ${describe(k)}, ${nextReview(k, new Date())}`}
+              {`${k.characters ?? ''} ${k.kana ? `${k.kana} ` : ''}${k.meaning}: ${describe(k)}, ${nextReview(k, new Date())}`}
             </span>
             {words ? null : <i className="bar" aria-hidden="true" />}
             <span className="character" aria-hidden="true">

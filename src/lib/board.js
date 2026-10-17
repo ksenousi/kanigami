@@ -301,12 +301,16 @@ export function levelKanji(subjects = [], assignments = []) {
     .map(subject => {
       const a = bySubject.get(subject.id)
       const meaning = subject.data.meanings?.find(m => m.primary)?.meaning ?? ''
+      // The primary reading — two where WaniKani marks two. A radical has
+      // none, and kana vocabulary is its own reading; both come out empty.
+      const kana = (subject.data.readings ?? []).filter(r => r.primary).map(r => r.reading).join('、')
       const base = {
         id: subject.id,
         characters: subject.data.characters,
         // A radical may have no codepoint; the grid draws WaniKani's image.
         image: glyphFor(subject.data).image,
         meaning,
+        kana,
         url: pageFor(subject.data),
         system: subject.data.spaced_repetition_system_id,
         // A kanji's radicals, WaniKani's own list — what keeps it locked.

@@ -45,11 +45,53 @@
        ['庭', 'garden'], ['庫', 'storage'], ['箱', 'box'], ['筆', 'brush'], ['鉄', 'iron'], ['銀', 'silver'],
        ['鏡', 'mirror'], ['歯', 'tooth'], ['鼻', 'nose'], ['眼', 'eyeball'], ['涙', 'tear'], ['汗', 'sweat'],
        ['汽', 'steam'], ['械', 'machine']]
+  // One primary reading each, as WaniKani teaches it first.
+  const READING = {
+    '大': 'だい',
+    '口': 'こう',
+    '山': 'さん',
+    '川': 'せん',
+    '人': 'にん',
+    '入': 'にゅう',
+    '薬': 'やく',
+    '皿': 'さら',
+    '曜': 'よう',
+    '港': 'こう',
+    '湖': 'こ',
+    '橋': 'きょう',
+    '島': 'とう',
+    '岸': 'がん',
+    '波': 'は',
+    '泳': 'えい',
+    '洋': 'よう',
+    '漁': 'ぎょ',
+    '祭': 'さい',
+    '際': 'さい',
+    '察': 'さつ',
+    '窓': 'まど',
+    '階': 'かい',
+    '局': 'きょく',
+    '庭': 'てい',
+    '庫': 'こ',
+    '箱': 'はこ',
+    '筆': 'ひつ',
+    '鉄': 'てつ',
+    '銀': 'ぎん',
+    '鏡': 'きょう',
+    '歯': 'は',
+    '鼻': 'はな',
+    '眼': 'がん',
+    '涙': 'るい',
+    '汗': 'あせ',
+    '汽': 'き',
+    '械': 'かい'
+  }
   const system = fresh ? 2 : 1
   const kanjiSubjects = KANJI.map(([characters, meaning], i) => ({
     id: 1000 + i,
     object: 'kanji',
     data: { level: LEVEL, characters, meanings: [{ meaning, primary: true }], lesson_position: i, spaced_repetition_system_id: system,
+      readings: [{ reading: READING[characters], primary: true }],
       document_url: `https://www.wanikani.com/kanji/${encodeURIComponent(characters)}`,
       // Only the locked one names its radicals: 械 waits on 戈, the
       // radical still in apprentice, for the level line's locked behind.
