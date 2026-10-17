@@ -32,7 +32,7 @@ import usePointing from './usePointing.js'
 //   hours from the keyboard; the line is the live region.
 //
 // Each bar is a share of the tallest (`--h`, 0–1); the CSS says how tall the
-// tallest is — 96px on its own, the column's height beside the level line.
+// tallest is — 96px on its own, taller in the column beside the level.
 
 // The most kanji drawn over one hour. A dozen on one line ran across the
 // hours either side and into the next hour's own; the rest are a count, and

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 // j and k scroll the board, the way they do in a pager; d and u jump to the
-// next or previous of its three bands — 今 now, 手元 at hand, 先 ahead —
+// next or previous of its bands — 今 now and 先 ahead —
 // rather than half a screen, which lands nowhere in particular. That is all.
 //
 // Held, the page glides rather than stepping at the keyboard's repeat rate,

@@ -493,14 +493,17 @@ describe('coverage', () => {
   })
 })
 
-describe('the level line', () => {
+describe('the level and its strip', () => {
   const line = host => host.querySelector('.level-line').textContent
 
   it('counts the level’s kanji by state against the 90% mark', async () => {
     const host = await board()
-    expect(host.querySelector('.level-line .head').textContent).toContain('0 of 2 needed')
-    expect(host.querySelector('.level-line .need').textContent).toBe('2 needed')
-    expect(host.querySelectorAll('.level-line .states i')).toHaveLength(2)
+    expect(host.querySelector('.level > .head').textContent).toContain('0 of 2 needed')
+    const blocks = [...host.querySelectorAll('.kanji.strip li')]
+    expect(blocks.map(li => li.querySelector('.bar') !== null)).toEqual([true, true])
+    // The 90% line stands beside the block that reaches it — the second.
+    expect(blocks.map(li => li.classList.contains('need'))).toEqual([false, true])
+    expect(blocks.map(li => li.querySelector('.character').textContent)).toEqual(['山', '川'])
     expect(host.querySelector('.level-line .tally').textContent).toBe('0 passed1 apprentice II1 locked')
   })
 
@@ -530,8 +533,10 @@ describe('the level line', () => {
     expect(host.querySelector('.level-line .holding').textContent).toContain('工 Construction → 川')
     expect(host.querySelector('.level-line .holding').textContent).not.toContain('each soonest')
 
-    const cell = host.querySelector('.level-line .states .locked .under').textContent
-    expect(cell).toBe('川工')
+    // Under the locked kanji's block, its character and the radical holding it.
+    const cell = host.querySelector('.kanji.strip li.locked')
+    expect(cell.querySelector('.character').textContent).toBe('川')
+    expect(cell.querySelector('.by').textContent).toBe('工')
   })
 
   it('says the soonest day once when every radical shares it', async () => {
@@ -767,15 +772,16 @@ describe('j, k, d and u', () => {
     const host = await board()
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
     const bands = [...host.querySelectorAll('.band')]
-    expect(bands).toHaveLength(3)
-    // The page sits with the second band's top 16px down: at hand is up.
+    expect(bands).toHaveLength(2)
+    // The page sits with now's top 16px down: ahead is below it.
     bands.forEach((band, i) => {
-      band.getBoundingClientRect = () => ({ top: [-600, 16, 900][i] })
+      band.getBoundingClientRect = () => ({ top: [16, 900][i] })
     })
     key('keydown', 'd')
     expect(scrollTo).toHaveBeenLastCalledWith(expect.objectContaining({ top: window.scrollY + 884 }))
+    // Up from the first band is the top of the page.
     key('keydown', 'u')
-    expect(scrollTo).toHaveBeenLastCalledWith(expect.objectContaining({ top: window.scrollY - 616 }))
+    expect(scrollTo).toHaveBeenLastCalledWith(expect.objectContaining({ top: 0 }))
   })
 
   it('leaves the keys alone while typing', async () => {

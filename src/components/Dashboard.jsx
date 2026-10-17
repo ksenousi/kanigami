@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   getLevelKanji,
   getLevelRadicals,
@@ -52,10 +52,9 @@ import useScrollKeys from './useScrollKeys.js'
 //
 // j and k scroll it and d and u jump band to band (useScrollKeys).
 //
-// The figures in the masthead, then three bands, each named on its
-// hairline (PLAN.md, "The regroup"): 今 now — the level line beside the next
-// 24 hours; 手元 at hand — the level's grid beside where the reviews stand;
-// 先 ahead — the pace dial, then taught, coverage and the
+// The figures in the masthead, then two bands, each named on its hairline
+// (PLAN.md, "The regroup", then "The strip carries the kanji"): 今 now — the
+// level as its strip, beside the week ahead and the SRS spread; 先 ahead — the pace dial, then taught, coverage and the
 // milestones a row each, the first two following a level chosen on the
 // dial's bars.
 //
@@ -102,7 +101,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
       optional(getLevelProgressions(token)),
       optional(subjectTotals(token)),
       optional(getSpacedRepetitionSystems(token)),
-      // The level's radicals, for the level line's count of what still
+      // The level's radicals, for the level's count of what still
       // holds locked kanji back — read up front now, and handed to the grid's
       // switch so it never reads them twice.
       optional(getLevelRadicals(token, user.level))
@@ -291,29 +290,30 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
         </div>
       ) : (
         <>
-          <Band kanji="今" name="Now · what’s due and when">
-            {/* The level line and the week ahead side by side on a wide
-                screen: both are short and wide, and stacked they were 800px. */}
+          <Band kanji="今" name="Now · this level, and what’s due">
+            {/* The level beside what is due: its kanji as the strip, a block
+                each with the character under it, then the tally and the
+                reads; the week ahead and the SRS spread in the other column.
+                The level line and the level's grid were one section each
+                until they were merged (PLAN.md, "The strip carries the
+                kanji"). */}
             <div className="now-pair">
-              <LevelLine board={board} level={user.level} perLevel={paceFor(board.pace, chosenPace)} />
-              <Forecast
-                summary={board.summary}
-                hours={board.hours}
-                waitingOn={user.level < TOP_LEVEL ? (board.waitingOn ?? []) : []}
-                nextLevel={user.level + 1}
-              />
-            </div>
-          </Band>
-          <Band kanji="手元" name="At hand · this level and your items">
-            {/* The level's grid, and the spread beside it. Keeps slipping
-                stood here until it was taken off the board; of four layouts
-                prototyped for the room it left, the owner kept the two
-                columns (PLAN.md, "Without slipping"). */}
-            <div className="columns">
               <div className="column">
-                <Level key={user.level} board={board} level={user.level} token={token} />
+                <Level
+                  key={user.level}
+                  board={board}
+                  level={user.level}
+                  token={token}
+                  perLevel={paceFor(board.pace, chosenPace)}
+                />
               </div>
               <div className="column">
+                <Forecast
+                  summary={board.summary}
+                  hours={board.hours}
+                  waitingOn={user.level < TOP_LEVEL ? (board.waitingOn ?? []) : []}
+                  nextLevel={user.level + 1}
+                />
                 <Srs spread={board.spread} moved={board.moved} />
               </div>
             </div>
@@ -384,7 +384,7 @@ const NAMED = 4
 
 // A section's hairline heading: what it is on the left, its one number on
 // the right. Not a box — the rule is the only thing drawn.
-// 今 now, 手元 at hand, 先 ahead: the board's three bands, each named on the
+// 今 now and 先 ahead: the board's two bands, each named on the
 // hairline that opens it. The name is a sentence, not a head — the sections
 // inside keep their own.
 function Band({ kanji, name, children }) {
@@ -410,8 +410,8 @@ function Head({ children, right }) {
 // A count of nothing is dim. Only reviews take the accent, and only when
 // there are some.
 //
-// The kanji to the next level was a figure here; it is the level line's
-// sentence now, beside the rest of what the level says. The seven days'
+// The kanji to the next level was a figure here; it is the level's head
+// now, beside the rest of what the level says. The seven days'
 // total went at the owner's word — the 24 hours under it say what is
 // coming, and a week's sum asked nothing of anyone.
 function Figures({ board }) {
@@ -441,19 +441,13 @@ function Figures({ board }) {
   )
 }
 
-// 段 The level line — where the level stands, straight under the figures,
-// the board's second band. Decided from a prototype (PLAN.md, "The level
-// line"): of four places — a band, the figure growing its lines, a road of
-// soonest passes, a pinned masthead line — the band.
-//
-// The head says the day and the count against the 90%. Beneath, a
-// hairline of the level's every kanji in the grid's order — passed, then
-// apprentice by stage, then lessons, then locked — with a mark where the
-// 90% WaniKani levels you up at falls, and the counts by state. Then the
-// reads: what is next, what the level-up waits on, and the next level —
-// fastest, at your median, and at the dial when it has been moved.
-// A sentence once led it — `32 kanji to level 18, 9 still locked` — and went
-// at the owner's word: the hairline, the counts and the level-up said it all.
+// 段 Under the level's strip, what the level says: the counts by state,
+// the radicals holding its locked kanji, then the reads — what is next,
+// what the level-up waits on, and the next level: fastest, at your
+// last-five pace, and at the dial when it has been moved. It was the level
+// line, a section with its own strip (PLAN.md, "The level line"), until
+// the strip and the level's grid were merged (PLAN.md, "The strip carries
+// the kanji"); the strip is the grid's now.
 //
 // Every state is WaniKani's, read off an assignment. The fastest level-up
 // runs WaniKani's own intervals and the dates run a pace; all are
@@ -473,13 +467,13 @@ const STATES = [
 ]
 const stateOf = k => (k.state === 'apprentice' ? `a${k.stage}` : k.state)
 
-function LevelLine({ board, level, perLevel }) {
-  const { passed, needed, remaining, total } = board.passed
+// `counts`: the tally and the holding line, which are the kanji's — left
+// out while the strip shows the radicals.
+function LevelReads({ board, level, perLevel, counts = true }) {
+  const { remaining, total } = board.passed
   const kanji = board.kanji
   const tally = Object.fromEntries(STATES.map(([state]) => [state, kanji.filter(k => stateOf(k) === state).length]))
   const p = board.pace
-  const onLevel = p?.current?.days
-  const day = onLevel !== undefined ? Math.floor(onLevel) + 1 : null
   const top = level >= TOP_LEVEL
   const levelUp = board.levelUp
   // The fastest the next level can come, every answer right — through the
@@ -492,7 +486,6 @@ function LevelLine({ board, level, perLevel }) {
   const atHome = at(home)
   const atDial = perLevel !== home ? at(perLevel) : null
   const ahead = Boolean(fastest || atHome || atDial)
-  const holders = holdersOf(board.behind)
 
   const next = board.next
   let up = null
@@ -503,46 +496,9 @@ function LevelLine({ board, level, perLevel }) {
   else if (levelUp === undefined) up = 'Reading…'
 
   return (
-    <section className="level-line">
-      <div className="head">
-        <h2>level {level}</h2>
-        <span>
-          {[day !== null ? `day ${day}` : null, total > 0 ? (top ? `${passed} of ${total} passed` : `${passed} of ${needed} needed`) : null]
-            .filter(Boolean)
-            .join(' · ')}
-        </span>
-      </div>
-      {total === 0 ? (
-        <p className="notes">
-          <span className="soft">No kanji at this level yet</span>
-        </p>
-      ) : null}
-      {total > 0 ? (
+    <div className="level-line">
+      {counts && total > 0 ? (
         <>
-          <div className="states" aria-hidden="true">
-            {kanji.map(k => (
-              <span key={k.id} className={standing(k)}>
-                <i />
-                {/* A locked kanji wears its own character, and under it the
-                    radicals holding it — the strip says what the lock is. */}
-                {k.state === 'locked' ? (
-                  <span className="under">
-                    <span className="held">{glyph(k)}</span>
-                    {(holders.get(k.id) ?? []).map(r => (
-                      <span key={r.id} className={`holder ${standing(r)}`}>
-                        {glyph(r)}
-                      </span>
-                    ))}
-                  </span>
-                ) : null}
-              </span>
-            ))}
-            {!top ? (
-              <span className="need" style={{ left: `${(needed / total) * 100}%` }}>
-                {needed} needed
-              </span>
-            ) : null}
-          </div>
           <p className="tally">
             {STATES.filter(([state]) => tally[state] > 0 || state === 'passed').map(([state, word]) => (
               <span key={state}>
@@ -604,8 +560,23 @@ function LevelLine({ board, level, perLevel }) {
           </span>
         </p>
       ) : null}
-    </section>
+    </div>
   )
+}
+
+
+// The level's head: `day 5 · 20 of 28 needed`, or passed of all on the
+// last level, which has no level-up to count towards.
+function levelCount(board, level) {
+  const { passed, needed, total } = board.passed
+  const days = board.pace?.current?.days
+  const top = level >= TOP_LEVEL
+  return [
+    days !== undefined ? `day ${Math.floor(days) + 1}` : null,
+    total > 0 ? (top ? `${passed} of ${total} passed` : `${passed} of ${needed} needed`) : null
+  ]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 // What keeps the locked kanji locked, as one line under the strip: each of
@@ -651,8 +622,8 @@ function Holding({ behind }) {
   )
 }
 
-// Each locked kanji's radicals still in the way, by kanji id, for its cell —
-// in the level line's strip and in the level's grid.
+// Each locked kanji's radicals still in the way, by kanji id, for its block
+// in the strip.
 function holdersOf(behind) {
   const holders = new Map()
   for (const { radical, holds } of behind?.blockers ?? []) {
@@ -661,7 +632,7 @@ function holdersOf(behind) {
   return holders
 }
 
-// Where a kanji or radical stands, as the level line's class: its state,
+// Where a kanji or radical stands, as the strip's class: its state,
 // and for apprentice its stage, so it wears that stage's hue.
 function standing(item) {
   return item.state === 'apprentice' ? `apprentice a${item.stage}` : item.state
@@ -676,11 +647,16 @@ function percent(fraction) {
   return fraction === null ? '–' : Math.round(fraction * 100)
 }
 
-// Every kanji of the level, locked ones included, so the level's size is
-// on screen rather than implied. Brightness says where each stands; the
-// hairline beneath says it again for anyone not reading brightness —
-// apprentice as four pips lit to its stage, passed as one tangerine
-// rule. Each cell's label carries all of it in words.
+// 段 The level — where it stands, at the head of the board. Every kanji of
+// the level, locked ones included, as one strip: a block each in its
+// state's colour — passed tangerine, apprentice a hue a stage, lessons
+// faint, locked the rule — in progress order, with the character under it
+// and a line where the 90% WaniKani levels you up at falls. The head says
+// the day and the count against that 90%; under the strip, the tally and
+// the reads (`LevelReads`). Decided from a prototype (PLAN.md, "The strip
+// carries the kanji"): the level line's strip and the level's grid were two
+// sections saying the same kanji twice. Each cell's label carries all of
+// it in words.
 //
 // **Pointing at a character re-points the notes** to it — what it is, its
 // stage, and when WaniKani next asks for it — the way the pace caption and
@@ -696,15 +672,15 @@ function percent(fraction) {
 // and its vocabulary** — words beside `level 16`, the chosen one lit —
 // rather than a fold under the kanji, which read as one more section head.
 // The radicals and the vocabulary are each read the first time they are
-// asked for. Words are as long as they are, so they flow rather than sit in
-// the kanji's eight columns, a step down from the kanji's size.
+// asked for. The radicals take the strip as the kanji do; words are as
+// long as they are, so they flow instead.
 const KINDS = ['kanji', 'radicals', 'vocab']
 const OTHERS = {
   radicals: { read: getLevelRadicals, noun: 'radicals', one: 'a radical' },
   vocab: { read: getLevelVocabulary, noun: 'vocabulary', one: 'a word' }
 }
 
-function Level({ board, level, token }) {
+function Level({ board, level, token, perLevel }) {
   const [reading, setReading] = useState(null)
   const [showing, setShowing] = useState('kanji')
   // Per kind: null until asked for, then 'reading', 'failed' or the items.
@@ -737,8 +713,7 @@ function Level({ board, level, token }) {
   // threshold and no line of their own, so their count stays here.
   const count = other && otherPassed !== null ? `${otherPassed} of ${items.length} passed` : null
 
-  // On a tablet the notes stand beside the grid rather than under it (see
-  // `.level` in index.css), so the level is half as tall.
+  const top = level >= TOP_LEVEL
   return (
     <section className="level">
       <div className="head">
@@ -752,14 +727,21 @@ function Level({ board, level, token }) {
             ))}
           </span>
         </h2>
+        <span>{levelCount(board, level)}</span>
       </div>
       <div className="body">
-        {!other ? (
+        {!other && board.kanji.length === 0 ? (
+          <p className="notes">
+            <span className="soft">No kanji at this level yet</span>
+          </p>
+        ) : !other ? (
           <Grid
             items={board.kanji}
             label={`Level ${level} kanji`}
             onRead={setReading}
             holders={holders}
+            need={top ? null : board.passed.needed}
+            strip
           />
         ) : items === null || items === 'reading' ? (
           <p className="notes" role="status">
@@ -780,6 +762,7 @@ function Level({ board, level, token }) {
             label={`Level ${level} ${other.noun}`}
             onRead={setReading}
             words={showing === 'vocab'}
+            strip={showing !== 'vocab'}
           />
         )}
       </div>
@@ -801,12 +784,14 @@ function Level({ board, level, token }) {
           </span>
         ) : null}
       </p>
+      <LevelReads board={board} level={level} perLevel={perLevel} counts={!other} />
     </section>
   )
 }
 
-// One grid of the level's subjects — kanji, radicals or words. `onRead` hears the
-// item under the pointer or the keyboard, and null when both leave.
+// The level's subjects — kanji or radicals as the strip, words flowing.
+// `onRead` hears the item under the pointer or the keyboard, and null when
+// both leave.
 //
 // Each cell links out to its WaniKani page. A mouse clicks through, since
 // it reads by hovering; **a finger's first tap reads and its second opens**,
@@ -814,21 +799,24 @@ function Level({ board, level, token }) {
 // cell the arrows are on. The links stay out of the tab order, which the
 // grid already walks as one stop.
 //
-// `words` lets the cells run as wide as their word, so a row holds as many
-// as fit; up and down then go to the word nearest above or below.
-const ACROSS = 8
-
-function Grid({ items, label, onRead, words = false, holders = null }) {
+// The strip is a block a subject, its character under it at the label's
+// size — pointing at one reads it large in the readout — and a line beside
+// the block where `need` is reached. `words` lets the cells run as wide as
+// their word instead, so a row holds as many as fit; up and down then go to
+// the word nearest above or below.
+function Grid({ items, label, onRead, words = false, holders = null, need = null }) {
   const { at, point, groupProps, itemProps } = usePointing(i => onRead(i === null ? null : items[i]))
+  const across = useAcross(groupProps.ref, words ? 0 : items.length)
   const opens = useRef(true)
 
   function key(event) {
-    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -ACROSS, ArrowDown: ACROSS }[event.key]
-    if (step) {
+    const sideways = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
+    const down = { ArrowUp: -1, ArrowDown: 1 }[event.key]
+    if (sideways || down) {
       event.preventDefault()
       if (at === null) point(0)
-      else if (words && Math.abs(step) === ACROSS) point(below(event.currentTarget, at, Math.sign(step)) ?? at)
-      else point(Math.min(items.length - 1, Math.max(0, at + step)))
+      else if (down && words) point(below(event.currentTarget, at, down) ?? at)
+      else point(Math.min(items.length - 1, Math.max(0, at + (sideways ?? down * across))))
     }
     if (event.key === 'Escape') point(null)
     if (event.key === 'Enter' && items[at]?.url) window.open(items[at].url, '_blank', 'noreferrer')
@@ -840,14 +828,19 @@ function Grid({ items, label, onRead, words = false, holders = null }) {
     // is not reliably read by. `role="list"` because Safari drops the list
     // role from a list styled without bullets.
     <ul
-      className={words ? 'kanji words' : 'kanji'}
+      className={words ? 'kanji words' : 'kanji strip'}
+      style={words ? undefined : { '--across': across }}
       role="list"
       aria-label={label}
       onKeyDown={key}
       {...groupProps}
     >
       {items.map((k, i) => (
-        <li key={k.id} className={[k.state, at === i ? 'reading' : ''].join(' ').trim()} {...itemProps(i)}>
+        <li
+          key={k.id}
+          className={[standing(k), at === i ? 'reading' : '', need === i + 1 ? 'need' : ''].join(' ').trim()}
+          {...itemProps(i)}
+        >
           <a
             className="open"
             href={k.url ?? undefined}
@@ -866,10 +859,13 @@ function Grid({ items, label, onRead, words = false, holders = null }) {
             <span className="sr-only">
               {`${k.characters ?? ''} ${k.meaning}: ${describe(k)}, ${nextReview(k, new Date())}`}
             </span>
+            {words ? null : <i className="bar" aria-hidden="true" />}
             <span className="character" aria-hidden="true">
               {k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')}
             </span>
-            {k.state === 'apprentice' ? (
+            {/* A word keeps its mark under it: pips lit to its apprentice
+                stage, or one rule. */}
+            {!words ? null : k.state === 'apprentice' ? (
               <span className="pips" aria-hidden="true">
                 {[1, 2, 3, 4].map(n => (
                   <i key={n} className={n <= k.stage ? 'lit' : ''} />
@@ -891,6 +887,30 @@ function Grid({ items, label, onRead, words = false, holders = null }) {
       ))}
     </ul>
   )
+}
+
+// How many blocks a row of the strip holds, from the width it has: one row
+// while every block gets STRIP_CELL px; past that, as few rows as fit,
+// split evenly, so a level never ends on a row of one or two. On a laptop
+// a level's thirty-odd kanji take one row of the column; on a phone, two.
+const STRIP_CELL = 18
+
+function useAcross(ref, count) {
+  const [across, setAcross] = useState(count)
+  useLayoutEffect(() => {
+    const list = ref.current
+    if (!list || !count) return
+    const fit = () => {
+      const rows = Math.max(1, Math.ceil((count * STRIP_CELL) / Math.max(1, list.clientWidth)))
+      setAcross(Math.ceil(count / rows))
+    }
+    fit()
+    if (typeof ResizeObserver === 'undefined') return
+    const watch = new ResizeObserver(fit)
+    watch.observe(list)
+    return () => watch.disconnect()
+  }, [ref, count])
+  return across
 }
 
 // In a flowing list, the cell on the next row up (`way` -1) or down (+1)

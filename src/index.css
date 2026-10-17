@@ -1470,123 +1470,67 @@ button.quiet {
 }
 
 
-/* ---- 段 the level line ----
-   Where the level stands, the board's second band under the figures: a
-   hairline of every kanji with the 90% mark over it, the counts
-   by state, and three short reads. */
+/* ---- 段 the level's reads ----
+   Under the strip: the counts by state, the radicals holding the locked
+   kanji, and three short reads. */
 .board .level-line {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-/* One cell per kanji, its state in its colour: passed in tangerine,
-   clear of the apprentice hues; apprentice a hue a stage; lessons
-   faint; locked the rule. */
-.board .level-line .states {
-  position: relative;
-  display: flex;
-  gap: 3px;
-  padding-top: 28px;
-}
-
-.board .level-line .states > span {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.board .level-line .states i,
 .board .level-line .tally i {
   display: block;
   background: var(--rule);
 }
 
-.board .level-line .states i {
-  width: 100%;
-  height: 10px;
-}
-
-.board .level-line .passed > i,
 .board .level-line i.passed {
   background: var(--srs-passed);
 }
 
-.board .level-line .a1 > i,
 .board .level-line i.a1 {
   background: var(--srs-apprentice-1);
 }
 
-.board .level-line .a2 > i,
 .board .level-line i.a2 {
   background: var(--srs-apprentice-2);
 }
 
-.board .level-line .a3 > i,
 .board .level-line i.a3 {
   background: var(--srs-apprentice-3);
 }
 
-.board .level-line .a4 > i,
 .board .level-line i.a4 {
   background: var(--srs-apprentice-4);
 }
 
-.board .level-line .lesson > i,
 .board .level-line i.lesson {
   background: color-mix(in srgb, var(--dim) 45%, var(--ground));
-}
-
-/* Under each locked cell, its kanji and the radicals holding it, stacked,
-   each in its subject's colour. */
-.board .level-line .states .under {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: var(--jp-sans);
-  font-size: 15px;
-  line-height: 1.15;
-}
-
-.board .level-line .held {
-  color: var(--subject-kanji);
-}
-
-.board .level-line .holder {
-  font-size: 13px;
-  color: var(--subject-radical);
 }
 
 /* A radical holding a lock wears where it stands, in the strip's hues:
    apprentice its stage's, a lesson waiting and a radical still locked
    dimmed. */
-.board .level-line .holder.a1,
 .board .level-line .holding .radical.a1 {
   color: var(--srs-apprentice-1);
 }
 
-.board .level-line .holder.a2,
 .board .level-line .holding .radical.a2 {
   color: var(--srs-apprentice-2);
 }
 
-.board .level-line .holder.a3,
 .board .level-line .holding .radical.a3 {
   color: var(--srs-apprentice-3);
 }
 
-.board .level-line .holder.a4,
 .board .level-line .holding .radical.a4 {
   color: var(--srs-apprentice-4);
 }
 
-.board .level-line .holder.lesson,
 .board .level-line .holding .radical.lesson {
   color: var(--text-soft);
 }
 
-.board .level-line .holder.locked,
 .board .level-line .holding .radical.locked {
   color: var(--dim);
 }
@@ -1618,23 +1562,6 @@ button.quiet {
   height: 0.9em;
   width: auto;
   filter: var(--strokes);
-}
-
-/* The 90% WaniKani levels you up at: a strong hairline over the cells,
-   named to its left — it sits near the end, where a name to its right runs
-   off the page. */
-.board .level-line .need {
-  position: absolute;
-  top: 0;
-  bottom: -4px;
-  border-right: 1px solid var(--text-strong);
-  padding-right: 6px;
-  font-family: var(--mono);
-  font-size: var(--label);
-  letter-spacing: 0.03em;
-  color: var(--text-soft);
-  white-space: nowrap;
-  transform: translateX(-100%);
 }
 
 .board .level-line .tally {
@@ -2472,16 +2399,6 @@ button.quiet {
   gap: 2px 18px;
 }
 
-/* The level's grid: ten across, a step down from the --display-lg it was. */
-.board .kanji:not(.words) {
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 12px 4px;
-}
-
-.board .kanji:not(.words) .character {
-  font-size: var(--input);
-}
-
 /* The dial, shorter: the bars and the strip. */
 .board .dial .chart {
   padding-top: 50px;
@@ -2645,29 +2562,6 @@ button.quiet {
   .board .columns {
     grid-template-columns: minmax(0, 1fr);
   }
-
-  /* The level full width: the grid on the left keeps its ten across at
-     a size a finger can hit, and the notes stand beside it rather than
-     under it, so the section is half as tall. The radicals, opened, run the
-     full width beneath. */
-  .board .level {
-    display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    gap: 20px 36px;
-    align-items: start;
-  }
-
-  .board .level > .head {
-    grid-column: 1 / -1;
-  }
-
-  .board .level > .body {
-    grid-column: 1;
-  }
-
-  .board .level > .readout {
-    grid-column: 2;
-  }
 }
 
 /* A sixth of an upright iPad is narrower than 天国 paradise, and the last
@@ -2739,26 +2633,9 @@ button.quiet {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* A cell is narrower than a character here, so the strip's glyphs give
-     way to the line under it, which says the same. */
-  .board .level-line .states .under {
-    display: none;
-  }
-
   .board .columns {
     grid-template-columns: minmax(0, 1fr);
     gap: 36px;
-  }
-
-  /* The level's notes go back under the grid. */
-  .board .level {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .board .kanji {
-    gap: 16px 4px;
   }
 
   /* A head that cannot fit its name and its number on one line puts the
@@ -2774,6 +2651,12 @@ button.quiet {
 
   .board .head > span {
     text-align: left;
+  }
+
+  /* Under the level's kinds, whose chosen one is marked 12px below its
+     word, the number clears the mark rather than sitting on it. */
+  .board .head:has(.kinds) {
+    row-gap: 16px;
   }
 
   /* 25 hours in 343px is 14px an hour, narrower than its name. The strip
@@ -2869,8 +2752,79 @@ button.quiet {
   .board .rows > section > :not(.head) {
     grid-column: 1;
   }
+}
 
-  .board .kanji:not(.words) {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-  }
+/* 今 Now: the level in one column, the week and the spread in the other. */
+.board .now-pair > .column {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  min-width: 0;
+}
+
+/* The level's kanji as the strip — one block a kanji in its state's
+   colour, its character under it at the label's size (pointing at one
+   reads it large in the readout), the 90% line beside the block that
+   reaches it. `--across` is set from the width (`useAcross`): one row where
+   every block gets 18px, rows split evenly where not. */
+.board .kanji.strip {
+  display: grid;
+  grid-template-columns: repeat(var(--across, 30), minmax(0, 1fr));
+  gap: 12px 2px;
+}
+
+.board .kanji.strip .open {
+  gap: 5px;
+}
+
+.board .kanji.strip .character {
+  font-size: var(--label);
+  line-height: 1.1;
+}
+
+.board .kanji.strip .bar {
+  display: block;
+  align-self: stretch;
+  height: 6px;
+  background: var(--rule);
+}
+
+.board .kanji.strip .passed .bar {
+  background: var(--srs-passed);
+}
+
+.board .kanji.strip .a1 .bar {
+  background: var(--srs-apprentice-1);
+}
+
+.board .kanji.strip .a2 .bar {
+  background: var(--srs-apprentice-2);
+}
+
+.board .kanji.strip .a3 .bar {
+  background: var(--srs-apprentice-3);
+}
+
+.board .kanji.strip .a4 .bar {
+  background: var(--srs-apprentice-4);
+}
+
+.board .kanji.strip .lesson .bar {
+  background: color-mix(in srgb, var(--dim) 45%, var(--ground));
+}
+
+.board .kanji.strip .by {
+  font-size: var(--label);
+}
+
+/* The 90% WaniKani levels you up at: a strong hairline between the block
+   that reaches it and the next. The head says the count. */
+.board .kanji.strip li.need::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  right: -2px;
+  border-right: 1px solid var(--text-strong);
+  pointer-events: none;
 }

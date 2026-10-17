@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-// Which item of a readout group — the kanji grid, the pace bars, the
+// Which item of a readout group — the level's strip, the pace bars, the
 // forecast's hours — is being pointed at, by mouse, finger, or keyboard.
 //
 // A mouse reads on hover and lets go on leaving, as before. **A finger has

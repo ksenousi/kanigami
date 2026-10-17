@@ -2182,3 +2182,38 @@ typing in a field, never with Cmd, Ctrl or Alt held; with reduced motion,
 fuller set — hjkl sent to each section as arrows, `}` `{` hopping between
 them, gg and G, a `?` key sheet — and cut back to this on the owner's word;
 don't re-add them.
+
+**The strip carries the kanji — decided from a prototype.** Asked for: the
+level line and the level's grid merged into one. They were two sections
+saying the same kanji twice, in the same order — progress — and the same
+colours. Prototyped on the real board: **A** one section, the strip on top
+of the grid under one head; **B** the grid as the strip, the strip gone and
+the 90% line drawn in the grid; **C** B with the reads in a column beside
+the grid; then, at the owner's own suggestion, **D** the strip kept and the
+grid gone, each kanji under its block. D was picked; A, B and C are
+rejected.
+
+What shipped: the level is one section at the head of 今 now — its head
+(`level 18`, the kinds switch, `day 5 · 20 of 28 needed`), the strip, the
+tally and the radicals holding the locks, then the reads (next, level-up,
+the next level). The strip is the old grid drawn differently, so it keeps
+everything the grid did: a block per kanji in its state's colour, the
+character under it at `--label` size — pointing at one, or tapping it,
+reads it large in the readout, which is why the strip's characters can be
+small — the radicals holding a locked kanji under it, a click or a second
+tap out to WaniKani, and the arrows walking it. The 90% line stands beside
+the block that reaches it; its count is the head's. The radicals switch
+draws the radicals as a strip too; vocabulary stays the flowing word list,
+since a level's words will not sit under blocks.
+
+A row holds as many blocks as get 18px each (`useAcross`, measured from the
+width): a level's thirty-odd kanji take one row of the column on a laptop
+and at 820px, and split into even rows elsewhere — two of 16 at 1180px and
+on a phone — so a level never ends on a row of one. D was first drawn full
+width at the label's double size; the owner wanted the two columns back
+and the strip smaller, and it went into the left column of 今, with the
+forecast and the SRS spread in the right. That leaves two bands, 今 now
+and 先 ahead: 手元 at hand, which held the grid and the spread, is gone,
+and `d` and `u` jump between the two. The two-column at-hand layout picked
+under "Without slipping" is superseded by this.
+

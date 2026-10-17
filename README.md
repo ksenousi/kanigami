@@ -20,8 +20,10 @@ token. There is no server and no database. The token is held in
   next 24 hours of reviews drawn beneath them, and the kanji your level-up
   waits on marked at the hour each comes up.
 - **The level** — every kanji of your current level, locked ones included,
-  ordered by progress, with when each comes back for review; a switch in
-  the heading shows the level's radicals instead. A line projects the
+  as one strip: a block each in its SRS stage's colour with the kanji under
+  it, ordered by progress, a line where the level-up falls, and when each
+  comes back for review on a hover or a tap; a switch in the heading shows
+  the level's radicals or vocabulary instead. A line projects the
   earliest level-up if every answer from here is right, and says so.
 - **The SRS spread** and what moved in the past seven days.
 - **Taught** — radicals, kanji and vocabulary started, each as a share of
