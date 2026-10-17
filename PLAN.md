@@ -2322,3 +2322,17 @@ count in the band's colour, its share of everything started, and what
 WaniKani dates of its past week. The SRS counts no longer swap to shares on
 hover; the specimen says the share. Each readout keeps the specimen's
 height at rest, and the rest of its chart steps back while one is read.
+
+**More on a pace bar.** Asked for: more detail when a level is read.
+Mocked with each extra on a switch; the owner shipped dates, against your
+median, this level's progress and a range ahead, and left out "against
+WaniKani's fastest". A passed level reads `14 days · your median` (or `1
+day slower than your median`, `your fastest`), then `26 Jan – 9 Feb 2026
+· 92% right · every item guru or above`. A break gives its span too. This
+level reads `day 14 so far · of ≈ 18 at your pace` (`at the dial` once it
+has moved), then its start and right answers, and a third, quieter line:
+`20 of 29 kanji passed · fastest level-up Wed 21 Oct 02:00 if all
+correct`. A level ahead reads the span the dial's pace puts it in, `≈ 20
+Jan – 7 Feb 2027`, its pace, and the click to choose it. The specimen
+takes an optional third line for this (`more`), and the dial's readout
+keeps three lines' height at rest.

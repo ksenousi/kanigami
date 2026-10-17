@@ -286,7 +286,7 @@ describe('the pace dial', () => {
     history()
     const host = await board()
     await tap(host.querySelectorAll('.dial .bars > span')[29])
-    expect(host.querySelector('.dial .specimen').textContent).toMatch(/^30 ≈ \w{3} \d{4} at 10 days a level · /)
+    expect(host.querySelector('.dial .specimen').textContent).toMatch(/^30 ≈ \d+ \w{3} – \d+ \w{3} \d{4} at 10 days a level/)
   })
 
   it('remembers a goal of a level by a month, and says the pace it asks for', async () => {

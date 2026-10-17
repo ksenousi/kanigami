@@ -1560,6 +1560,12 @@ button.quiet {
   color: var(--text-soft);
 }
 
+.board .specimen .more {
+  font-size: var(--small);
+  line-height: 1.4;
+  color: var(--dim);
+}
+
 .board .specimen .stage.passed {
   color: var(--srs-passed);
 }
@@ -2195,11 +2201,12 @@ button.quiet {
 }
 
 /* The chosen level's line and a pointed-at level's specimen share one
-   cell, kept at the specimen's height, so reading a bar never pushes the
-   slider down under the pointer. */
+   cell, kept at the specimen's height — three lines beside the level's
+   number — so reading a bar never pushes the slider down under the
+   pointer. */
 .board .dial .under .readout {
   display: grid;
-  min-height: var(--figure);
+  min-height: calc(var(--body) * 1.3 + var(--small) * 2.8);
 }
 
 .board .dial .under .readout > * {

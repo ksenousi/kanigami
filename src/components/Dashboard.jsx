@@ -334,6 +334,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
               coverage={board.coverage}
               byLevel={board.byLevel}
               standings={board.standings}
+              passed={board.passed}
             />
           </Band>
         </>
@@ -1081,7 +1082,7 @@ function paceFor(p, chosen) {
   return chosen !== null ? chosen : homePace(p)
 }
 
-function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c, byLevel, standings }) {
+function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c, byLevel, standings, passed }) {
   const [through, setThrough] = useState(null)
   // Only a level ahead is a projection, and choosing one needs the kanji
   // index, so it waits for coverage's read.
@@ -1109,6 +1110,7 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
         counted={Boolean(later)}
         rightByLevel={byLevel}
         standings={standings}
+        kanjiPassed={passed}
       />
       <div className="rows">
         <Taught learned={counts} totals={totals} next={m?.next} at={at} gains={gains} counted={Boolean(later)} />
@@ -1168,7 +1170,7 @@ function Waiting({ title }) {
 // it). Scaled from 80%, or the tenth below the lowest, to 100%, with your
 // overall dashed across. Pointing at either row reads both in the line.
 // Undefined while it reads, keeping its room; null, and gone, if it can't.
-function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, onThrough = null, counted = true, rightByLevel, standings = null }) {
+function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, onThrough = null, counted = true, rightByLevel, standings = null, kanjiPassed: levelPassed = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   // A click or one tap chooses a level ahead, and reads it with the same
   // touch; it once took a finger two, and on bars 13px wide the second often
@@ -1399,6 +1401,11 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
               s={shown}
               ahead={ahead}
               perLevel={perLevel}
+              home={homePace(p)}
+              median={p.median}
+              passed={levelPassed}
+              soonest={soonest}
+              now={now}
               quickest={quickest}
               right={rights?.[reading] ?? null}
               choosable={Boolean(onThrough) && shown.level > level}
@@ -1593,30 +1600,53 @@ function levelSpan(levels) {
 }
 
 // A level, read: its number large, how long it took (or is taking, or
-// would take) beside it, and under that when it began, how right you were
-// on its items, and what its swatch means — said on the bar that wears one
-// rather than in a key under the chart.
-function LevelSpecimen({ s, ahead, perLevel, quickest, right, choosable, chosen }) {
-  const began = s.began ? `began ${dayMonthYear(s.began)}` : null
+// would take) beside it, and under that its dates, how right you were on
+// its items and what its swatch means — said on the bar that wears one
+// rather than in a key under the chart. A passed level is held against
+// your median; this one says how far through it you are and the soonest
+// it can end; one ahead gives the span the dial's pace puts it in.
+function LevelSpecimen({ s, ahead, perLevel, home, median, passed, soonest, now, quickest, right, choosable, chosen }) {
+  const began = s.began ? new Date(s.began) : null
+  const ended = began && s.days !== undefined ? new Date(began.getTime() + s.days * 24 * 60 * 60 * 1000) : null
+  // The year once when both ends share it: `26 Jan – 9 Feb 2026`.
+  const span =
+    began && ended
+      ? `${began.getFullYear() === ended.getFullYear() ? dayMonth(began) : dayMonthYear(began)} – ${dayMonthYear(ended)}`
+      : null
   const fastest = s.level === quickest?.level
+  const pace = perLevel !== null ? `≈ ${dayCount(perLevel)} at ${perLevel === home ? 'your pace' : 'the dial'}` : null
+  const versus = () => {
+    if (median === null || median === undefined) return null
+    const diff = toStep(s.days) - toStep(median)
+    if (diff === 0) return 'your median'
+    const gap = Math.abs(diff)
+    return `${dayCount(gap)} ${gap === 1 ? 'day' : 'days'} ${diff < 0 ? 'quicker' : 'slower'} than your median`
+  }
+  const start = s.kind === 'ahead' && ahead ? ahead.startOf(s.level) : null
+  const end = start ? (s.level >= TOP_LEVEL ? ahead.done : ahead.startOf(s.level + 1)) : null
+
   const named = {
-    passed: `${Math.round(s.days)} days${fastest ? ' · your fastest' : ''}`,
-    break: `${Math.round(s.days)} days · a break`,
-    current: `day ${Math.floor(s.days ?? 0) + 1} so far`,
-    missing: 'no record',
-    ahead: ahead ? `≈ ${monthYear(ahead.startOf(s.level))}` : '',
-    empty: ''
-  }[s.kind]
-  const parts = [
+    passed: [`${Math.round(s.days)} days`, fastest ? 'your fastest' : null, versus()],
+    break: [`${Math.round(s.days)} days`, 'a break'],
+    current: [`day ${Math.floor(s.days ?? 0) + 1} so far`, pace ? `of ${pace}` : null],
+    missing: ['no record'],
+    ahead: [start && end ? `≈ ${start.getFullYear() === end.getFullYear() ? dayMonth(start) : dayMonthYear(start)} – ${dayMonthYear(end)}` : ''],
+    empty: ['']
+  }[s.kind].filter(Boolean)
+  const where = [
     s.kind === 'break' ? 'left out of the pace' : null,
+    s.kind === 'passed' || s.kind === 'break' ? span : began ? `began ${dayMonthYear(began)}` : null,
+    right ? `${percent(right.share)}% right` : null,
     s.standing ? (
       <span key="standing" className={`stage all-${s.standing}`}>
         every item {s.standing} or above
       </span>
     ) : null,
-    began,
-    right ? `${percent(right.share)}% right` : null,
-    s.kind === 'ahead' && perLevel !== null ? `at ${dayCount(perLevel)} days a level` : null,
+    s.kind === 'ahead' && perLevel !== null ? `at ${dayCount(perLevel)} days a level` : null
+  ].filter(Boolean)
+  const more = [
+    s.kind === 'current' && passed?.total ? `${passed.passed} of ${passed.needed} kanji passed` : null,
+    s.kind === 'current' && soonest ? `fastest level-up ${when(soonest, now)} if all correct` : null,
     choosable ? (
       <Fragment key="choose">
         <span className="by-pointer">click</span>
@@ -1625,21 +1655,22 @@ function LevelSpecimen({ s, ahead, perLevel, quickest, right, choosable, chosen 
       </Fragment>
     ) : null
   ].filter(Boolean)
+  const joined = parts =>
+    parts.length
+      ? parts.map((part, i) => (
+          <Fragment key={i}>
+            {i ? ' · ' : ''}
+            {part}
+          </Fragment>
+        ))
+      : null
   return (
     <Specimen
       glyph={s.level}
       kind={`number${s.kind === 'current' ? ' hot' : ''}`}
-      named={named}
-      where={
-        parts.length
-          ? parts.map((part, i) => (
-              <Fragment key={i}>
-                {i ? ' · ' : ''}
-                {part}
-              </Fragment>
-            ))
-          : null
-      }
+      named={named.join(' · ')}
+      where={joined(where)}
+      more={joined(more)}
     />
   )
 }
