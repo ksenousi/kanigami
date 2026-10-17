@@ -1102,9 +1102,9 @@ function Waiting({ title }) {
 // Undefined while it reads, keeping its room; null, and gone, if it can't.
 function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, onThrough = null, counted = true, rightByLevel, standings = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
-  // A mouse chooses on its click; a finger's first tap reads the bar and
-  // the second chooses it, as a kanji's second tap opens it.
-  const chooses = useRef(true)
+  // A click or one tap chooses a level ahead, and reads it with the same
+  // touch; it once took a finger two, and on bars 13px wide the second often
+  // landed on the next level and only read that.
   const atMedianMark = usePointing()
   const atRecentMark = usePointing()
   const [goal, setGoal] = useState(readGoal)
@@ -1271,14 +1271,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
                 .join(' ')
                 .trim()}
               {...itemProps(i)}
-              onPointerDown={event => {
-                chooses.current = event.pointerType === 'mouse' || reading === i
-                itemProps(i).onPointerDown(event)
-              }}
-              onClick={() => {
-                if (chooses.current) chooseThrough(s)
-                chooses.current = true
-              }}
+              onClick={() => chooseThrough(s)}
             >
               {s.kind === 'passed' ? <i style={{ height: `${Math.max(4, height(s.days))}%` }} /> : null}
               {s.kind === 'current' ? (

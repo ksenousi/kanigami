@@ -2217,3 +2217,12 @@ and 先 ahead: 手元 at hand, which held the grid and the spread, is gone,
 and `d` and `u` jump between the two. The two-column at-hand layout picked
 under "Without slipping" is superseded by this.
 
+
+**One tap chooses a level ahead.** Reported: choosing a level on the dial's
+bars to see taught and coverage then sometimes took two taps. It did, by
+design — a finger's first tap read the bar and the second chose it — and
+on bars about 13px wide the second tap often landed on the next level,
+which only read that one. A click or a single tap on a level ahead now both
+reads and chooses it, and a tap on the chosen level lets go; a passed level
+still only reads. Nothing is lost: once chosen, the line under the bars
+names the level and its date (`Through level 20 ≈ 20 Jan 2027`).

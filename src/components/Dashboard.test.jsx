@@ -427,7 +427,7 @@ describe('coverage', () => {
     expect(readout(host)).not.toContain('Through level 20')
   })
 
-  it('reads a level ahead on a first tap and chooses it on the second', async () => {
+  it('chooses a level ahead on one tap, and lets go on the next', async () => {
     const host = await board()
     await until(host, '.cover')
     // A finger's tap is its pointer events, then a click.
@@ -436,11 +436,12 @@ describe('coverage', () => {
       await tap(bar)
       await click(bar)
     }
-    await touch()
-    expect(host.querySelector('.dial .readout .usual:not(.hidden)').textContent).toMatch(/^Level 20 ≈ /)
     expect(n5(host)).toMatch(/1 of 79/)
     await touch()
     expect(n5(host)).toMatch(/3 of 79/)
+    expect(host.querySelector('.dial .readout').textContent).toContain('Through level 20')
+    await touch()
+    expect(n5(host)).toMatch(/1 of 79/)
   })
 
   it('does not choose a level already passed', async () => {
