@@ -367,22 +367,6 @@ describe('the decades on the dial', () => {
   })
 })
 
-describe('the srs spread', () => {
-  it('reads a band as a specimen in place of the counts, and lets go', async () => {
-    api.getStartedAssignments.mockResolvedValue([
-      { data: { subject_id: 501, subject_type: 'kanji', srs_stage: 2, started_at: new Date().toISOString() } },
-      { data: { subject_id: 502, subject_type: 'kanji', srs_stage: 6, started_at: new Date().toISOString() } }
-    ])
-    const host = await board()
-    const counts = host.querySelectorAll('.srs .counts > span')
-    await hover(counts[0])
-    expect(host.querySelector('.srs .specimen').textContent).toMatch(/^1 apprentice · 50%/)
-    expect(host.querySelector('.srs .rest').classList.contains('hidden')).toBe(true)
-    await unhover(host.querySelector('.srs .spreadline'))
-    expect(host.querySelector('.srs .specimen')).toBeNull()
-  })
-})
-
 describe('milestones', () => {
   it('shows the next round number with how many to go, and the ones reached', async () => {
     const day = 86400000

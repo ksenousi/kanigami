@@ -336,46 +336,38 @@ body {
   gap: 10px;
 }
 
-/* A 2px segment is too thin to point at, so each is a 14px band of
-   pointer with its line drawn through the middle (the padding, clipped);
-   the negative margins keep the line where it always sat. */
 .segments {
   display: flex;
   gap: 2px;
-  height: 14px;
-  margin-block: -6px;
+  height: 2px;
 }
 
 .segment {
   height: 100%;
-  padding-block: 6px;
-  background-clip: content-box;
   border-radius: 1px;
 }
 
-/* One colour per band, drawing the segment and colouring its own count —
-   as background-color, since the shorthand would reset the clip that keeps
-   the segment a 2px line inside its 14px of pointer. The
+/* One colour per band, drawing the segment and colouring its own count. The
    colour is what ties the two together — without it the words are evenly
    spaced over proportional segments and you cannot tell which is which. */
 .segment.srs-apprentice {
-  background-color: var(--accent);
+  background: var(--accent);
 }
 
 .segment.srs-guru {
-  background-color: var(--srs-guru);
+  background: var(--srs-guru);
 }
 
 .segment.srs-master {
-  background-color: var(--srs-master);
+  background: var(--srs-master);
 }
 
 .segment.srs-enlightened {
-  background-color: var(--srs-enlightened);
+  background: var(--srs-enlightened);
 }
 
 .segment.srs-burned {
-  background-color: var(--srs-burned);
+  background: var(--srs-burned);
 }
 
 .counts {
@@ -391,30 +383,26 @@ body {
   color: var(--dim);
 }
 
-/* Pointing at a band reads it in the counts' place (PLAN.md, "The
-   specimen"): the counts and the past seven days are the rest, the
-   specimen sits over them, and the cell keeps the taller. */
-.spreadline .readout {
-  display: grid;
+/* The count and its share in one cell: the cell takes the wider, and only
+   one shows, so the swap moves nothing. */
+.counts .figure {
+  display: inline-grid;
 }
 
-.spreadline .readout > * {
+.counts .figure > span {
   grid-area: 1 / 1;
-  min-width: 0;
 }
 
-.spreadline .readout > .rest {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.spreadline .readout > .hidden {
+/* Keyboard focus reads the shares too — that is its focus mark. */
+.counts .share,
+.spreadline.shares .counts .count,
+.spreadline:focus-visible .counts .count {
   visibility: hidden;
 }
 
-.spreadline.aside .segment:not(.reading) {
-  opacity: 0.35;
+.spreadline.shares .counts .share,
+.spreadline:focus-visible .counts .share {
+  visibility: visible;
 }
 
 .spreadline:focus-visible {
@@ -1635,26 +1623,6 @@ button.quiet {
   font-family: var(--jp-serif);
   font-weight: 300;
   font-variant-numeric: tabular-nums;
-}
-
-.board .specimen .glyph.srs-apprentice {
-  color: var(--accent);
-}
-
-.board .specimen .glyph.srs-guru {
-  color: var(--srs-guru);
-}
-
-.board .specimen .glyph.srs-master {
-  color: var(--srs-master);
-}
-
-.board .specimen .glyph.srs-enlightened {
-  color: var(--srs-enlightened);
-}
-
-.board .specimen .glyph.srs-burned {
-  color: var(--srs-burned);
 }
 
 .board .specimen .glyph.hot {

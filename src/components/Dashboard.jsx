@@ -950,91 +950,26 @@ function describe(k) {
   return stageName(k.stage)
 }
 
-// The spread and the past seven days at rest; pointing at a band, its
-// segment or its count, reads that band as a specimen in their place
-// (PLAN.md, "The specimen"). It was a swap of every count for its share.
 function Srs({ spread: bands, moved: gained }) {
-  const { at, point, groupProps, itemProps } = usePointing()
-  const band = at === null ? null : bands.bands[at]
-
-  function key(event) {
-    const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
-    if (step) {
-      event.preventDefault()
-      point(at === null ? 0 : Math.min(bands.bands.length - 1, Math.max(0, at + step)))
-    }
-    if (event.key === 'Escape') point(null)
-  }
-
   return (
     <section className="srs">
       <Head>srs spread</Head>
-      <div
-        className={at === null ? 'spreadline' : 'spreadline aside'}
-        role="group"
-        aria-label="SRS spread"
-        onKeyDown={key}
-        {...groupProps}
-      >
-        {bands.total > 0 ? (
-          <div className="segments" aria-hidden="true">
-            {bands.bands.map((b, i) =>
-              b.count > 0 ? (
-                <span
-                  key={b.key}
-                  className={`segment srs-${b.key}${at === i ? ' reading' : ''}`}
-                  style={{ flexGrow: b.count }}
-                  {...itemProps(i)}
-                />
-              ) : null
-            )}
-          </div>
-        ) : null}
-        <div className="readout" aria-live="polite">
-          <div className={band ? 'rest hidden' : 'rest'}>
-            {bands.total > 0 ? (
-              <p className="counts">
-                {bands.bands.map((b, i) => (
-                  <span key={b.key} className={`srs-${b.key}`} {...itemProps(i)}>
-                    {b.key} <span className="count">{many(b.count)}</span>
-                  </span>
-                ))}
-              </p>
-            ) : null}
-            <p className="notes row moves">
-              {/* Only the moves WaniKani dates — see `moved` for why master and
-                  enlightened cannot be here. */}
-              {/* `+27 apprentice` read as the apprentice count going up by that;
-                  it is lessons started, and the guru and burned counts are first
-                  arrivals. Past, so it says past. */}
-              <span className="soft">Past 7 days</span>
-              {/* Lessons done are progress, so neutral ink — in apprentice's red
-                  they read as a warning about something done right. Guru and
-                  burned keep their band colours, which mean nothing urgent. */}
-              <span className="soft">{many(gained.apprentice)} taught</span>
-              <span className="srs-guru">{many(gained.guru)} to guru</span>
-              <span className="srs-burned">{many(gained.burned)} burned</span>
-            </p>
-          </div>
-          {band ? <BandSpecimen band={band} total={bands.total} gained={gained} /> : null}
-        </div>
-      </div>
+      <Spread spread={bands} />
+      <p className="notes row moves">
+        {/* Only the moves WaniKani dates — see `moved` for why master and
+            enlightened cannot be here. */}
+        {/* `+27 apprentice` read as the apprentice count going up by that;
+            it is lessons started, and the guru and burned counts are first
+            arrivals. Past, so it says past. */}
+        <span className="soft">Past 7 days</span>
+        {/* Lessons done are progress, so neutral ink — in apprentice's red
+            they read as a warning about something done right. Guru and
+            burned keep their band colours, which mean nothing urgent. */}
+        <span className="soft">{many(gained.apprentice)} taught</span>
+        <span className="srs-guru">{many(gained.guru)} to guru</span>
+        <span className="srs-burned">{many(gained.burned)} burned</span>
+      </p>
     </section>
-  )
-}
-
-// A band, read: its count large in its colour, its share of everything
-// started, and what moved into it in the past seven days where WaniKani
-// dates that — lessons for apprentice, first arrivals for guru and burned.
-function BandSpecimen({ band, total, gained }) {
-  const moved = { apprentice: gained.apprentice, guru: gained.guru, burned: gained.burned }[band.key]
-  return (
-    <Specimen
-      glyph={many(band.count)}
-      kind={`number srs-${band.key}`}
-      named={`${band.key} · ${share(band.count, total)}`}
-      where={moved !== undefined ? `+${many(moved)} in 7 days` : null}
-    />
   )
 }
 
@@ -1862,5 +1797,38 @@ function share(count, total) {
   return `${Math.round(exact)}%`
 }
 
+// One segmented hairline, and the counts as one line of type beneath it,
+// each in its band's colour — the colour is what ties a number to its
+// segment. Never five cards with five numbers in them.
+//
+// Pointing anywhere on it — hover, or a tap that holds — turns every count
+// into its share of the total at once. Each figure stacks its count and its
+// share in one cell, as wide as the wider of the two, so the swap moves
+// nothing on the line.
+function Spread({ spread: bands }) {
+  const { at, groupProps, itemProps } = usePointing()
+  if (bands.total === 0) return null
 
-
+  return (
+    <div className={at === null ? 'spreadline' : 'spreadline shares'} {...groupProps} {...itemProps(0)}>
+      <div className="segments" aria-hidden="true">
+        {bands.bands
+          .filter(band => band.count > 0)
+          .map(band => (
+            <span key={band.key} className={`segment srs-${band.key}`} style={{ flexGrow: band.count }} />
+          ))}
+      </div>
+      <p className="counts">
+        {bands.bands.map(band => (
+          <span key={band.key} className={`srs-${band.key}`}>
+            {band.key}{' '}
+            <span className="figure">
+              <span className="count">{many(band.count)}</span>
+              <span className="share">{share(band.count, bands.total)}</span>
+            </span>
+          </span>
+        ))}
+      </p>
+    </div>
+  )
+}
