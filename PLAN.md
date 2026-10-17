@@ -2289,3 +2289,22 @@ near the same height. Stacked, below 1,180px, the columns dissolve
 (`display: contents`) and the spread goes last — the level, the
 forecast, the spread — so what is due still comes second on an iPad or a
 phone.
+
+**The specimen — decided from a prototype.** Asked for: a nicer hover on
+the strip. Drawn against the shipped two plain lines: **A** the specimen,
+the item read large like a dictionary entry; **B** the reading under the
+pointer, anchored to the block with a tick; **C** the strip answers, the
+character growing with its reading above it as furigana and one line in
+the slot. A was picked; B and C are rejected.
+
+What shipped: pointing at, or tapping, an item puts a specimen in the
+level's slot — the character at `--figure` (a word of three or more
+characters at `--display-lg`, a radical's image inverted), and beside it
+the reading in soft ink and the meaning, then the stage in the strip's
+own hue for that state (`passed, guru I` in tangerine, `apprentice III`
+in sky) and when WaniKani next asks for it in plain time — `next today
+17:00`, `next tomorrow 07:00`, `next in 6 days · Fri 23 Oct 18:00`, from
+`plainly` in `dates.js`, days counted by the calendar. Apprentice IV adds
+`one right answer passes it`; locked, in lessons and burned say nothing
+more than their stage. While one is read the rest of the strip steps back
+to `--dim`, its blocks at 45%, so the one under the pointer is the one lit.

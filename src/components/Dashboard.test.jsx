@@ -623,7 +623,9 @@ describe('the level’s kanji', () => {
   it('reads a kanji under the mouse and lets go when it leaves', async () => {
     const host = await board()
     await hover(cell(host, 0))
-    expect(readout(host)).toContain('山 Mountain · apprentice II')
+    expect(readout(host)).toContain('山 Mountain apprentice II · next')
+    // The rest of the strip steps back while one is read.
+    expect(host.querySelector('.kanji.strip').classList.contains('dimming')).toBe(true)
     expect(host.querySelector('.level .slot .rest').classList.contains('hidden')).toBe(true)
     await unhover(cell(host, 0))
     expect(readout(host)).toBe('')
@@ -636,7 +638,7 @@ describe('the level’s kanji', () => {
     expect(cell(host, 0).classList.contains('reading')).toBe(true)
     expect(readout(host)).toContain('山 Mountain')
     await tap(cell(host, 1))
-    expect(readout(host)).toContain('川 River · locked')
+    expect(readout(host)).toContain('川 River locked')
     await tap(document.body)
     expect(host.querySelector('.kanji li.reading')).toBeNull()
   })

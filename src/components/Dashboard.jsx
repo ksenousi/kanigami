@@ -32,7 +32,7 @@ import {
   road,
   srsSystems
 } from '../lib/board.js'
-import { clock, count as many, dayMonth, dayMonthYear, monthYear, roughly, when } from '../lib/dates.js'
+import { clock, count as many, dayMonth, dayMonthYear, monthYear, plainly, roughly, when } from '../lib/dates.js'
 import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
 import { kanjiIndex } from '../lib/kanjiIndex.js'
@@ -743,16 +743,9 @@ function Level({ board, level, token, perLevel }) {
           ) : null}
           <LevelReads board={board} level={level} perLevel={perLevel} counts={!other} />
         </div>
-        <p className="notes readout" aria-live="polite">
-          {reading ? (
-            <>
-              <span className="soft">
-                {reading.characters ?? ''} {reading.kana ? `${reading.kana} ` : ''}{reading.meaning} · {describe(reading)}
-              </span>
-              <span className="soft">{nextReview(reading, new Date())}</span>
-            </>
-          ) : null}
-        </p>
+        <div className="readout" aria-live="polite">
+          {reading ? <Specimen item={reading} now={new Date()} /> : null}
+        </div>
       </div>
     </section>
   )
@@ -797,7 +790,7 @@ function Grid({ items, label, onRead, words = false, holders = null, need = null
     // is not reliably read by. `role="list"` because Safari drops the list
     // role from a list styled without bullets.
     <ul
-      className={words ? 'kanji words' : 'kanji strip'}
+      className={[words ? 'kanji words' : 'kanji strip', at !== null ? 'dimming' : ''].join(' ').trim()}
       style={words ? undefined : { '--across': across }}
       role="list"
       aria-label={label}
@@ -898,6 +891,42 @@ function below(list, at, way) {
     if (best === null || Math.abs(centre(r) - centre(from)) < Math.abs(centre(cells[best]) - centre(from))) best = i
   })
   return best
+}
+
+// 標本 The pointed-at item, set like a dictionary entry (PLAN.md, "The
+// specimen"): the character large, its reading and meaning beside it, and
+// under them its stage in the strip's own hue and when WaniKani next asks
+// for it in plain time. Read off the assignment, like everything else here.
+function Specimen({ item: k, now }) {
+  const glyphs = k.characters ?? (k.image ? <img src={k.image} alt="" /> : '〓')
+  const next = upNext(k, now)
+  return (
+    <div className="specimen">
+      {/* The spaces between the parts are for the live region, which
+          reads the text run together otherwise. */}
+      <span className={k.characters && k.characters.length > 2 ? 'glyph long' : 'glyph'}>{glyphs}</span>{' '}
+      <div className="entry">
+        <p className="named">
+          {k.kana ? <span className="kana">{k.kana}</span> : null}
+          {k.kana ? ' ' : null}
+          {k.meaning}
+        </p>{' '}
+        <p className="where">
+          <span className={`stage ${standing(k)}`}>{describe(k)}</span>
+          {next ? ` · ${next}` : ''}
+          {k.state === 'apprentice' && k.stage === 4 ? ' · one right answer passes it' : ''}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// The specimen's when: nothing where the stage already says it — locked, in
+// lessons, burned — and otherwise due now or the next review, plainly.
+function upNext(k, now) {
+  if (k.state === 'locked' || k.state === 'lesson' || k.stage === 9 || !k.availableAt) return null
+  const at = new Date(k.availableAt)
+  return at <= now ? 'due now' : `next ${plainly(at, now)}`
 }
 
 // When WaniKani next asks for it, read off the assignment — never worked out.

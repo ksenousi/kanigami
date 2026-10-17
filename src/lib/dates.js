@@ -39,6 +39,18 @@ export function when(at, now = new Date()) {
   return `${weekday(d)} ${dayMonth(d)} ${clock(d)}`
 }
 
+// A moment in plain time first, the exact one after: `today 17:00`,
+// `tomorrow 07:00`, `in 6 days · Fri 23 Oct 18:00`. Days are counted by
+// the calendar, so 23:00 tonight to 01:00 is tomorrow, not today.
+export function plainly(at, now = new Date()) {
+  const d = new Date(at)
+  const midnight = t => new Date(t.getFullYear(), t.getMonth(), t.getDate())
+  const days = Math.round((midnight(d) - midnight(new Date(now))) / (24 * 60 * 60 * 1000))
+  if (days <= 0) return `today ${clock(d)}`
+  if (days === 1) return `tomorrow ${clock(d)}`
+  return `in ${days} days · ${weekday(d)} ${dayMonth(d)} ${clock(d)}`
+}
+
 // A projected date, as precise as a projection deserves: the day within a
 // few months, the month beyond.
 export function roughly(at, now = new Date()) {

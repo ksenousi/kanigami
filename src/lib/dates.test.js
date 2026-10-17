@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clock, count, dayMonth, dayMonthYear, monthYear, roughly, when } from './dates.js'
+import { clock, count, dayMonth, dayMonthYear, monthYear, plainly, roughly, when } from './dates.js'
 
 // Local times, so the expectations hold in any timezone.
 const AT = new Date(2026, 9, 7, 19, 5) // Wed 7 Oct 2026, 19:05
@@ -10,6 +10,12 @@ describe('dates', () => {
     expect(dayMonth(AT)).toBe('7 Oct')
     expect(dayMonthYear(AT)).toBe('7 Oct 2026')
     expect(monthYear(new Date(2027, 8, 1))).toBe('Sep 2027')
+  })
+
+  it('says a moment in plain time, counting calendar days', () => {
+    expect(plainly(AT, new Date(2026, 9, 7, 8))).toBe('today 19:05')
+    expect(plainly(AT, new Date(2026, 9, 6, 23, 30))).toBe('tomorrow 19:05')
+    expect(plainly(AT, new Date(2026, 9, 1, 20))).toBe('in 6 days · Wed 7 Oct 19:05')
   })
 
   it('says today, or the day, for a moment', () => {

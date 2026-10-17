@@ -1497,6 +1497,95 @@ button.quiet {
 .board .level .slot > .readout {
   align-self: start;
 }
+
+/* 標本 the specimen: the pointed-at item read large, like a dictionary
+   entry — the character at the figure size, its reading and meaning
+   beside it, its stage in the strip's hue and when it is next due under
+   them (PLAN.md, "The specimen"). */
+.board .specimen {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 20px;
+  align-items: center;
+}
+
+.board .specimen .glyph {
+  font-family: var(--jp-sans);
+  font-size: var(--figure);
+  line-height: 1;
+  color: var(--text-strong);
+}
+
+/* A word of three or more characters steps down a size, so it does not
+   push its entry off the column. */
+.board .specimen .glyph.long {
+  font-size: var(--display-lg);
+}
+
+.board .specimen .glyph img {
+  height: 0.9em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+.board .specimen p {
+  margin: 0;
+}
+
+.board .specimen .named {
+  font-size: var(--body);
+  line-height: 1.3;
+  color: var(--text-strong);
+}
+
+.board .specimen .kana {
+  font-family: var(--jp-sans);
+  color: var(--text-soft);
+  margin-right: 12px;
+}
+
+.board .specimen .where {
+  font-size: var(--small);
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+
+.board .specimen .stage.passed {
+  color: var(--srs-passed);
+}
+
+.board .specimen .stage.a1 {
+  color: var(--srs-apprentice-1);
+}
+
+.board .specimen .stage.a2 {
+  color: var(--srs-apprentice-2);
+}
+
+.board .specimen .stage.a3 {
+  color: var(--srs-apprentice-3);
+}
+
+.board .specimen .stage.a4 {
+  color: var(--srs-apprentice-4);
+}
+
+.board .specimen .stage.lesson,
+.board .specimen .stage.locked {
+  color: var(--dim);
+}
+
+/* While one is read, the rest step back, so the block under the pointer
+   is the one lit. */
+.board .kanji.dimming li:not(.reading) .character {
+  color: var(--dim);
+}
+
+.board .kanji.dimming li:not(.reading) .bar,
+.board .kanji.dimming li:not(.reading) .pips,
+.board .kanji.dimming li:not(.reading) .underline {
+  opacity: 0.45;
+}
 .board .level-line {
   display: flex;
   flex-direction: column;
