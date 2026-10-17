@@ -33,3 +33,15 @@ export function coverage(lists = [], characters = new Set()) {
     return { name, total: all.length, have: all.filter(k => characters.has(k)).length }
   })
 }
+
+// How much of the kanji written in each kind of text you would recognise:
+// the shares, summed, of the kanji in `characters`. `kanji` and `reading`
+// are kanjiReading's KANJI and READING — each corpus's shares in parts per
+// million, in KANJI's order. A share of running text, not of a list.
+export function readingCoverage(kanji = '', reading = [], characters = new Set()) {
+  const order = [...kanji]
+  return reading.map(([name, ppm]) => ({
+    name,
+    share: order.reduce((sum, k, i) => (characters.has(k) ? sum + (ppm[i] ?? 0) : sum), 0) / 1e6
+  }))
+}

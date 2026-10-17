@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { coverage, taughtKanji, throughLevel } from './coverage.js'
+import { coverage, readingCoverage, taughtKanji, throughLevel } from './coverage.js'
 import { compact, isComplete, isFresh } from './kanjiIndex.js'
 import { JLPT, JOYO } from './kanjiLists.js'
 
@@ -58,5 +58,24 @@ describe('kanjiIndex records', () => {
     expect(isFresh(record, 8 * DAY)).toBe(false)
     expect(isComplete(record)).toBe(true)
     expect(isComplete({ at: 0, kanji: [] })).toBe(false)
+  })
+})
+
+describe('readingCoverage', () => {
+  it('sums the shares of the kanji you know, per kind of text', () => {
+    // Hand-made shares, in parts per million: 日 is common, 山 less so.
+    const kanji = '日山川'
+    const reading = [
+      ['news', [500000, 200000, 100000]],
+      ['books', [100000, 0, 300000]]
+    ]
+    expect(readingCoverage(kanji, reading, new Set(['日', '山']))).toEqual([
+      { name: 'news', share: 0.7 },
+      { name: 'books', share: 0.1 }
+    ])
+    expect(readingCoverage(kanji, reading, new Set())).toEqual([
+      { name: 'news', share: 0 },
+      { name: 'books', share: 0 }
+    ])
   })
 })

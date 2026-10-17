@@ -7,7 +7,7 @@
 // is `earliestLevelUp`, and that runs WaniKani's own interval table, read
 // from the API, rather than one of ours.
 
-import { STAGES } from './standing.js'
+import { BANDS, STAGES } from './standing.js'
 import { glyphFor, pageFor, subjectTypeName } from './subject.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -126,6 +126,27 @@ export function levelStandings(levelOf = new Map(), assignments = [], top = 60) 
     if (reached) standings.set(level, reached.key)
   }
   return standings
+}
+
+// Each level's started items by type and SRS rank: for a level, how many of
+// its radicals, kanji and vocabulary sit at apprentice, guru, master,
+// enlightened and burned — read off each assignment's stage. `levelOf` maps
+// subject id to level, from the kanji and ahead indexes. Asked for by the
+// owner for a pace bar's readout.
+export function levelSpreads(levelOf = new Map(), assignments = [], top = 60) {
+  const spreads = new Map()
+  for (const a of assignments) {
+    const d = a?.data
+    const level = levelOf.get(d?.subject_id)
+    if (!level || level > top || typeof d.srs_stage !== 'number' || d.srs_stage < 1) continue
+    const type = subjectTypeName(d.subject_type)
+    const band = BANDS.find(b => d.srs_stage >= b.from && d.srs_stage <= b.to)
+    if (!band || !['radical', 'kanji', 'vocabulary'].includes(type)) continue
+    if (!spreads.has(level)) spreads.set(level, { radical: {}, kanji: {}, vocabulary: {} })
+    const kind = spreads.get(level)[type]
+    kind[band.key] = (kind[band.key] ?? 0) + 1
+  }
+  return spreads
 }
 
 // What moved this week, by the only three dates an assignment carries:

@@ -198,7 +198,12 @@
       lessons: [{ available_at: iso(hour0), subject_ids: Array.from({ length: fresh ? 12 : 14 }, (_, i) => 40000 + i) }],
       reviews: COUNTS.map((count, i) => ({
         available_at: iso(hour0 + i * H),
-        subject_ids: Array.from({ length: count }, () => pool[(next++ * step) % pool.length].data.subject_id)
+        // The level's own kanji and radicals due in this hour are in it, as WaniKani's
+        // would be, then started subjects for the rest of the count.
+        subject_ids: [
+          ...[...kanjiAssignments, ...radicalAssignments].filter(k => k.data.available_at === iso(hour0 + i * H)).map(k => k.data.subject_id),
+          ...Array.from({ length: count }, () => pool[(next++ * step) % pool.length].data.subject_id)
+        ]
       }))
     }
   }

@@ -11,12 +11,13 @@ import {
   getSummary,
   getUser
 } from '../lib/wanikani.js'
-import { dueNow, forecastAhead, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
+import { BANDS, dueNow, forecastAhead, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
 import {
   accuracy,
   accuracyByLevel,
   earliestLevelUp,
   fastestLevel,
+  levelSpreads,
   levelStandings,
   levelKanji,
   levelUpItems,
@@ -36,7 +37,7 @@ import { clock, count as many, dayMonth, dayMonthYear, monthYear, plainly, rough
 import { stageName } from '../lib/srs.js'
 import { subjectTotals } from '../lib/totals.js'
 import { kanjiIndex } from '../lib/kanjiIndex.js'
-import { coverage, taughtKanji, throughLevel } from '../lib/coverage.js'
+import { coverage, readingCoverage, taughtKanji, throughLevel } from '../lib/coverage.js'
 import { aheadByLevel, aheadIndex } from '../lib/aheadIndex.js'
 import Forecast from './Forecast.jsx'
 import useOnline from './useOnline.js'
@@ -108,7 +109,10 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
     // Coverage's two reads, apart from the rest: the kanji index is the
     // largest read the app makes, and the lists are a chunk of their own, so
     // nothing else on the board waits for either.
-    const extra = Promise.all([optional(kanjiIndex(token)), optional(import('../lib/kanjiLists.js'))])
+    const extra = Promise.all([
+      optional(kanjiIndex(token)),
+      optional(import('../lib/kanjiLists.js'))
+    ])
     // Taught's radicals and words ahead: larger still, so it waits on nothing
     // and nothing waits on it — without it, those two lines stay at now.
     const later = optional(aheadIndex(token))
@@ -146,7 +150,11 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
         Promise.all([extra, later]).then(([[kanjiIdx], aheadIdx]) => {
           if (!live) return
           const levelOf = kanjiIdx && aheadIdx ? new Map([...kanjiIdx, ...aheadIdx].map(([id, n]) => [id, n])) : null
-          setBoard(held => ({ ...held, standings: levelOf ? levelStandings(levelOf, started, TOP_LEVEL) : null }))
+          setBoard(held => ({
+            ...held,
+            standings: levelOf ? levelStandings(levelOf, started, TOP_LEVEL) : null,
+            spreads: levelOf ? levelSpreads(levelOf, started, TOP_LEVEL) : null
+          }))
         })
 
         // Right answers by level: the statistics, placed by the two indexes.
@@ -158,11 +166,19 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           setBoard(held => ({ ...held, byLevel: levelOf ? accuracyByLevel(statistics, levelOf, TOP_LEVEL) : null }))
         })
 
-        extra.then(([index, lists]) => {
+        extra.then(([index, lists, reading]) => {
           if (!live) return
           setBoard(held => ({
             ...held,
-            coverage: index && lists ? { index, taught: taughtKanji(index, started), lists: { JLPT: lists.JLPT, JOYO: lists.JOYO } } : null
+            coverage:
+              index && lists
+                ? {
+                    index,
+                    taught: taughtKanji(index, started),
+                    lists: { JLPT: lists.JLPT, JOYO: lists.JOYO },
+                    reading: reading ? { kanji: reading.KANJI, shares: reading.READING } : null
+                  }
+                : null
           }))
         })
 
@@ -334,6 +350,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
               coverage={board.coverage}
               byLevel={board.byLevel}
               standings={board.standings}
+              spreads={board.spreads}
               passed={board.passed}
             />
           </Band>
@@ -1014,7 +1031,7 @@ function paceFor(p, chosen) {
   return chosen !== null ? chosen : homePace(p)
 }
 
-function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c, byLevel, standings, passed }) {
+function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learned: counts, totals, later, milestones: m, coverage: c, byLevel, standings, spreads, passed }) {
   const [through, setThrough] = useState(null)
   // Only a level ahead is a projection, and choosing one needs the kanji
   // index, so it waits for coverage's read.
@@ -1042,6 +1059,7 @@ function Ahead({ pace: p, level, now, soonest, fastest, perLevel, onPace, learne
         counted={Boolean(later)}
         rightByLevel={byLevel}
         standings={standings}
+        spreads={spreads}
         kanjiPassed={passed}
       />
       <div className="rows">
@@ -1102,7 +1120,7 @@ function Waiting({ title }) {
 // it). Scaled from 80%, or the tenth below the lowest, to 100%, with your
 // overall dashed across. Pointing at either row reads both in the line.
 // Undefined while it reads, keeping its room; null, and gone, if it can't.
-function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, onThrough = null, counted = true, rightByLevel, standings = null, kanjiPassed: levelPassed = null }) {
+function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, through = null, onThrough = null, counted = true, rightByLevel, standings = null, spreads = null, kanjiPassed: levelPassed = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   // A click or one tap chooses a level ahead, and reads it with the same
   // touch; it once took a finger two, and on bars 13px wide the second often
@@ -1333,7 +1351,7 @@ function PaceDial({ pace: p, level, now, soonest, fastest, perLevel, onPace, thr
               s={shown}
               ahead={ahead}
               perLevel={perLevel}
-              median={p.median}
+              spread={spreads?.get(shown.level) ?? null}
               passed={levelPassed}
               soonest={soonest}
               now={now}
@@ -1536,7 +1554,7 @@ function levelSpan(levels) {
 // rather than in a key under the chart. A passed level is held against
 // your median; this one says how far through it you are and the soonest
 // it can end; one ahead gives the span the dial's pace puts it in.
-function LevelSpecimen({ s, ahead, perLevel, median, passed, soonest, now, quickest, right, choosable, chosen }) {
+function LevelSpecimen({ s, ahead, perLevel, spread, passed, soonest, now, quickest, right, choosable, chosen }) {
   const began = s.began ? new Date(s.began) : null
   const ended = began && s.days !== undefined ? new Date(began.getTime() + s.days * 24 * 60 * 60 * 1000) : null
   // The year once when both ends share it: `26 Jan – 9 Feb 2026`.
@@ -1545,18 +1563,12 @@ function LevelSpecimen({ s, ahead, perLevel, median, passed, soonest, now, quick
       ? `${began.getFullYear() === ended.getFullYear() ? dayMonth(began) : dayMonthYear(began)} – ${dayMonthYear(ended)}`
       : null
   const fastest = s.level === quickest?.level
-  // Against your median, as a signed count of days: `+1 vs median`.
-  const versus = () => {
-    if (median === null || median === undefined) return null
-    const diff = toStep(s.days) - toStep(median)
-    return diff === 0 ? 'median' : `${diff > 0 ? '+' : '−'}${dayCount(Math.abs(diff))} vs median`
-  }
   const start = s.kind === 'ahead' && ahead ? ahead.startOf(s.level) : null
   const end = start ? (s.level >= TOP_LEVEL ? ahead.done : ahead.startOf(s.level + 1)) : null
 
   // Labels and figures, not sentences.
   const named = {
-    passed: [`${Math.round(s.days)} days`, fastest ? 'fastest' : null, versus()],
+    passed: [`${Math.round(s.days)} days`, fastest ? 'fastest' : null],
     break: [`${Math.round(s.days)} days`, 'break'],
     current: [`day ${Math.floor(s.days ?? 0) + 1}`, perLevel !== null ? `of ≈ ${dayCount(perLevel)}` : null],
     missing: ['no record'],
@@ -1599,7 +1611,46 @@ function LevelSpecimen({ s, ahead, perLevel, median, passed, soonest, now, quick
       named={named.join(' · ')}
       where={joined(where)}
       more={joined(more)}
+      below={spread ? <LevelSpread spread={spread} /> : null}
     />
+  )
+}
+
+// A level's radicals, kanji and vocabulary by SRS rank: a hairline each,
+// segmented in the ranks' colours, and the ranks named beside it — never
+// colour alone.
+const SPREAD_KINDS = [
+  ['radical', 'radicals'],
+  ['kanji', 'kanji'],
+  ['vocabulary', 'vocab']
+]
+
+function LevelSpread({ spread }) {
+  return (
+    <div className="level-spread">
+      {SPREAD_KINDS.map(([type, word]) => {
+        const bands = BANDS.filter(b => spread[type][b.key])
+        if (bands.length === 0) return null
+        return (
+          <div key={type} className="kind">
+            <span className={`name wk-${type}`}>{word}</span>
+            <span className="segments" aria-hidden="true">
+              {bands.map(b => (
+                <i key={b.key} className={`srs-${b.key}`} style={{ flexGrow: spread[type][b.key] }} />
+              ))}
+            </span>
+            <span className="ranks">
+              {bands.map((b, i) => (
+                <span key={b.key} className={`srs-${b.key}`}>
+                  {i ? ' · ' : ''}
+                  {many(spread[type][b.key])} {b.key}
+                </span>
+              ))}
+            </span>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -1739,17 +1790,37 @@ const MEASURES = [
   ['JOYO', 'Jōyō']
 ]
 
+// A share of running text as a whole percentage, as `share` does for a list.
+const percentOf = fraction => share(Math.round(fraction * 1e4), 1e4)
+
 function Coverage({ coverage: c, at }) {
   const [measure, setMeasure] = useState('JLPT')
   if (c === undefined) return <Waiting title="coverage" />
   if (!c) return null
 
-  const lists = c.lists[measure]
-  const nowRows = coverage(lists, c.taught)
-  const thenRows = at ? coverage(lists, throughLevel(c.index, c.taught, at)) : nowRows
-  const endRows = coverage(lists, throughLevel(c.index, c.taught, TOP_LEVEL))
+  const measures = MEASURES.filter(([key]) => key !== 'READ' || c.reading)
+  const then = at ? throughLevel(c.index, c.taught, at) : c.taught
+  const end = throughLevel(c.index, c.taught, TOP_LEVEL)
+  // Each row as a fraction now and then, and its words: a list's share and
+  // count (`54% 90 of 166`), running text's share alone, its gain in points.
+  const rowsOf = characters =>
+    measure === 'READ' && c.reading
+      ? readingCoverage(c.reading.kanji, c.reading.shares, characters).map(r => ({ name: r.name, fraction: r.share }))
+      : coverage(c.lists[measure === 'READ' ? 'JLPT' : measure], characters).map(r => ({ ...r, fraction: r.have / r.total }))
+  const nowRows = rowsOf(c.taught)
+  const thenRows = at ? rowsOf(then) : nowRows
+  const words = (row, before) => {
+    if (row.total === undefined) {
+      const gain = Math.round((row.fraction - before.fraction) * 100)
+      return { plus: gain > 0 ? `+${gain} ` : null, text: [percentOf(row.fraction), ''] }
+    }
+    return { plus: row.have > before.have ? `+${many(row.have - before.have)} ` : null, text: [share(row.have, row.total), ` ${many(row.have)} of ${many(row.total)}`] }
+  }
   const widest = Math.max(
-    ...endRows.map((row, i) => `+${row.have - nowRows[i].have} 100% ${many(row.have)} of ${many(row.total)}`.length)
+    ...rowsOf(end).map((row, i) => {
+      const w = words(row, nowRows[i])
+      return `${w.plus ?? ''}${w.text.join('')}`.length
+    })
   )
 
   return (
@@ -1759,7 +1830,7 @@ function Coverage({ coverage: c, at }) {
       <Head right={at ? `through level ${at}` : null}>
         coverage
         <span className="kinds" role="group" aria-label="Measure coverage against">
-          {MEASURES.map(([key, label]) => (
+          {measures.map(([key, label]) => (
             <button key={key} type="button" aria-pressed={key === measure} onClick={() => setMeasure(key)}>
               {label}
             </button>
@@ -1768,17 +1839,19 @@ function Coverage({ coverage: c, at }) {
       </Head>
       <div className="cover" style={{ '--share-width': `${widest + 1}ch` }}>
         {thenRows.map((row, i) => {
-          const before = nowRows[i].have
+          const before = nowRows[i]
+          const w = words(row, before)
           return (
             <div key={row.name} className="row">
               <span className="name">{row.name}</span>
               <span className="track" aria-hidden="true">
-                <span className="fill gain" style={{ width: `${(row.have / row.total) * 100}%` }} />
-                <span className="fill" style={{ width: `${(before / row.total) * 100}%` }} />
+                <span className="fill gain" style={{ width: `${row.fraction * 100}%` }} />
+                <span className="fill" style={{ width: `${before.fraction * 100}%` }} />
               </span>
               <span className="pct">
-                {at && row.have > before ? <span className="plus">+{many(row.have - before)} </span> : null}
-                <span className="soft">{share(row.have, row.total)}</span> {many(row.have)} of {many(row.total)}
+                {at && w.plus ? <span className="plus">{w.plus}</span> : null}
+                <span className="soft">{w.text[0]}</span>
+                {w.text[1]}
               </span>
             </div>
           )

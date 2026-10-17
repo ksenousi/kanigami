@@ -146,6 +146,9 @@ describe('Forecast', () => {
     const waitingOn = [...'鼻堂塩席果'].map((characters, i) => ({ characters, stage: i === 3 ? 4 : 2, availableAt: at }))
     const host = await render(<Forecast summary={summary} waitingOn={waitingOn} />)
     expect(host.querySelector('.mark').textContent).toBe('席鼻堂+2')
+    await hover(hours(host)[2])
+    // The readout names every one, the passing one first and marked.
+    expect(host.querySelector('.waiting').textContent).toBe('席 ↑guru · 鼻堂塩果')
   })
 
   it('marks the radicals holding locked kanji beside the kanji', async () => {

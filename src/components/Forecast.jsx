@@ -141,7 +141,7 @@ export default function Forecast({ summary, hours: given = null, waitingOn = [] 
             <span className="soft">{resting(summary, hours.slice(0, DAY_HOURS))}</span>
           </p>
         ) : (
-          <HourSpecimen hours={hours} index={reading} today={today} />
+          <HourSpecimen hours={hours} index={reading} today={today} marked={marks.get(reading) ?? []} />
         )}
       </div>
     </section>
@@ -226,7 +226,7 @@ function walk(count, now, point) {
 // type").
 const NOUNS = { radical: ['radical', 'radicals'], kanji: ['kanji', 'kanji'], vocabulary: ['vocab', 'vocab'] }
 
-function HourSpecimen({ hours, index, today }) {
+function HourSpecimen({ hours, index, today, marked }) {
   const hour = hours[index]
   if (!hour) return null
   const start = new Date(hour.at)
@@ -258,7 +258,39 @@ function HourSpecimen({ hours, index, today }) {
             ))
           : null
       }
+      more={marked.length ? <LevelUpKanji marked={marked} /> : null}
     />
+  )
+}
+
+// What the level-up waits on in this hour, every one of them — the chart
+// draws three and counts the rest — set as the chart sets them: the ones a
+// right answer passes bright and named `↑guru`, the rest softer.
+function LevelUpKanji({ marked }) {
+  const glyph = k => k.characters ?? (k.image ? <img src={k.image} alt={k.meaning} /> : '〓')
+  const passing = marked.filter(k => k.stage === 4)
+  const rest = marked.filter(k => k.stage !== 4)
+  return (
+    <span className="waiting">
+      {passing.length ? (
+        <>
+          <span className="jp">
+            {passing.map(k => (
+              <span key={k.id ?? k.characters}>{glyph(k)}</span>
+            ))}
+          </span>{' '}
+          <span className="up srs-guru">↑guru</span>
+        </>
+      ) : null}
+      {passing.length && rest.length ? ' · ' : ''}
+      {rest.length ? (
+        <span className="jp quiet">
+          {rest.map(k => (
+            <span key={k.id ?? k.characters}>{glyph(k)}</span>
+          ))}
+        </span>
+      ) : null}
+    </span>
   )
 }
 

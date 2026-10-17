@@ -1593,6 +1593,100 @@ button.quiet {
   color: var(--srs-burned);
 }
 
+/* The level-up's kanji in an hour, as the chart sets them: passing ones
+   bright, the rest softer. */
+.board .specimen .waiting .jp {
+  font-family: var(--jp-sans);
+  color: var(--text-strong);
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 0.3em;
+}
+
+.board .specimen .waiting .jp.quiet {
+  color: var(--text-soft);
+}
+
+.board .specimen .waiting img {
+  height: 0.9em;
+  width: auto;
+  filter: var(--strokes);
+}
+
+/* With the spread under it, the level's number holds to the top rather
+   than floating in the middle of six lines. */
+.board .specimen:has(.level-spread) {
+  align-items: start;
+}
+
+/* A level's items by type and rank, under its specimen: a name, a short
+   hairline segmented in the ranks' colours, and the ranks named. */
+.board .specimen .level-spread {
+  display: grid;
+  grid-template-columns: max-content minmax(60px, 140px) minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: center;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: var(--label);
+  letter-spacing: 0.03em;
+}
+
+.board .specimen .level-spread .kind {
+  display: contents;
+}
+
+.board .specimen .level-spread .segments {
+  display: flex;
+  gap: 2px;
+  height: 3px;
+}
+
+.board .specimen .level-spread i {
+  display: block;
+  height: 100%;
+}
+
+.board .specimen .level-spread i.srs-apprentice {
+  background-color: var(--accent);
+}
+
+.board .specimen .level-spread i.srs-guru {
+  background-color: var(--srs-guru);
+}
+
+.board .specimen .level-spread i.srs-master {
+  background-color: var(--srs-master);
+}
+
+.board .specimen .level-spread i.srs-enlightened {
+  background-color: var(--srs-enlightened);
+}
+
+.board .specimen .level-spread i.srs-burned {
+  background-color: var(--srs-burned);
+}
+
+.board .specimen .level-spread .ranks .srs-apprentice {
+  color: var(--accent);
+}
+
+.board .specimen .level-spread .ranks .srs-guru {
+  color: var(--srs-guru);
+}
+
+.board .specimen .level-spread .ranks .srs-master {
+  color: var(--srs-master);
+}
+
+.board .specimen .level-spread .ranks .srs-enlightened {
+  color: var(--srs-enlightened);
+}
+
+.board .specimen .level-spread .ranks .srs-burned {
+  color: var(--srs-burned);
+}
+
 .board .specimen .stage.passed {
   color: var(--srs-passed);
 }
@@ -1633,10 +1727,11 @@ button.quiet {
   color: var(--dim);
 }
 
-/* The forecast's readout holds the specimen's height at rest, so reading
-   an hour moves nothing under it. */
+/* The forecast's readout holds the specimen's height at rest — three
+   lines, when the hour has level-up kanji — so reading an hour moves
+   nothing under it. */
 .board .forecast .readout {
-  min-height: var(--figure);
+  min-height: calc(var(--body) * 1.3 + var(--small) * 2.8);
 }
 
 /* The other hours step back while one is read, as the strip's kanji do. */
@@ -2489,6 +2584,13 @@ button.quiet {
     text-align: right;
   }
 
+  /* Here the head draws its hairline, and the chosen measure's rule sits
+     on it as in every other head. */
+  .board .forward .rows > section > .head .kinds button {
+    padding-bottom: 12px;
+    margin-bottom: -12px;
+  }
+
   .board .forward .rows .fills {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
@@ -2590,6 +2692,34 @@ button.quiet {
 .board .rows > section > :not(.head) {
   grid-column: 2;
   min-width: 0;
+}
+
+/* A head with a switch in it — coverage's four measures — wraps inside its
+   label column rather than running across the rows beside it: the name,
+   then the measures under it. */
+.board .rows > section > .head {
+  min-width: 0;
+}
+
+.board .rows > section > .head h2 {
+  white-space: normal;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.board .rows > section > .head .kinds {
+  flex-wrap: wrap;
+  gap: 16px 14px;
+  margin-left: 0;
+}
+
+/* Wrapped, the chosen one's rule sits 6px under it rather than 12, so it
+   stays clear of the measures on the line below; the reach above stays. */
+.board .rows > section > .head .kinds button {
+  padding-bottom: 6px;
+  margin-bottom: -6px;
 }
 
 .board .rows .fills,

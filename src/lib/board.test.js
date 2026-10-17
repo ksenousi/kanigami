@@ -1,24 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  accuracy,
-  accuracyByLevel,
-  earliestLevelUp,
-  levelKanji,
-  levelUpItems,
-  lockedBehind,
-  medianWorking,
-  milestones,
-  moved,
-  nextUp,
-  fastestLevel,
-  levelStandings,
-  pace,
-  paceToReach,
-  project,
-  road,
-  srsSystems,
-  week
-} from './board.js'
+import { accuracy, accuracyByLevel, earliestLevelUp, fastestLevel, levelKanji, levelSpreads, levelStandings, levelUpItems, lockedBehind, medianWorking, milestones, moved, nextUp, pace, paceToReach, project, road, srsSystems, week } from './board.js'
 
 // Hand-authored, smallest-possible shapes. Fake ids and dates throughout.
 const NOW = new Date(2026, 0, 14, 19, 40) // local time, a Wednesday evening
@@ -626,3 +607,13 @@ describe('paceToReach', () => {
   })
 })
 
+
+describe('levelSpreads', () => {
+  it('counts each level’s started items by type and rank', () => {
+    const levelOf = new Map([[1, 3], [2, 3], [3, 3], [4, 4], [5, 3]])
+    const a = (id, type, stage) => ({ data: { subject_id: id, subject_type: type, srs_stage: stage } })
+    const spreads = levelSpreads(levelOf, [a(1, 'radical', 9), a(2, 'kanji', 7), a(3, 'kana_vocabulary', 2), a(4, 'kanji', 5), a(5, 'kanji', 0)])
+    expect(spreads.get(3)).toEqual({ radical: { burned: 1 }, kanji: { master: 1 }, vocabulary: { apprentice: 1 } })
+    expect(spreads.get(4)).toEqual({ radical: {}, kanji: { guru: 1 }, vocabulary: {} })
+  })
+})

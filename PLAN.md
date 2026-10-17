@@ -2361,3 +2361,14 @@ level: `day 14 of ≈ 18`, `since 4 Oct · 71% right`, `20/29 kanji ·
 fastest Wed 21 Oct 02:00 if all correct`. A level ahead: its span and
 `click to choose`. An SRS band: `guru · 18%`, `+318 in 7 days`. Keep new
 readouts to this register.
+
+**A pace bar's ranks, and the hour's kanji.** The median comparison came
+off a pace bar on the owner's word; in its place, under the specimen, the
+level's started radicals, kanji and vocabulary each get a short hairline
+segmented by SRS rank and the ranks named beside it — `kanji 9 apprentice
+· 18 guru · 2 master` (`levelSpreads` in board.js, placed by the kanji and
+ahead indexes). The forecast's hour lists every level-up kanji due in it,
+not just the three drawn over the bar: the ones a right answer passes
+bright with `↑guru`, the rest softer. The SRS spread's own hover went back
+to swapping every count for its share, on the owner's word; its band
+specimen is gone.

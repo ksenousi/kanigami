@@ -7,7 +7,7 @@
 //
 // The spaces between the parts are for the live region, which reads the
 // text run together otherwise.
-export default function Specimen({ glyph, kind = '', named, where = null, more = null }) {
+export default function Specimen({ glyph, kind = '', named, where = null, more = null, below = null }) {
   return (
     <div className="specimen">
       <span className={`glyph ${kind}`.trim()}>{glyph}</span>{' '}
@@ -25,6 +25,7 @@ export default function Specimen({ glyph, kind = '', named, where = null, more =
             <p className="more">{more}</p>
           </>
         ) : null}
+        {below}
       </div>
     </div>
   )
