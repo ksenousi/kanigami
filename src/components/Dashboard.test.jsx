@@ -224,7 +224,7 @@ describe('the pace dial', () => {
     const host = await board()
     expect(host.querySelector('#pace-dial').value).toBe('10')
     expect(head(host)).toContain('projected at 10 days a level')
-    expect(host.querySelector('.level-line').textContent).toContain('at your pace · 10d')
+    expect(host.querySelector('.level-line').textContent).not.toContain('at your pace')
   })
 
   it('starts at the last five even when the median is slower', async () => {
@@ -606,7 +606,7 @@ describe('the level and its strip', () => {
     const host = await board()
     await settle()
     // 山 alone is not the two needed; 川 comes through its radical.
-    expect(line(host)).toMatch(/level \d+\w{3} \d+ \w{3} \d\d:\d\d if all correct/)
+    expect(line(host)).toMatch(/level \d+earliest \w{3} \d+ \w{3} \d\d:\d\d/)
   })
 
   it('hands its radicals to the grid’s switch, so they are read once', async () => {

@@ -324,7 +324,6 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
                   board={board}
                   level={user.level}
                   token={token}
-                  perLevel={paceFor(board.pace, chosenPace)}
                 />
                 <Srs spread={board.spread} moved={board.moved} />
               </div>
@@ -464,8 +463,8 @@ function Figures({ board }) {
 
 // 段 Under the level's strip, what the level says: the radicals holding
 // its locked kanji, then the reads — what is next,
-// what the level-up waits on, and the next level: fastest, at your
-// last-five pace, and at the dial when it has been moved. It was the level
+// what the level-up waits on, and the next level at its fastest. The
+// paced dates are the dial's, not this line's. It was the level
 // line, a section with its own strip (PLAN.md, "The level line"), until
 // the strip and the level's grid were merged (PLAN.md, "The strip carries
 // the kanji"); the strip is the grid's now. The counts by state were a
@@ -474,30 +473,22 @@ function Figures({ board }) {
 // stage.
 //
 // Every state is WaniKani's, read off an assignment. The fastest level-up
-// runs WaniKani's own intervals and the dates run a pace; all are
-// projections, and each says what it assumes beside its date.
+// runs WaniKani's own intervals, a projection, and says so: `earliest`.
 
 // `counts`: the holding line, which is the kanji's — left out while the
 // strip shows the radicals.
-function LevelReads({ board, level, perLevel, counts = true }) {
+function LevelReads({ board, level, counts = true }) {
   const { remaining, total } = board.passed
   const p = board.pace
   const top = level >= TOP_LEVEL
   const levelUp = board.levelUp
   // The fastest the next level can come, every answer right — through the
-  // locked kanji's radicals when it waits on them — and the next level at
-  // your last-five pace and, when it has been moved off it, at the dial.
-  // Neither pace can beat the fastest.
+  // locked kanji's radicals when it waits on them.
   const fastest = levelUp?.at ?? levelUp?.chained ?? null
-  const home = homePace(p)
-  const at = days => (!top && days !== null && p ? project(p, level, days, board.now, fastest)?.startOf(level + 1) : null)
-  const atHome = at(home)
-  const atDial = perLevel !== home ? at(perLevel) : null
-  const ahead = Boolean(fastest || atHome || atDial)
   // The whole level, unlock to that level-up, in whole days, as the
   // level's bar will record it once it is passed: `7d`.
   const unlocked = p?.current?.unlockedAt ? Date.parse(p.current.unlockedAt) : null
-  const span = date => (unlocked === null ? '' : ` · ${Math.round((new Date(date).getTime() - unlocked) / 86400000)}d`)
+  const span = unlocked !== null && fastest ? ` · ${Math.round((new Date(fastest).getTime() - unlocked) / 86400000)}d` : ''
 
   const next = board.next
   let up = null
@@ -531,21 +522,12 @@ function LevelReads({ board, level, perLevel, counts = true }) {
             <span>{up}</span>
           </div>
         ) : null}
-        {ahead ? (
+        {fastest && !top ? (
           <div>
             <span className="what">level {level + 1}</span>
-            {/* Each projection names what it assumes, in place of the
-                footnote that once said it for the whole line, one to a row. */}
-            <span className="stack">
-              {[
-                fastest ? `${when(fastest, board.now)} if all correct${span(fastest)}` : null,
-                atHome ? `≈ ${dayMonth(atHome)} at your pace${span(atHome)}` : null,
-                atDial ? `≈ ${dayMonth(atDial)} at the dial${span(atDial)}` : null
-              ]
-                .filter(Boolean)
-                .map(read => (
-                  <span key={read}>{read}</span>
-                ))}
+            <span>
+              earliest {when(fastest, board.now)}
+              {span}
             </span>
           </div>
         ) : null}
@@ -673,7 +655,7 @@ const OTHERS = {
   vocab: { read: getLevelVocabulary, noun: 'vocabulary', one: 'a word' }
 }
 
-function Level({ board, level, token, perLevel }) {
+function Level({ board, level, token }) {
   const [reading, setReading] = useState(null)
   const [showing, setShowing] = useState('kanji')
   // Per kind: null until asked for, then 'reading', 'failed' or the items.
@@ -769,7 +751,7 @@ function Level({ board, level, token, perLevel }) {
               <span className="soft">{count}</span>
             </p>
           ) : null}
-          <LevelReads board={board} level={level} perLevel={perLevel} counts={!other} />
+          <LevelReads board={board} level={level} counts={!other} />
         </div>
         <div className="readout" aria-live="polite">
           {reading ? <ItemSpecimen item={reading} now={new Date()} /> : null}
