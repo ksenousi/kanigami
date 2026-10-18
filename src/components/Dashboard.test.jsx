@@ -224,7 +224,7 @@ describe('the pace dial', () => {
     const host = await board()
     expect(host.querySelector('#pace-dial').value).toBe('10')
     expect(head(host)).toContain('projected at 10 days a level')
-    expect(host.querySelector('.level-line').textContent).toContain('at your pace')
+    expect(host.querySelector('.level-line').textContent).toContain('at your pace, 10 days')
   })
 
   it('starts at the last five even when the median is slower', async () => {

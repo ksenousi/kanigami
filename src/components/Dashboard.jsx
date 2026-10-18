@@ -494,6 +494,14 @@ function LevelReads({ board, level, perLevel, counts = true }) {
   const atHome = at(home)
   const atDial = perLevel !== home ? at(perLevel) : null
   const ahead = Boolean(fastest || atHome || atDial)
+  // The whole level, unlock to that level-up: `6.8 days`, whole days
+  // beside a pace's date, which is only ever a day.
+  const unlocked = p?.current?.unlockedAt ? Date.parse(p.current.unlockedAt) : null
+  const span = (date, exact) => {
+    if (unlocked === null) return ''
+    const days = (new Date(date).getTime() - unlocked) / 86400000
+    return `, ${exact ? dayCount(Math.round(days * 10) / 10) : Math.round(days)} days`
+  }
 
   const next = board.next
   let up = null
@@ -534,9 +542,9 @@ function LevelReads({ board, level, perLevel, counts = true }) {
                 footnote that once said it for the whole line. */}
             <span>
               {[
-                fastest ? `${when(fastest, board.now)} if all correct` : null,
-                atHome ? `≈ ${dayMonth(atHome)} at your pace` : null,
-                atDial ? `≈ ${dayMonth(atDial)} at the dial` : null
+                fastest ? `${when(fastest, board.now)} if all correct${span(fastest, true)}` : null,
+                atHome ? `≈ ${dayMonth(atHome)} at your pace${span(atHome)}` : null,
+                atDial ? `≈ ${dayMonth(atDial)} at the dial${span(atDial)}` : null
               ]
                 .filter(Boolean)
                 .join(' · ')}
