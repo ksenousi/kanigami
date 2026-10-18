@@ -1836,6 +1836,12 @@ button.quiet {
   color: var(--dim);
 }
 
+.board .level-line .reads .stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .board .level-line .glyphs {
   font-family: var(--jp-sans);
   color: var(--text-strong);

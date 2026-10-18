@@ -494,14 +494,10 @@ function LevelReads({ board, level, perLevel, counts = true }) {
   const atHome = at(home)
   const atDial = perLevel !== home ? at(perLevel) : null
   const ahead = Boolean(fastest || atHome || atDial)
-  // The whole level, unlock to that level-up: `6.8 days`, whole days
-  // beside a pace's date, which is only ever a day.
+  // The whole level, unlock to that level-up, in whole days, as the
+  // level's bar will record it once it is passed: `7d`.
   const unlocked = p?.current?.unlockedAt ? Date.parse(p.current.unlockedAt) : null
-  const span = (date, exact) => {
-    if (unlocked === null) return ''
-    const days = (new Date(date).getTime() - unlocked) / 86400000
-    return `, ${exact ? dayCount(Math.round(days * 10) / 10) : Math.round(days)} days`
-  }
+  const span = date => (unlocked === null ? '' : ` · ${Math.round((new Date(date).getTime() - unlocked) / 86400000)}d`)
 
   const next = board.next
   let up = null
@@ -539,15 +535,17 @@ function LevelReads({ board, level, perLevel, counts = true }) {
           <div>
             <span className="what">level {level + 1}</span>
             {/* Each projection names what it assumes, in place of the
-                footnote that once said it for the whole line. */}
-            <span>
+                footnote that once said it for the whole line, one to a row. */}
+            <span className="stack">
               {[
-                fastest ? `${when(fastest, board.now)} if all correct${span(fastest, true)}` : null,
+                fastest ? `${when(fastest, board.now)} if all correct${span(fastest)}` : null,
                 atHome ? `≈ ${dayMonth(atHome)} at your pace${span(atHome)}` : null,
                 atDial ? `≈ ${dayMonth(atDial)} at the dial${span(atDial)}` : null
               ]
                 .filter(Boolean)
-                .join(' · ')}
+                .map(read => (
+                  <span key={read}>{read}</span>
+                ))}
             </span>
           </div>
         ) : null}
