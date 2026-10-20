@@ -2400,3 +2400,15 @@ counted here. If it comes back, the route found is nhkore
 articles, 2011–25, which a script can turn into kanji shares — using only
 the word and count columns, not NHK's text or the definitions in the
 file.
+
+**The strip, bigger and in rows.** Asked for: get rid of the holding line
+(`戈 spear → 戦 · soonest 9 Oct … if all correct`) and make the kanji strip
+bigger and more legible. The line went; the strip still sets the radicals
+holding each locked kanji under its block, which says the same thing
+without the soonest days. The strip's characters went from `--label` to
+`--display`, the radicals under them to `--body`, the blocks from 6px to
+10px, and a block wants 42px before the strip wraps (was 18px). A pass
+that spread the level across the whole 今 Now band, with the spread and
+the forecast under it, was tried in a prototype; the owner moved it back
+to its column and had the strip take more rows instead: three on a laptop,
+two on an iPad, four on a phone.

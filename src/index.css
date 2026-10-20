@@ -1471,8 +1471,7 @@ button.quiet {
 
 
 /* ---- 段 the level's reads ----
-   Under the strip: the radicals holding the locked kanji and three short
-   reads. They share one slot with the readout of whatever is pointed at
+   Under the strip: three short reads. They share one slot with the readout of whatever is pointed at
    (PLAN.md, "One slot"); the reads keep their room while hidden, so
    nothing moves under the pointer. */
 .board .level .slot {
@@ -1756,56 +1755,6 @@ button.quiet {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-/* A radical holding a lock wears where it stands, in the strip's hues:
-   apprentice its stage's, a lesson waiting and a radical still locked
-   dimmed. */
-.board .level-line .holding .radical.a1 {
-  color: var(--srs-apprentice-1);
-}
-
-.board .level-line .holding .radical.a2 {
-  color: var(--srs-apprentice-2);
-}
-
-.board .level-line .holding .radical.a3 {
-  color: var(--srs-apprentice-3);
-}
-
-.board .level-line .holding .radical.a4 {
-  color: var(--srs-apprentice-4);
-}
-
-.board .level-line .holding .radical.lesson {
-  color: var(--text-soft);
-}
-
-.board .level-line .holding .radical.locked {
-  color: var(--dim);
-}
-
-/* The same, radical by radical, as one line under the strip. */
-.board .level-line .holding {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 28px;
-  margin: 0;
-  font-size: var(--small);
-}
-
-.board .level-line .holding > span {
-  white-space: nowrap;
-}
-
-.board .level-line .holding .radical {
-  font-family: var(--jp-sans);
-  color: var(--subject-radical);
-}
-
-.board .level-line .holding .kanji-held {
-  font-family: var(--jp-sans);
-  color: var(--subject-kanji);
 }
 
 .board .level-line img {
@@ -3055,29 +3004,29 @@ button.quiet {
 }
 
 /* The level's kanji as the strip — one block a kanji in its state's
-   colour, its character under it at the label's size (pointing at one
-   reads it large in the readout), the 90% line beside the block that
-   reaches it. `--across` is set from the width (`useAcross`): one row where
-   every block gets 18px, rows split evenly where not. */
+   colour, its character under it at display size (pointing at one reads
+   it large in the readout), the 90% line beside the block that reaches it.
+   `--across` is set from the width (`useAcross`): one row where every
+   block gets 42px, rows split evenly where not. */
 .board .kanji.strip {
   display: grid;
   grid-template-columns: repeat(var(--across, 30), minmax(0, 1fr));
-  gap: 12px 2px;
+  gap: 22px 5px;
 }
 
 .board .kanji.strip .open {
-  gap: 5px;
+  gap: 10px;
 }
 
 .board .kanji.strip .character {
-  font-size: var(--label);
+  font-size: var(--display);
   line-height: 1.1;
 }
 
 .board .kanji.strip .bar {
   display: block;
   align-self: stretch;
-  height: 6px;
+  height: 10px;
   background: var(--rule);
 }
 
@@ -3106,7 +3055,7 @@ button.quiet {
 }
 
 .board .kanji.strip .by {
-  font-size: var(--label);
+  font-size: var(--body);
 }
 
 /* The 90% WaniKani levels you up at: a strong hairline between the block
@@ -3116,7 +3065,7 @@ button.quiet {
   position: absolute;
   top: -4px;
   bottom: -4px;
-  right: -2px;
+  right: -3px;
   border-right: 1px solid var(--text-strong);
   pointer-events: none;
 }

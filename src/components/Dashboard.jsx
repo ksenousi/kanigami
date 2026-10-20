@@ -461,8 +461,7 @@ function Figures({ board }) {
   )
 }
 
-// 段 Under the level's strip, what the level says: the radicals holding
-// its locked kanji, then the reads — what is next,
+// 段 Under the level's strip, what the level says: the reads — what is next,
 // what the level-up waits on, and the next level at its fastest. The
 // paced dates are the dial's, not this line's. It was the level
 // line, a section with its own strip (PLAN.md, "The level line"), until
@@ -475,9 +474,7 @@ function Figures({ board }) {
 // Every state is WaniKani's, read off an assignment. The fastest level-up
 // runs WaniKani's own intervals, a projection, and says so: `earliest`.
 
-// `counts`: the holding line, which is the kanji's — left out while the
-// strip shows the radicals.
-function LevelReads({ board, level, counts = true }) {
+function LevelReads({ board, level }) {
   const { remaining, total } = board.passed
   const p = board.pace
   const top = level >= TOP_LEVEL
@@ -494,13 +491,12 @@ function LevelReads({ board, level, counts = true }) {
   let up = null
   if (top || total === 0) up = null
   else if (remaining === 0) up = 'Ready — WaniKani levels you up on its next look'
-  // Waiting on locked kanji gets no read: the strip greys them and the
-  // holding line names the radicals behind them.
+  // Waiting on locked kanji gets no read: the strip greys them and sets
+  // the radicals holding each under it.
   else if (levelUp === undefined) up = 'Reading…'
 
   return (
     <div className="level-line">
-      {counts && total > 0 ? <Holding behind={board.behind} /> : null}
       <div className="reads">
         {next ? (
           <div>
@@ -549,52 +545,6 @@ function levelCount(board, level) {
   ]
     .filter(Boolean)
     .join(' · ')
-}
-
-// What keeps the locked kanji locked, as one line under the strip: each of
-// the level's radicals not yet passed, its name, the locked kanji it holds
-// and the soonest it could pass — the strip's cells say the same kanji by
-// kanji. Decided from a prototype (PLAN.md, "Locked behind"): the strip
-// saying it was picked over rows, the grid and a map. Hidden when nothing on
-// the level is locked.
-//
-// A level's radicals are usually taught together and so pass together: when
-// every one of them has the same soonest day, it is said once at the end
-// rather than eight times — the list was the tallest thing on the board.
-function Holding({ behind }) {
-  if (!behind || (behind.blockers.length === 0 && behind.others.length === 0)) return null
-  const days = behind.blockers.map(b => (b.at ? dayMonth(b.at) : null))
-  const shared = days[0] && days.every(d => d === days[0]) ? days[0] : null
-
-  return (
-    <p className="holding">
-      {behind.blockers.map(({ radical: r, holds, at }) => (
-        <span key={r.id}>
-          <span className={`radical ${standing(r)}`}>{glyph(r)}</span> <span className="soft">{r.meaning}</span> →{' '}
-          <span className="kanji-held">
-            {holds.map(k => (
-              <span key={k.id}>{glyph(k)}</span>
-            ))}
-          </span>
-          {at && !shared ? <span className="dim"> · soonest {dayMonth(at)}</span> : null}
-        </span>
-      ))}
-      {/* The soonest days assume every answer right, as the level-up's
-          fastest does; said once, where the footnote used to say it. */}
-      {shared ? <span className="dim">{days.length > 1 ? 'each ' : ''}soonest {shared} if all correct</span> : null}
-      {!shared && days.some(Boolean) ? <span className="dim">if all correct</span> : null}
-      {behind.others.length > 0 ? (
-        <span>
-          <span className="kanji-held">
-            {behind.others.map(k => (
-              <span key={k.id}>{glyph(k)}</span>
-            ))}
-          </span>
-          <span className="dim"> · a radical from another level</span>
-        </span>
-      ) : null}
-    </p>
-  )
 }
 
 // Each locked kanji's radicals still in the way, by kanji id, for its block
@@ -751,7 +701,7 @@ function Level({ board, level, token }) {
               <span className="soft">{count}</span>
             </p>
           ) : null}
-          <LevelReads board={board} level={level} counts={!other} />
+          <LevelReads board={board} level={level} />
         </div>
         <div className="readout" aria-live="polite">
           {reading ? <ItemSpecimen item={reading} now={new Date()} /> : null}
@@ -864,8 +814,8 @@ function Grid({ items, label, onRead, words = false, holders = null, need = null
 // How many blocks a row of the strip holds, from the width it has: one row
 // while every block gets STRIP_CELL px; past that, as few rows as fit,
 // split evenly, so a level never ends on a row of one or two. On a laptop
-// a level's thirty-odd kanji take one row of the column; on a phone, two.
-const STRIP_CELL = 18
+// a level's thirty-odd kanji take three rows of the column; on a phone, four.
+const STRIP_CELL = 42
 
 function useAcross(ref, count) {
   const [across, setAcross] = useState(count)
