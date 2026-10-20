@@ -41,7 +41,7 @@ import usePointing from './usePointing.js'
 // first.
 const SHOWN = 3
 
-export default function Forecast({ summary, hours: given = null, waitingOn = [] }) {
+export default function Forecast({ summary, hours: given = null, waitingOn = [], rest = null }) {
   const { at: reading, point, groupProps, itemProps } = usePointing()
   // A week when the board hands one over; otherwise the summary's 25 hours.
   const hours = given ?? forecast(summary)
@@ -132,15 +132,19 @@ export default function Forecast({ summary, hours: given = null, waitingOn = [] 
         </div>
       </div>
 
-      {/* At rest the day's total; pointing at an hour reads it as a
-          specimen in the same place, which keeps the specimen's height so
-          nothing under the forecast moves (PLAN.md, "The specimen"). */}
+      {/* At rest the day's total, and under it whatever the board hands
+          over as `rest` (the next level's earliest date, from 1180px);
+          pointing at an hour reads it as a specimen in the same place. The
+          two share one cell, so nothing under or above the forecast moves
+          (PLAN.md, "The specimen", "The level line in the hour's room"). */}
       <div className="readout" aria-live="polite">
-        {reading === null ? (
+        <div className={reading === null ? 'at-rest' : 'at-rest hidden'}>
           <p className="notes">
             <span className="soft">{resting(summary, hours.slice(0, DAY_HOURS))}</span>
           </p>
-        ) : (
+          {rest}
+        </div>
+        {reading === null ? null : (
           <HourSpecimen hours={hours} index={reading} today={today} marked={marks.get(reading) ?? []} />
         )}
       </div>

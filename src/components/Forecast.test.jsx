@@ -16,7 +16,13 @@ const summary = {
   }))
 }
 
-const label = host => host.querySelector('.readout').textContent
+// The readout keeps its at-rest line in place, hidden, while an hour is
+// read; what it says is whatever is not hidden.
+const label = host =>
+  [...host.querySelector('.readout').children]
+    .filter(part => !part.classList.contains('hidden'))
+    .map(part => part.textContent)
+    .join('')
 const hours = host => host.querySelectorAll('.hour')
 const RESTING = /^38 due now · 106 more by this time tomorrow$/
 
@@ -65,6 +71,15 @@ describe('Forecast', () => {
     expect(tinted.slice(0, 3)).toEqual([true, false, true])
     // The line at rest still sums the summary's day, not the week.
     expect(label(host)).toMatch(RESTING)
+  })
+
+  it('keeps what it is handed under the line at rest, and steps it aside for an hour', async () => {
+    const host = await render(<Forecast summary={summary} rest={<p className="handed">level 16 earliest</p>} />)
+    expect(label(host)).toMatch(/^38 due now · 106 more by this time tomorrowlevel 16 earliest$/)
+    await hover(hours(host)[2])
+    expect(label(host)).toMatch(/^7 \d\d:00/)
+    // Still in place, hidden, so the readout keeps its height.
+    expect(host.querySelector('.readout .hidden .handed')).not.toBeNull()
   })
 
   it('prints each count on its bar, and stops a backlog bigger than the day at the top', async () => {

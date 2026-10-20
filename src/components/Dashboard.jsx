@@ -314,7 +314,11 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
                 merged (PLAN.md, "The strip carries the kanji"); the spread
                 came left when one slot left that column short (PLAN.md,
                 "The spread under the level"). Stacked, the spread goes
-                last, so what is due still comes second. */}
+                last, so what is due still comes second. From 1180px the
+                level line sits in the forecast's readout and the one under
+                the strip is hidden; the pointed-at kanji floats over the
+                spread instead of holding room (PLAN.md, "The level line in
+                the hour's room"). */}
             <div className="now-pair">
               <div className="column">
                 <Level
@@ -330,6 +334,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
                   summary={board.summary}
                   hours={board.hours}
                   waitingOn={user.level < TOP_LEVEL ? (board.waitingOn ?? []) : []}
+                  rest={<LevelReads board={board} level={user.level} />}
                 />
               </div>
             </div>

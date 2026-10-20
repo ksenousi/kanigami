@@ -2413,3 +2413,32 @@ that spread the level across the whole 今 Now band, with the spread and
 the forecast under it, was tried in a prototype; the owner moved it back
 to its column and had the strip take more rows instead: three on a laptop,
 two on an iPad, four on a phone.
+
+**The level line in the hour's room — decided from a prototype.** Asked
+for: use the empty space in 今 Now, where the level's column (the strip, the
+level line, the spread) ran about 130px past the forecast. Both columns
+also held room open under them for the hover readouts: the level's slot for
+a pointed-at kanji, the forecast's readout for a tapped hour. Drawn: the
+spread under the forecast (it overshot, leaving the gap on the left); the
+spread across the band's foot; the forecast's bars stretched alone; Past 7
+days under the forecast; the level line there as well; both folded into
+the forecast's held room; three columns (level, forecast, spread) from
+1,400px, which made the band shortest (398px against 525) but cramped the
+hour numbers and the level's head; the strip or the week across the full
+width (both taller than before). **C was picked**: from 1,180px the next
+level's line (`level 16  earliest Sat 24 Oct 06:00 · 16d`) sits in the
+forecast's readout under the day's total, in the room the hour's specimen
+already held, and the strip's copy is hidden. A pointed-at kanji's
+specimen floats over the spread (on the ground, covering its head while
+read) instead of holding room under the strip, so nothing moves. The
+forecast's bars take whatever height the level column leaves — each stack
+is a size container and a bar is its share of the stack less 54px for the
+count and the kanji, with 194px as the floor. Measured on the fake at
+1,440px the columns end at 419 and 419 and the band at 477. Stacked, below
+1,180px, nothing changes: the line stays under the strip.
+
+**The dial's readout floats the same way.** Asked for, "by that logic":
+the pace dial held three lines open under right answers by level for a
+pointed-at level's specimen. The readout now holds only the chosen level's
+line (empty unless one is chosen); the specimen floats over the slider and
+the goal on the ground, and a tap anywhere outside lets go, as before.

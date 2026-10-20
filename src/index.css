@@ -1728,9 +1728,33 @@ button.quiet {
 
 /* The forecast's readout holds the specimen's height at rest — three
    lines, when the hour has level-up kanji — so reading an hour moves
-   nothing under it. */
+   nothing under it. At rest and the specimen share one cell, the way the
+   level's slot does, so a rest taller than the specimen moves nothing
+   either. */
 .board .forecast .readout {
+  display: grid;
   min-height: calc(var(--body) * 1.3 + var(--small) * 2.8);
+}
+
+.board .forecast .readout > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.board .forecast .readout > .hidden {
+  visibility: hidden;
+}
+
+.board .forecast .at-rest {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* The level line goes to the forecast's readout only beside it, from
+   1180px; stacked it stays under the strip. */
+.board .forecast .level-line {
+  display: none;
 }
 
 /* The other hours step back while one is read, as the strip's kanji do. */
@@ -2246,13 +2270,13 @@ button.quiet {
   margin-top: -6px;
 }
 
-/* The chosen level's line and a pointed-at level's specimen share one
-   cell, kept at the specimen's height — three lines beside the level's
-   number — so reading a bar never pushes the slider down under the
-   pointer. */
+/* The chosen level's line holds the room it needs and no more; a
+   pointed-at level's specimen floats over the slider and the goal beneath
+   instead of holding three lines open under the bars, so reading a bar
+   still moves nothing (PLAN.md, "The level line in the hour's room"). */
 .board .dial .under .readout {
+  position: relative;
   display: grid;
-  min-height: calc(var(--body) * 1.3 + var(--small) * 2.8);
 }
 
 .board .dial .under .readout > * {
@@ -2262,6 +2286,14 @@ button.quiet {
 
 .board .dial .under .readout > .hidden {
   visibility: hidden;
+}
+
+.board .dial .under .readout > .specimen {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  padding-bottom: 12px;
+  background: var(--ground);
 }
 
 /* The other levels step back while one is read. */
@@ -2476,18 +2508,61 @@ button.quiet {
     align-items: start;
   }
 
-  /* Beside the level line the forecast's bars get more room, so the two
-     come out near the same height without stretching either. */
-  .board .now-pair .forecast {
-    --tallest: 140px;
+  /* The level line in the hour's room (PLAN.md): the next level's date
+     sits under the forecast's total, the strip's copy goes, and the
+     pointed-at kanji floats over the spread instead of holding room under
+     the strip — so the level column is the strip and the spread. */
+  .board .now-pair .forecast .level-line {
+    display: block;
+  }
+
+  .board .now-pair .level .slot .level-line {
+    display: none;
+  }
+
+  .board .now-pair .level .slot {
+    position: relative;
+  }
+
+  .board .now-pair .level .slot:not(:has(> .rest > .notes)) {
+    margin-top: -20px;
+  }
+
+  .board .now-pair .level .slot > .readout {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 1;
+    padding-bottom: 12px;
+    background: var(--ground);
+  }
+
+  /* The bars take whatever height the level column leaves: the columns
+     stretch to one height, the forecast's strip fills its column, and each
+     bar is a share of its hour's stack less the room its count and kanji
+     need. 194px is the floor, where a short level leaves the forecast the
+     taller side. */
+  .board .now-pair {
+    align-items: stretch;
+  }
+
+  .board .now-pair .forecast,
+  .board .now-pair .forecast .strip {
+    flex: 1 1 auto;
+  }
+
+  .board .now-pair .forecast .hours {
+    flex: 1 0 auto;
   }
 
   .board .now-pair .forecast .stack {
-    height: 194px;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 194px;
+    container-type: size;
   }
 
-  .board .now-pair .level-line {
-    gap: 12px;
+  .board .now-pair .forecast .hour i {
+    height: calc(var(--h, 0) * (100cqh - 54px));
   }
 
   /* Ahead, like the bands above it: the dial takes two thirds, and taught,
