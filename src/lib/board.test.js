@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { accuracy, accuracyByLevel, earliestLevelUp, fastestLevel, levelKanji, levelSpreads, levelStandings, levelUpItems, lockedBehind, medianWorking, milestones, moved, nextUp, pace, paceToReach, project, road, srsSystems, week } from './board.js'
+import { accuracy, accuracyByLevel, earliestLevelUp, fastestLevel, levelKanji, levelSpreads, levelStandings, levelUpItems, lockedBehind, medianWorking, milestones, moved, pace, paceToReach, project, road, srsSystems, week } from './board.js'
 
 // Hand-authored, smallest-possible shapes. Fake ids and dates throughout.
 const NOW = new Date(2026, 0, 14, 19, 40) // local time, a Wednesday evening
@@ -230,7 +230,7 @@ describe('project', () => {
   })
 })
 
-describe('levelKanji and nextUp', () => {
+describe('levelKanji', () => {
   const subject = (id, characters, position) => ({
     id,
     data: { characters, lesson_position: position, meanings: [{ meaning: `m${id}`, primary: true }] }
@@ -305,24 +305,6 @@ describe('levelKanji and nextUp', () => {
     const [r] = levelKanji([radical], [])
     expect(r.image).toBe('https://example.test/a.svg')
     expect(r.state).toBe('locked')
-  })
-
-  it('groups what comes up soonest and says whether each is one step from passing', () => {
-    const up = nextUp(levelKanji(subjects, assignments), NOW)
-    expect(up.kanji.map(x => x.characters)).toEqual(['川', '血'])
-    expect(up.at).toBe(local(14, 21))
-    expect(up.oneStep).toBe(false)
-  })
-
-  it('treats everything already due as one group due now', () => {
-    const due = [
-      assignment({ subject_id: 2, srs_stage: 4, started_at: local(8, 0), available_at: local(13, 9) }),
-      assignment({ subject_id: 3, srs_stage: 4, started_at: local(8, 0), available_at: local(14, 11) })
-    ]
-    const up = nextUp(levelKanji(subjects, due), NOW)
-    expect(up.at).toBeNull()
-    expect(up.kanji).toHaveLength(2)
-    expect(up.oneStep).toBe(true)
   })
 })
 

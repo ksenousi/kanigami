@@ -1182,7 +1182,8 @@ the most data per inch) — and **the original was kept over all four.**
   passed. Each cell's `aria-label` says it in words. Under the grid:
   `day 12 on this level`; the soonest unpassed kanji with their time —
   `薬 皿 up at 21:00, one step from passing` when every one of them sits at
-  apprentice IV, which is WaniKani's stage read back; and
+  apprentice IV, which is WaniKani's stage read back (removed later on the
+  owner's word — the strip already names each kanji's next review); and
   `level 16 earliest thu 1 oct 04:00 · if every answer is right`, or
   `level 16 waits on locked kanji` when not enough are unlocked to reach
   the threshold.

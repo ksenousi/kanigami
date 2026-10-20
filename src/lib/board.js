@@ -359,28 +359,6 @@ function progress(k) {
   return k.stage ?? 0
 }
 
-// The unpassed kanji of this level that come up soonest — the ones worth
-// knowing the time of. Everything due at that same moment is grouped, and
-// `oneStep` says whether every one of them sits at apprentice IV, where a
-// right answer is what passes it. That is WaniKani's stage read back, not a
-// prediction of one.
-//
-// Anything already due is one group, whatever hour it fell due in: `at` is
-// null for that group, because the honest time is now.
-export function nextUp(kanji = [], now = new Date()) {
-  const waiting = kanji
-    .filter(k => k.state === 'apprentice' && k.availableAt)
-    .sort((a, b) => Date.parse(a.availableAt) - Date.parse(b.availableAt))
-  if (waiting.length === 0) return null
-
-  const first = Date.parse(waiting[0].availableAt)
-  const due = first <= now.getTime()
-  const group = due
-    ? waiting.filter(k => Date.parse(k.availableAt) <= now.getTime())
-    : waiting.filter(k => Date.parse(k.availableAt) === first)
-  return { at: due ? null : waiting[0].availableAt, kanji: group, oneStep: group.every(k => k.stage === 4) }
-}
-
 const UNIT_MS = {
   milliseconds: 1,
   seconds: 1000,

@@ -26,7 +26,6 @@ import {
   milestones,
   RECENT,
   moved,
-  nextUp,
   pace,
   paceToReach,
   project,
@@ -139,7 +138,6 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           moved: moved(started, now),
           learned: learned(started),
           kanji,
-          next: nextUp(kanji, now),
           passed
         }))
 
@@ -399,9 +397,6 @@ function Disconnect({ onDisconnect }) {
 
 const TOP_LEVEL = 60
 
-// How many kanji the next-up line names before it counts them instead.
-const NAMED = 4
-
 // A section's hairline heading: what it is on the left, its one number on
 // the right. Not a box — the rule is the only thing drawn.
 // 今 now and 先 ahead: the board's two bands, each named on the
@@ -461,8 +456,8 @@ function Figures({ board }) {
   )
 }
 
-// 段 Under the level's strip, what the level says: the reads — what is next,
-// what the level-up waits on, and the next level at its fastest. The
+// 段 Under the level's strip, what the level says: the reads — what the
+// level-up waits on, and the next level at its fastest. The
 // paced dates are the dial's, not this line's. It was the level
 // line, a section with its own strip (PLAN.md, "The level line"), until
 // the strip and the level's grid were merged (PLAN.md, "The strip carries
@@ -487,7 +482,6 @@ function LevelReads({ board, level }) {
   const unlocked = p?.current?.unlockedAt ? Date.parse(p.current.unlockedAt) : null
   const span = unlocked !== null && fastest ? ` · ${Math.round((new Date(fastest).getTime() - unlocked) / 86400000)}d` : ''
 
-  const next = board.next
   let up = null
   if (top || total === 0) up = null
   else if (remaining === 0) up = 'Ready — WaniKani levels you up on its next look'
@@ -498,20 +492,6 @@ function LevelReads({ board, level }) {
   return (
     <div className="level-line">
       <div className="reads">
-        {next ? (
-          <div>
-            <span className="what">next</span>
-            <span>
-              {/* A handful reads as characters; a batch of a dozen from one
-                  lesson session is a wall of them, and the count says more. */}
-              <span className="glyphs">
-                {next.kanji.length <= NAMED ? next.kanji.map(k => k.characters).join(' ') : `${next.kanji.length} kanji`}
-              </span>{' '}
-              {next.at ? `up at ${clock(next.at)}` : 'due now'}
-              {next.oneStep ? ', one step from passing' : ''}
-            </span>
-          </div>
-        ) : null}
         {up ? (
           <div>
             <span className="what">level-up</span>

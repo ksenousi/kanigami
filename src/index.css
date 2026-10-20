@@ -1785,11 +1785,6 @@ button.quiet {
   color: var(--dim);
 }
 
-.board .level-line .glyphs {
-  font-family: var(--jp-sans);
-  color: var(--text-strong);
-}
-
 /* ---- 歩 the pace dial ----
    Days per level, full width: sixty slots, one per level, each a
    full-height column so there is something to point at or tap, with its

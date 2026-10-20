@@ -509,14 +509,13 @@ describe('the level and its strip', () => {
     expect(blocks.map(li => li.querySelector('.character').textContent)).toEqual(['山', '川'])
   })
 
-  it('says what is up next, and leaves the locked kanji to the strip', async () => {
+  it('leaves the locked kanji to the strip', async () => {
     api.getLevelRadicals.mockResolvedValue([
       [{ id: 31, data: { characters: '工', meanings: [{ meaning: 'Construction', primary: true }], lesson_position: 0 } }],
       [{ data: { subject_id: 31, srs_stage: 3, started_at: new Date().toISOString() } }]
     ])
     const host = await board()
     await settle()
-    expect(line(host)).toContain('山 up at')
     expect(line(host)).not.toContain('level-up')
   })
 
