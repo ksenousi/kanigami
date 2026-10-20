@@ -181,6 +181,38 @@ describe('done-pill', () => {
     expect(await ui.find({ type: 'Text', text: /Old summary/ })).toBeUndefined()
   })
 
+  test('keeps the verdict when a subagent starts a turn of its own', async ($, on) => {
+    engine(on)
+    await $.turn.start({ text: 'go', turnId: 'a1' })
+    await $.tool.call({ tool: TOOL, state: 'done', reason: 'All set.', tldr: 'Shipped.', eli5: 'It is out.' })
+    await $.turn.start({ text: 'look around', turnId: 'a2', agentId: 'sub1' } as never)
+    const stop = await $.classic.Stop({ stop_hook_active: false, background_tasks: [] } as never)
+    expect(stop.block).toBeUndefined()
+    await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 'a1', reason: 'answer' })
+    const ui = await $.ui.mount({ plugin: 'done-pill', surface: 'desktop', ...band(false) })
+    expect(await ui.find({ type: 'Text', text: /Done · safe to close/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /Shipped/ })).toBeDefined()
+  })
+
+  test('keeps the status line over a survey, and the survey under it', async ($, on) => {
+    engine(on)
+    await $.turn.start({ text: 'go', turnId: 'v1' })
+    await $.tool.call({ tool: TOOL, state: 'needs-you', reason: 'Pick one.', tldr: 'Two options.', eli5: 'Choose.' })
+    await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 'v1', reason: 'answer' })
+    for (const surface of SURFACES) {
+      const ui = await $.ui.mount({
+        plugin: 'done-pill',
+        surface,
+        component: 'AbovePrompt',
+        props: { hasSurvey: true, isWorking: false, maxRows: 10, bodyColumns: 100 } as never,
+      })
+      expect(await ui.find({ type: 'Text', text: /Needs you/ })).toBeDefined()
+      expect(await ui.find({ key: 'engine' })).toBeDefined()
+      expect(await ui.find({ type: 'Text', text: /TL;DR/ })).toBeUndefined()
+      await ui.unmount()
+    }
+  })
+
   test('refuses a state it does not know', async ($, on) => {
     engine(on)
     const called = await $.tool.call({ tool: TOOL, state: 'maybe', reason: 'x' })

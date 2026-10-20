@@ -84,6 +84,9 @@ export const register: Register = on => {
   }).catch(() => ({ deny: 'done-pill could not record the status; say plainly in your message whether anything is pending.' }))
 
   on('turn.start', async ($, e, next) => {
+    // A subagent's run starts a turn of its own; clearing here would wipe a
+    // verdict the main turn already gave.
+    if (e.agentId !== undefined) return next(e)
     await update($, declared, () => null)
     await update($, running, () => [])
     return next(e)
@@ -127,7 +130,6 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey) return next(e)
     const last = await read($, pill)
     const kind = e.props.isWorking ? 'working' : last?.kind
     if (!kind) return next(e)
@@ -137,13 +139,27 @@ export const register: Register = on => {
     // While a turn runs, the last one's summary would describe the wrong reply.
     const ended = kind === 'working' ? null : last
     const reason = ended?.reason ?? ''
+    const status = (
+      <Text key="status" color={look.color} bold wrap="truncate-end">
+        ● {look.label}
+        {reason ? <Text dimColor bold={false}>{`  ${reason}`}</Text> : null}
+      </Text>
+    )
+
+    // A survey holds the band: keep the status line over it, and leave the
+    // survey the rest of the room.
+    if (e.props.hasSurvey) {
+      return (
+        <Box flexDirection="column" gap={0}>
+          {status}
+          {await next(e)}
+        </Box>
+      )
+    }
 
     return (
       <Box flexDirection="column" gap={0}>
-        <Text key="status" color={look.color} bold wrap="truncate-end">
-          ● {look.label}
-          {reason ? <Text dimColor bold={false}>{`  ${reason}`}</Text> : null}
-        </Text>
+        {status}
         {ended?.tldr ? (
           <Text key="tldr" wrap="wrap">
             <Text bold>TL;DR </Text>
