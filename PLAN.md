@@ -2434,7 +2434,11 @@ read) instead of holding room under the strip, so nothing moves. The
 forecast's bars take whatever height the level column leaves — each stack
 is a size container and a bar is its share of the stack less 54px for the
 count and the kanji, with 194px as the floor. Measured on the fake at
-1,440px the columns end at 419 and 419 and the band at 477. Stacked, below
+1,440px the columns end at 439 and 439 and the band at 497. (A first cut
+pulled the empty slot up over the strip's foot to save its 20px gap; the
+empty readout there, on the ground, cropped the radicals under the last
+row's locked kanji. The readout now paints only when it holds something,
+and the gap stays.) Stacked, below
 1,180px, nothing changes: the line stays under the strip.
 
 **The dial's readout floats the same way.** Asked for, "by that logic":

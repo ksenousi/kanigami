@@ -2524,14 +2524,15 @@ button.quiet {
     position: relative;
   }
 
-  .board .now-pair .level .slot:not(:has(> .rest > .notes)) {
-    margin-top: -20px;
-  }
-
+  /* Only a readout with something in it covers what is under it; an
+     empty one laid over the strip's foot cropped the radicals there. */
   .board .now-pair .level .slot > .readout {
     position: absolute;
     inset: 0 0 auto;
     z-index: 1;
+  }
+
+  .board .now-pair .level .slot > .readout:not(:empty) {
     padding-bottom: 12px;
     background: var(--ground);
   }
