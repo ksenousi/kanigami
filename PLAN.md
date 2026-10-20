@@ -2446,3 +2446,12 @@ the pace dial held three lines open under right answers by level for a
 pointed-at level's specimen. The readout now holds only the chosen level's
 line (empty unless one is chosen); the specimen floats over the slider and
 the goal on the ground, and a tap anywhere outside lets go, as before.
+
+**Unnamed bands, and no figures.** Asked for: the band names (`今 Now ·
+this level, and what's due`, `先 Ahead · pace, and what you'll know`) and
+the masthead's figures (reviews due, lessons waiting, meaning / reading %)
+go — they added nothing. The two bands stay, split by the hairline, and d
+and u still jump between them; each section keeps its own head. The
+masthead holds 蟹紙, when the board was read, and Disconnect. Lifetime
+accuracy left with its figure; the statistics read stays for right answers
+by level.

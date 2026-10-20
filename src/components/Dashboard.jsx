@@ -11,9 +11,8 @@ import {
   getSummary,
   getUser
 } from '../lib/wanikani.js'
-import { BANDS, dueNow, forecastAhead, kanjiPassed, learned, lessonsWaiting, spread } from '../lib/standing.js'
+import { BANDS, forecastAhead, kanjiPassed, learned, spread } from '../lib/standing.js'
 import {
-  accuracy,
   accuracyByLevel,
   earliestLevelUp,
   fastestLevel,
@@ -51,8 +50,8 @@ import useScrollKeys from './useScrollKeys.js'
 //
 // j and k scroll it and d and u jump band to band (useScrollKeys).
 //
-// The figures in the masthead, then two bands, each named on its hairline
-// (PLAN.md, "The regroup", then "The strip carries the kanji"): 今 now — the
+// Two bands, split by a hairline (PLAN.md, "The regroup", then "The strip
+// carries the kanji", then "Unnamed bands"): 今 now — the
 // level as its strip, beside the week ahead and the SRS spread; 先 ahead — the pace dial, then taught, coverage and the
 // milestones a row each, the first two following a level chosen on the
 // dial's bars.
@@ -67,7 +66,7 @@ import useScrollKeys from './useScrollKeys.js'
 // tab left open on an iPad lives for days, and a board read on Monday says
 // Monday's due count on Thursday. Coming back to the tab, or back online,
 // more than STALE_MS after the last read reads it all again, and the
-// masthead says when the figures were read and re-reads on a tap.
+// masthead says when the board was read and re-reads on a tap.
 const STALE_MS = 10 * 60 * 1000
 
 export default function Dashboard({ token, user, onUser, onDisconnect }) {
@@ -183,7 +182,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
           }))
         })
 
-        return commentary.then(([statistics, progressions, totals, systems, radicals]) => {
+        return commentary.then(([, progressions, totals, systems, radicals]) => {
           if (!live) return
           const srs = systems ? srsSystems(systems) : null
           const radicalItems = radicals ? levelKanji(radicals[0], radicals[1]) : null
@@ -195,7 +194,6 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             waitingOn: levelUpItems(kanji, radicalItems, passed.remaining),
             // The level's own system — the accelerated one on levels 1–2.
             fastest: srs ? fastestLevel(srs.get(kanji.find(k => k.system)?.system)) : null,
-            accuracy: statistics ? accuracy(statistics) : null,
             pace: progressions ? pace(progressions, user.level, now) : null,
             radicals: radicalItems,
             // Without the intervals there is no soonest, but which radical
@@ -250,7 +248,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
   }, [])
 
   // A failure with a board already drawn is a re-read that did not land:
-  // the board stays, and the masthead says the figures are the old ones. Only
+  // the board stays, and the masthead says it is the old one. Only
   // a 401 — the token itself refused — takes the board away.
   const blocking = failure && (!board || failure.status === 401)
 
@@ -258,9 +256,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
     <div className="surface-ink board">
       <header className="masthead">
         <span className="wordmark">蟹紙</span>
-        {board && !blocking ? (
-          <Figures board={board} />
-        ) : (
+        {board && !blocking ? null : (
           <>
             <span className="tag">kanigami</span>
             <span className="eyebrow">
@@ -275,7 +271,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
             type="button"
             onClick={refresh}
             disabled={busy}
-            aria-label={`Figures read at ${clock(board.now)}. Read again.`}
+            aria-label={`Read at ${clock(board.now)}. Read again.`}
           >
             {busy ? 'reading' : failure ? `not updated · read ${clock(board.now)}` : `read ${clock(board.now)}`}
           </button>
@@ -306,7 +302,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
         </div>
       ) : (
         <>
-          <Band kanji="今" name="Now · this level, and what’s due">
+          <Band>
             {/* The level beside what is due: its kanji as the strip, a block
                 each with the character under it, then the reads and the SRS
                 spread; the week ahead in the other column. The level line
@@ -339,7 +335,7 @@ export default function Dashboard({ token, user, onUser, onDisconnect }) {
               </div>
             </div>
           </Band>
-          <Band kanji="先" name="Ahead · pace, and what you’ll know">
+          <Band>
             <Ahead
               pace={board.pace}
               level={user.level}
@@ -404,18 +400,11 @@ const TOP_LEVEL = 60
 
 // A section's hairline heading: what it is on the left, its one number on
 // the right. Not a box — the rule is the only thing drawn.
-// 今 now and 先 ahead: the board's two bands, each named on the
-// hairline that opens it. The name is a sentence, not a head — the sections
-// inside keep their own.
-function Band({ kanji, name, children }) {
-  return (
-    <div className="band">
-      <p className="band-name">
-        <span className="jp">{kanji}</span> {name}
-      </p>
-      {children}
-    </div>
-  )
+// 今 now and 先 ahead: the board's two bands, split by a hairline. They
+// were named on it until the owner found the names added nothing; the
+// sections inside keep their own heads, and d and u still jump band to band.
+function Band({ children }) {
+  return <div className="band">{children}</div>
 }
 
 function Head({ children, right }) {
@@ -423,40 +412,6 @@ function Head({ children, right }) {
     <div className="head">
       <h2>{children}</h2>
       {right ? <span>{right}</span> : null}
-    </div>
-  )
-}
-
-// A count of nothing is dim. Only reviews take the accent, and only when
-// there are some.
-//
-// The kanji to the next level was a figure here; it is the level's head
-// now, beside the rest of what the level says. The seven days'
-// total went at the owner's word — the 24 hours under it say what is
-// coming, and a week's sum asked nothing of anyone.
-function Figures({ board }) {
-  const reviews = dueNow(board.summary)
-  const lessons = lessonsWaiting(board.summary)
-
-  return (
-    <div className="figures">
-      <div className={reviews > 0 ? 'figure due' : 'figure none'}>
-        <b>{reviews}</b>
-        <span>reviews due</span>
-      </div>
-      <div className={lessons > 0 ? 'figure' : 'figure none'}>
-        <b>{lessons}</b>
-        <span>lessons waiting</span>
-      </div>
-      {board.accuracy ? (
-        <div className="figure soft">
-          <b>
-            {percent(board.accuracy.meaning)}
-            <small> / {percent(board.accuracy.reading)}</small>
-          </b>
-          <span>meaning / reading %</span>
-        </div>
-      ) : null}
     </div>
   )
 }

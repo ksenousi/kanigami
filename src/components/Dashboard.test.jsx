@@ -96,21 +96,7 @@ afterEach(async () => {
 })
 
 describe('the board', () => {
-  it('draws the figures from the core reads', async () => {
-    const host = await board()
-    const figures = host.querySelector('.figures').textContent
-    expect(figures).toContain('3reviews due')
-    expect(figures).toContain('2lessons waiting')
-  })
-
-  it('leaves the kanji to the next level and the seven days out of the figures', async () => {
-    const host = await board()
-    const figures = host.querySelector('.figures').textContent
-    expect(figures).not.toContain('to level')
-    expect(figures).not.toContain('7 days')
-  })
-
-  it('says when the figures were read', async () => {
+  it('says when the board was read', async () => {
     const host = await board()
     expect(host.querySelector('.masthead').textContent).toMatch(/read \d/)
   })
@@ -179,7 +165,7 @@ describe('reading again', () => {
     api.getSummary.mockRejectedValue(Object.assign(new Error('WaniKani could not be reached.'), { status: 0 }))
     await click(host.querySelector('.masthead button'))
     await settle()
-    expect(host.querySelector('.figures')).toBeTruthy()
+    expect(host.querySelector('.band')).toBeTruthy()
     expect(host.querySelector('.masthead').textContent).toContain('not updated')
   })
 
@@ -188,7 +174,7 @@ describe('reading again', () => {
     api.getUser.mockRejectedValue(Object.assign(new Error('That token was rejected.'), { status: 401 }))
     await click(host.querySelector('.masthead button'))
     await settle()
-    expect(host.querySelector('.figures')).toBeNull()
+    expect(host.querySelector('.band')).toBeNull()
     expect(host.textContent).toContain('That token was rejected.')
   })
 })
@@ -492,7 +478,7 @@ describe('coverage', () => {
     const host = await board()
     await settle()
     expect(host.querySelector('.cover')).toBeNull()
-    expect(host.querySelector('.figures')).toBeTruthy()
+    expect(host.querySelector('.band')).toBeTruthy()
   })
 })
 

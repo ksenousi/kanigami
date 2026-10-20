@@ -805,14 +805,7 @@ button.quiet {
   max-width: 42ch;
 }
 
-/* Standing figures — counts that read at a glance without a card around them. */
-.figures {
-  display: flex;
-  gap: clamp(28px, 6vw, 64px);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
+/* A count with its label under it — the spread's counts. */
 .figure {
   display: flex;
   flex-direction: column;
@@ -833,14 +826,6 @@ button.quiet {
   font-size: var(--label);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--dim);
-}
-
-.figure.due b {
-  color: var(--accent);
-}
-
-.figure.none b {
   color: var(--dim);
 }
 
@@ -872,8 +857,8 @@ button.quiet {
 
 /* ---- 盤 The board ---- */
 
-/* The whole app now: the figures in the masthead, then three bands — now,
-   at hand and ahead (see "the board, in three bands" below). Desktop-first
+/* The whole app now: the masthead, then two bands — now and ahead,
+   split by a hairline (see "the board, in three bands" below). Desktop-first
    like everything else here, and nothing tries to be clever when the page
    is narrow. De-boxed: each section is a hairline heading and what sits
    under it, never a card. */
@@ -893,7 +878,7 @@ button.quiet {
   white-space: nowrap;
 }
 
-/* The masthead's doors — when the figures were read, and Disconnect — are
+/* The masthead's doors — when the board was read, and Disconnect — are
    the only controls a finger has to find up here. */
 .board .masthead button {
   min-height: 44px;
@@ -955,25 +940,6 @@ button.quiet {
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
-}
-
-.board .figures {
-  justify-content: flex-start;
-  /* Five labels in mono capitals need about 1,250px with their gaps, so
-     anything narrower than a wide desktop wraps — the two standing figures
-     go to a second line, and the three counts that ask something lead. */
-  flex-wrap: wrap;
-  gap: 24px clamp(40px, 5vw, 80px);
-}
-
-/* The weekly total and accuracy are standing, not a call to act, so they
-   sit a register back from the three counts in front of them. */
-.board .figure.soft b {
-  color: var(--text-soft);
-}
-
-.board .figure b small {
-  font-size: var(--display);
 }
 
 .board .columns {
@@ -2425,32 +2391,6 @@ button.quiet {
   border-top: 1px solid var(--rule);
 }
 
-.board .band-name {
-  margin: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-size: var(--small);
-  color: var(--dim);
-}
-
-.board .band-name .jp {
-  font-family: var(--jp-serif);
-  font-size: var(--input);
-  color: var(--text-strong);
-}
-
-/* Every band after the first wears its name on its hairline rather than on
-   a row of its own. */
-.board .band + .band > .band-name {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform: translateY(-55%);
-  padding-right: 14px;
-  background: var(--ground);
-}
-
 .board section {
   gap: 14px;
 }
@@ -2465,31 +2405,6 @@ button.quiet {
   align-items: start;
 }
 
-
-/* The figures, a line in the masthead: each count beside its name. */
-.board .masthead .figures {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px clamp(20px, 3vw, 40px);
-  margin-left: 18px;
-  white-space: normal;
-}
-
-.board .masthead .figure {
-  flex-direction: row;
-  align-items: baseline;
-  gap: 10px;
-  white-space: nowrap;
-}
-
-.board .masthead .figure b {
-  font-size: var(--display-lg);
-}
-
-.board .masthead .figure b small {
-  font-size: var(--small);
-}
 
 /* The level line and the next 24 hours: side by side on a wide screen.
    Stacked, the columns dissolve into one list so the spread, which sits
@@ -2842,14 +2757,6 @@ button.quiet {
     display: none;
   }
 
-  /* The figures take a line of their own under 蟹紙 and the masthead's
-     doors, rather than pushing the doors to a third. */
-  .board .masthead .figures {
-    order: 3;
-    flex-basis: 100%;
-    margin-left: 0;
-  }
-
 }
 
 /* An upright 11- or 13-inch iPad (820px and up) keeps at hand two-up, as
@@ -2919,13 +2826,6 @@ button.quiet {
 
   .board .masthead {
     column-gap: 18px;
-  }
-
-  /* Two figures to a row, their labels free to wrap under them. */
-  .board .figures {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 22px 20px;
   }
 
   /* The level line's three reads stack. */
@@ -3028,14 +2928,6 @@ button.quiet {
     white-space: normal;
     gap: 4px 16px;
   }
-  .board .masthead .figures {
-    gap: 4px 22px;
-  }
-
-  .board .masthead .figure b {
-    font-size: var(--display);
-  }
-
   /* Each row's label goes above it rather than beside it. */
   .board .rows > section {
     grid-template-columns: minmax(0, 1fr);
